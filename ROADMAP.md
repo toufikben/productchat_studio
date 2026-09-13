@@ -1,6 +1,8 @@
 # ProductChat Studio — خارطة الطريق الحية
 
-> **آخر تحديث:** 2026-09-13 22:45 UTC
+> **مصدر الحقيقة للتحقق:** [`docs/MODEL_INVENTORY.md`](docs/MODEL_INVENTORY.md) و[`docs/FEATURE_VERIFICATION_MATRIX.md`](docs/FEATURE_VERIFICATION_MATRIX.md). وجود بند هنا لا يعني أنه runtime-verified؛ الحالة لا تُرفع إلا بدليل قابل لإعادة الإنتاج.
+
+> **آخر تحديث:** 2026-09-14 00:16 UTC
 > **الحالة:** Android-first؛ iOS وWeb مؤجلان عمدًا إلى ما بعد إصدار Android.
 
 ## طريقة استخدام هذه الخارطة
@@ -11,13 +13,17 @@
 
 | المجال | الحالة | الملاحظة |
 |---|---|---|
-| بيئة Flutter وAndroid | مكتمل | Flutter 3.47.4، Dart 3.13.3، Android SDK 35/36، أدوات Native مثبتة |
-| تدقيق المستودع | مكتمل جزئيًا | البنية الأساسية سليمة، مع وجود شاشات وخدمات تحتاج تنفيذًا إنتاجيًا |
-| Hugging Face | مكتمل جزئيًا | LaMa وReal-ESRGAN مرفوعان؛ MI-GAN متوقف لحين توضيح ترخيص الأوزان |
-| تحليل Dart | مكتمل | `flutter analyze` بلا أخطاء |
-| اختبارات Dart | ناجح جزئيًا | الاختبار الحالي ناجح، وتغطية الميزات ما زالت محدودة |
-| Android Seika | ONNX مدمج مبدئيًا | جسر LaMa ONNX وProGuard وONNX Runtime مضافون؛ يلزم بناء Android فعلي للتحقق |
-| Android APK/AAB | متبقٍ | يحتاج بناء واختبارًا على جهاز أو محاكي Android |
+| بيئة Flutter وAndroid | مكتمل للبناء المحلي | Flutter 3.47.4 وDart 3.13.3 وAndroid SDK 36 متاحة؛ `flutter analyze` و`flutter test` ناجحان |
+| تدقيق المستودع | مكتمل كجرد، جزئي كتنفيذ | الجرد ومصفوفة التحقق محدثان؛ ما زالت شاشات وخدمات تحتاج تنفيذًا إنتاجيًا |
+| Hugging Face | مكتمل كوجود، جزئي كتكامل | المستودع العام موجود وفيه LaMa وReal-ESRGAN؛ MI-GAN متوقف قانونيًا، وReal-ESRGAN غير موصول runtime |
+| تحليل Dart | مكتمل حاليًا | `flutter analyze` بلا أخطاء بعد استعادة البيئة |
+| اختبارات Dart | ناجح حاليًا | `flutter test`: 7 اختبارات ناجحة، تشمل AI operation contracts |
+| Android Seika | مصدر/عقد/بناء مكتمل، runtime متبقٍ | LaMa graph والعقد والتحقق والـ cancellation والـ resource cleanup مضافة؛ يلزم جهاز/محاكي |
+| Android APK/AAB | APK debug مكتمل، الجهاز/release متبقٍ | `app-debug.apk` بُني؛ لا يوجد جهاز أو محاكي في البيئة، وAAB/signing لاحقان |
+| P4 وظائف المنتج الأساسية | جزئي | image picker وفتح المحرر فعليان؛ mask/chat/batch/history ما زالت متبقية |
+| P5 التخزين والخصوصية | جزئي | SharedPreferences وLegal screen مضافان؛ cache retention وHistory/Settings الدائمين متبقيان |
+| P6 النماذج المتقدمة | قرار مكتمل، runtime متبقٍ | Real-ESRGAN fallback موثق؛ لا يوجد ONNX/NCNN backend، وMI-GAN معطل قانونيًا |
+| P10 اللغات والوصول | جزئي | العربية/الإنجليزية وRTL wiring وSemantics أساسية؛ 16 لغة واختبارات شاملة متبقية |
 | الدفع | متبقٍ | Google Play Billing غير مربوط بالإنتاج أو Sandbox |
 | iOS | مؤجل | لن يدخل في نطاق الإصدار الحالي |
 | Web | مؤجل | لن يدخل في نطاق الإصدار الحالي |
@@ -61,7 +67,7 @@
 - [x] إضافة حذف وإعادة تنزيل النماذج.
 - [x] إضافة جاهزية Offline بعد اكتمال التنزيل.
 
-### 5. محرك Seika وONNX — قيد التنفيذ الآن
+### 5. محرك Seika وONNX — مصدره مكتمل، runtime متبقٍ
 
 - [x] إنشاء `SeikaService` في Dart.
 - [x] إنشاء MethodChannel Android.
@@ -70,8 +76,10 @@
 - [x] تشغيل LaMa ONNX بالقناع الحقيقي.
 - [ ] تشغيل Real-ESRGAN أو نسخة ONNX/NCNN مناسبة لـ Android؛ الملف الحالي `.pth` وليس ONNX.
 - [ ] دمج MI-GAN أو بديله بعد الحسم القانوني — اختياري للإصدار الأساسي.
-- [ ] تنفيذ CPU/NNAPI/GPU fallback.
-- [ ] إضافة حدود الذاكرة وتصغير الصور الكبيرة وتنظيف الملفات المؤقتة.
+- [x] تنفيذ CPU/NNAPI fallback مبدئي مع `RunOptions` للإلغاء والمهلة.
+- [x] إضافة حدود الذاكرة وتصغير الصور الكبيرة وتنظيف الموارد المؤقتة.
+- [x] إضافة verification cache للنموذج، cancellation، وnative hard timeout.
+- [ ] تنفيذ Integration Tests على Android والتحقق من inference والذاكرة والزمن.
 
 ### 6. إكمال واجهات Android — متبقٍ
 
@@ -112,7 +120,8 @@
 ### 10. الاختبارات والأداء — متبقٍ
 
 - [ ] توسيع اختبارات Smart Analysis.
-- [ ] إضافة اختبارات Seika وModel Manager.
+- [x] إضافة اختبارات contract لـ Seika/AI/Model Manager.
+- [ ] إضافة اختبارات MethodChannel وIntegration Tests على Android.
 - [ ] بناء APK Debug وRelease وAAB.
 - [ ] اختبار جهاز Android منخفض ومتوسط وحديث.
 - [ ] قياس الذاكرة والزمن وحجم التنزيل.
@@ -125,6 +134,24 @@
 - [ ] إنشاء Keystore خارج Git.
 - [ ] إعداد signing آمن.
 - [ ] فحص Google Play requirements.
+
+### 11.1 بوابة قبول Android — متبقٍ قبل Release
+
+- [ ] تشغيل LaMa cold/warm على emulator أو جهاز حقيقي.
+- [ ] اختبار cancellation أثناء `session.run` وhard timeout.
+- [ ] اختبار 30–100 inference مع heap/native profiling.
+- [ ] التحقق من output image quality وportrait/landscape.
+- [ ] قياس latency وpeak memory وCPU/NNAPI.
+- [ ] تنظيف cache files وتحديد retention policy.
+
+### 11.2 إكمال المنتج الأساسي — متبقٍ قبل Release
+
+- [ ] إكمال image picker وmask creation وربطهما بالـ Chat/Editor.
+- [ ] تطبيق editing pipeline الحقيقي في Batch بدل نسخ الملفات فقط.
+- [ ] ربط History وSettings وBrand Identity بتخزين دائم.
+- [ ] إكمال Privacy Policy وTerms وCompliance flow.
+- [ ] تحديد استراتيجية Real-ESRGAN: ONNX/NCNN أو إعلان fallback بوضوح.
+- [ ] تنفيذ Credits وGoogle Play Billing واختبار Sandbox.
 
 ### 12. iOS — مؤجل
 
