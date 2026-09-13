@@ -1,4 +1,4 @@
-package com.productchat.studio.native
+package com.productchat.aiphotostudio.native
 
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment

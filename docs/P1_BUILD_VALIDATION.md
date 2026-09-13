@@ -19,7 +19,7 @@
 - Regenerated the missing Flutter Android project files with `flutter create --platforms=android`.
 - Preserved the custom Seika/ONNX bridge and merged it into the generated Android structure.
 - Migrated the main Manifest to Android embedding v2.
-- Added Kotlin DSL Android configuration with application id `com.productchat.studio`, ONNX Runtime dependency, ProGuard, and model resource handling.
+- Added Kotlin DSL Android configuration with application id `com.productchat.aiphotostudio`, ONNX Runtime dependency, ProGuard, and model resource handling.
 - Set Gradle to use JDK 17 explicitly.
 - Centralized `compileSdk = 36` for Android application and library subprojects, including older plugin projects such as `file_picker`.
 - Removed the generated `test/widget_test.dart` because it referenced the nonexistent `MyApp` class and was not a project test.

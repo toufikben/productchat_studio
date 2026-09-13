@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.productchat.studio"
+    namespace = "com.productchat.aiphotostudio"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -14,7 +14,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.productchat.studio"
+        applicationId = "com.productchat.aiphotostudio"
         minSdk = 24
         targetSdk = 35
         versionCode = flutter.versionCode

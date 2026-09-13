@@ -6,4 +6,4 @@
 
 # Flutter plugin and bridge classes
 -keep class io.flutter.** { *; }
--keep class com.productchat.studio.** { *; }
+-keep class com.productchat.aiphotostudio.** { *; }

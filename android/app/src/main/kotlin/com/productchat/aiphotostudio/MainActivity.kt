@@ -1,9 +1,9 @@
-package com.productchat.studio
+package com.productchat.aiphotostudio
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import com.productchat.studio.native.SeikaChannel
+import com.productchat.aiphotostudio.native.SeikaChannel
 
 class MainActivity : FlutterActivity() {
     private val channelName = "productchat/studio/seika"

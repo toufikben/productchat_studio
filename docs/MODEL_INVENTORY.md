@@ -40,7 +40,7 @@
 - URLs: `lib/core/constants.dart`
 - Download/checksum: `lib/services/model_manager.dart`
 - Flutter bridge: `lib/services/seika_service.dart`
-- Android inference: `android/app/src/main/kotlin/com/productchat/studio/native/SeikaChannel.kt`
+- Android inference: `android/app/src/main/kotlin/com/productchat/aiphotostudio/native/SeikaChannel.kt`
 - Android dependency: `android/app/build.gradle`
 
 ## Verification policy
