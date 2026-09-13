@@ -1,20 +1,30 @@
 import 'package:flutter/services.dart';
 import '../models/edit_result.dart';
+import 'model_manager.dart';
 
 /// Local image operations backed by the Android/iOS Seika native bridge.
 /// The bridge is intentionally explicit about masks: an image must never be
 /// passed as its own mask because that produces undefined inpainting output.
 class SeikaService {
   static const _channel = MethodChannel('productchat/studio/seika');
+  final ModelManager _models;
+
+  SeikaService({ModelManager? models}) : _models = models ?? ModelManager();
 
   Future<EditResult> inpaint(String imagePath, String maskPath) async {
     if (imagePath.isEmpty || maskPath.isEmpty) {
       return const EditResult.failure('An image path and a real mask path are required.');
     }
     try {
+      final modelPath = await _models.readyPath(ModelManager.lama);
+      if (modelPath == null) {
+        return const EditResult.failure(
+            'LaMa model is not downloaded or failed SHA-256 verification.');
+      }
       final output = await _channel.invokeMethod<String>('inpaint', {
         'imagePath': imagePath,
         'maskPath': maskPath,
+        'modelPath': modelPath,
       });
       if (output == null || output.isEmpty) {
         return const EditResult.failure('Seika returned no output path.');

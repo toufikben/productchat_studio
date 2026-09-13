@@ -1,0 +1,166 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:crypto/crypto.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+
+import '../core/constants.dart';
+
+class ModelSpec {
+  final String id;
+  final String url;
+  final String fileName;
+  final String sha256;
+
+  const ModelSpec({
+    required this.id,
+    required this.url,
+    required this.fileName,
+    required this.sha256,
+  });
+}
+
+class ModelDownloadProgress {
+  final String modelId;
+  final int received;
+  final int total;
+  final bool complete;
+
+  const ModelDownloadProgress({
+    required this.modelId,
+    required this.received,
+    required this.total,
+    this.complete = false,
+  });
+
+  double get fraction => total <= 0 ? 0 : (received / total).clamp(0, 1);
+}
+
+class ModelManager {
+  static const lama = ModelSpec(
+    id: 'lama',
+    url: AppConstants.modelLamaUrl,
+    fileName: 'lama_fp32.onnx',
+    sha256: '1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6',
+  );
+
+  final Dio _dio;
+  final Future<Directory> Function() _directoryProvider;
+
+  ModelManager({Dio? dio, Future<Directory> Function()? directoryProvider})
+      : _dio = dio ?? Dio(),
+        _directoryProvider = directoryProvider ?? getApplicationSupportDirectory;
+
+  Future<File> modelFile(ModelSpec model) async {
+    final directory = await _directoryProvider();
+    final modelsDirectory = Directory('${directory.path}/models');
+    await modelsDirectory.create(recursive: true);
+    return File('${modelsDirectory.path}/${model.fileName}');
+  }
+
+  Future<bool> isReady(ModelSpec model) async {
+    final file = await modelFile(model);
+    if (!await file.exists()) return false;
+    return _matchesSha256(file, model.sha256);
+  }
+
+  Future<String?> readyPath(ModelSpec model) async {
+    return await isReady(model) ? (await modelFile(model)).path : null;
+  }
+
+  Stream<ModelDownloadProgress> download(ModelSpec model) async* {
+    if (await isReady(model)) {
+      final file = await modelFile(model);
+      yield ModelDownloadProgress(
+          modelId: model.id,
+          received: await file.length(),
+          total: await file.length(),
+          complete: true);
+      return;
+    }
+
+    final file = await modelFile(model);
+    final temporary = File('${file.path}.part');
+    var offset = await temporary.exists() ? await temporary.length() : 0;
+    if (offset > 0) {
+      try {
+        final response = await _dio.head<void>(model.url);
+        final total = int.tryParse(response.headers.value('content-length') ?? '');
+        if (total != null && offset >= total) {
+          await _finalize(temporary, file, model);
+          yield ModelDownloadProgress(modelId: model.id, received: total, total: total, complete: true);
+          return;
+        }
+      } catch (_) {
+        offset = 0;
+        if (await temporary.exists()) await temporary.delete();
+      }
+    }
+
+    final response = await _dio.download(
+      model.url,
+      temporary.path,
+      deleteOnError: false,
+      fileAccessMode: offset > 0 ? FileAccessMode.append : FileAccessMode.write,
+      options: Options(
+        responseType: ResponseType.bytes,
+        headers: offset > 0 ? {'Range': 'bytes=$offset-'} : null,
+      ),
+      onReceiveProgress: (received, total) {
+        // Dio's callback is exposed through the async stream below by polling
+        // the part file; this callback still enables progress in native logs.
+      },
+    );
+    if (offset > 0 && response.statusCode == HttpStatus.ok) {
+      // The server ignored Range. Retry once from byte zero to avoid a
+      // duplicated or corrupted artifact.
+      await temporary.delete();
+      await for (final _ in download(model)) {
+        // The recursive call performs the clean full download and validation.
+      }
+      final complete = await modelFile(model);
+      final length = await complete.length();
+      yield ModelDownloadProgress(
+          modelId: model.id, received: length, total: length, complete: true);
+      return;
+    }
+    if (response.statusCode != null && response.statusCode! >= 400) {
+      throw StateError('Model download failed with HTTP ${response.statusCode}.');
+    }
+
+    final total = await temporary.length();
+    yield ModelDownloadProgress(modelId: model.id, received: total, total: total);
+    await _finalize(temporary, file, model);
+    yield ModelDownloadProgress(modelId: model.id, received: total, total: total, complete: true);
+  }
+
+  Future<void> delete(ModelSpec model) async {
+    final file = await modelFile(model);
+    final temporary = File('${file.path}.part');
+    if (await file.exists()) await file.delete();
+    if (await temporary.exists()) await temporary.delete();
+  }
+
+  Future<void> _finalize(File temporary, File target, ModelSpec model) async {
+    if (!await _matchesSha256(temporary, model.sha256)) {
+      await temporary.delete();
+      throw StateError('SHA-256 mismatch for ${model.id}; download discarded.');
+    }
+    if (await target.exists()) await target.delete();
+    await temporary.rename(target.path);
+  }
+
+  Future<bool> _matchesSha256(File file, String expected) async {
+    final digest = await sha256.bind(file.openRead()).first;
+    return digest.toString().toLowerCase() == expected.toLowerCase();
+  }
+}
+
+String modelDownloadProgressToJson(ModelDownloadProgress progress) => jsonEncode({
+      'modelId': progress.modelId,
+      'received': progress.received,
+      'total': progress.total,
+      'complete': progress.complete,
+    });
