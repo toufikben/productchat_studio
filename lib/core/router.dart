@@ -5,6 +5,7 @@ import '../features/splash/splash_screen.dart';
 import '../features/editor/editor_screen.dart';
 import '../features/batch/batch_screen.dart';
 import '../features/settings/legal_screen.dart';
+import '../features/billing/paywall_screen.dart';
 
 final routerProvider = GoRouter(
     initialLocation: '/splash',
@@ -16,7 +17,8 @@ final routerProvider = GoRouter(
           builder: (_, state) =>
               EditorScreen(imagePath: state.uri.queryParameters['imagePath'])),
       GoRoute(path: '/batch', builder: (_, __) => const BatchScreen()),
-      GoRoute(path: '/legal', builder: (_, __) => const LegalScreen())
+      GoRoute(path: '/legal', builder: (_, __) => const LegalScreen()),
+      GoRoute(path: '/credits', builder: (_, __) => const PaywallScreen())
     ],
     errorBuilder: (_, __) =>
         const Scaffold(body: Center(child: Text('Page not found'))));

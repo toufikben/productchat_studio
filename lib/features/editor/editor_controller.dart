@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/ai_service.dart';
+import '../../services/billing_service.dart';
 import '../../models/edit_request.dart';
 
 class EditorText {
@@ -87,16 +88,41 @@ class EditorController extends StateNotifier<EditorState> {
   Future<void> _apply(EditOp op) async {
     final path = state.imagePath;
     if (path == null) return;
+    final cost = _costFor(op);
+    if (!billingService.canSpend(cost)) {
+      state = state.copyWith(error: 'Not enough credits. Please open the Credits screen.');
+      return;
+    }
     state = state.copyWith(busy: true);
     try {
       final result = await _ai.apply(path, op);
       if (result.ok && result.outputPath != null) {
-        _push(result.outputPath!);
+        final spent = await billingService.spend(result.creditsUsed);
+        if (spent || result.creditsUsed == 0) {
+          _push(result.outputPath!);
+        } else {
+          state = state.copyWith(error: 'Credits changed before the operation completed.');
+        }
       } else {
         state = state.copyWith(error: result.error ?? 'Image operation failed.');
       }
     } finally {
       if (mounted) state = state.copyWith(busy: false);
+    }
+  }
+
+  int _costFor(EditOp op) {
+    switch (op) {
+      case EditOp.removeBg:
+      case EditOp.shadow:
+        return 1;
+      case EditOp.enhance:
+        return 2;
+      case EditOp.export:
+        return 0;
+      case EditOp.inpaint:
+      case EditOp.relight:
+        return 3;
     }
   }
 
