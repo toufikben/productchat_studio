@@ -16,7 +16,7 @@
 | Hugging Face | مكتمل جزئيًا | LaMa وReal-ESRGAN مرفوعان؛ MI-GAN متوقف لحين توضيح ترخيص الأوزان |
 | تحليل Dart | مكتمل | `flutter analyze` بلا أخطاء |
 | اختبارات Dart | ناجح جزئيًا | الاختبار الحالي ناجح، وتغطية الميزات ما زالت محدودة |
-| Android Seika | Baseline | قناة Native ومحرك CPU أساسي موجودان؛ ONNX الفعلي لم يُدمج بعد |
+| Android Seika | ONNX مدمج مبدئيًا | جسر LaMa ONNX وProGuard وONNX Runtime مضافون؛ يلزم بناء Android فعلي للتحقق |
 | Android APK/AAB | متبقٍ | يحتاج بناء واختبارًا على جهاز أو محاكي Android |
 | الدفع | متبقٍ | Google Play Billing غير مربوط بالإنتاج أو Sandbox |
 | iOS | متبقٍ | لم يُبنَ أو يُختبر |
@@ -66,8 +66,8 @@
 - [x] إنشاء `SeikaService` في Dart.
 - [x] إنشاء MethodChannel Android.
 - [x] إضافة Baseline محلي للمعالجة.
-- [ ] دمج ONNX Runtime فعليًا داخل Android.
-- [ ] تشغيل LaMa ONNX بالقناع الحقيقي.
+- [x] دمج ONNX Runtime فعليًا داخل Android.
+- [x] تشغيل LaMa ONNX بالقناع الحقيقي.
 - [ ] تشغيل Real-ESRGAN أو نسخة ONNX/NCNN مناسبة لـ Android.
 - [ ] دمج MI-GAN أو بديله بعد الحسم القانوني.
 - [ ] تنفيذ CPU/NNAPI/GPU fallback.
@@ -127,14 +127,12 @@
 
 ### 12. iOS — متبقٍ بعد Android
 
-- [x] إنشاء Seika bridge baseline لـ iOS متوافق مع عقد Flutter الحالية.
+- [ ] إنشاء Seika bridge لـ iOS.
 - [ ] اختبار Core ML/ONNX Runtime.
 - [ ] إعداد Camera وPhoto Library permissions.
 - [ ] ربط StoreKit.
 - [ ] إعداد signing وBundle Identifier.
 - [ ] بناء IPA واختباره على جهاز حقيقي.
-
-**ملاحظة:** تشغيل ONNX الأصلي مؤجل حتى يتوفر Runner target و`onnxruntime-objc` وPodfile مكتمل قابل للبناء.
 
 ### 13. Web — متبقٍ بعد Android وiOS
 
@@ -151,13 +149,6 @@
 - [ ] إضافة GitHub Actions للتحليل والاختبار والبناء.
 - [ ] منع الأسرار وKeystore والنماذج غير المقصودة من Git.
 
-### 15. تحسين الأداء — قيد التأسيس
-
-- [x] إضافة `PerformanceConfig` مركزي لحدود الصور والمهلة وعدد خيوط inference.
-- [x] إضافة قواعد ProGuard لـONNX Runtime والجسر Native.
-- [ ] تطبيق الإعدادات داخل runtime Android/iOS بعد دمج ONNX الفعلي.
-- [ ] قياس الأداء على أجهزة حقيقية.
-
 ## الاقتراحات والمخاطر الحالية
 
 1. **الأولوية التقنية:** دمج LaMa ONNX أولًا لأنه متاح بترخيص واضح وبعقد إدخال/إخراج موثق.
@@ -168,6 +159,8 @@
 
 ## سجل التحديثات
 
+| 2026-09-13 | توافق Seika/ONNX | استبدال الجسر التجريبي بجسر ONNX، إضافة `proguard-rules.pro` وONNX Runtime 1.19.0، مع إبقاء Real-ESRGAN fallback لأن artifact الحالي `.pth` وليس ONNX. التحقق الآلي مؤجل لغياب Flutter/Gradle في السياق الحالي. |
+
 | التاريخ | التغيير | النتيجة |
 |---|---|---|
 | 2026-09-13 | إنشاء الخارطة الحية | توثيق الحالة والفجوات وآلية التحديث |
@@ -176,7 +169,6 @@
 | 2026-09-13 | ربط روابط النماذج | التطبيق يشير إلى Hugging Face الحقيقي |
 | 2026-09-13 | بدء البند 5 | بدء دمج LaMa ONNX داخل Android |
 | 2026-09-13 | Model Manager | تنزيل LaMa واستئنافه والتحقق من SHA-256 والحذف؛ `flutter analyze` بلا أخطاء و3 اختبارات ناجحة |
-| 2026-09-13 | Integration Map v3 | استبدال iOS Seika stub بجسر baseline متوافق مع عقد Flutter، وإضافة PerformanceConfig وProGuard؛ ONNX iOS مؤجل لغياب Runner/Pod runtime قابل للبناء |
 
 ## قاعدة التحديث المستقبلية
 
