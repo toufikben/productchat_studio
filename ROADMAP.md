@@ -24,7 +24,7 @@
 | P5 التخزين والخصوصية | جزئي | SharedPreferences وLegal screen مضافان؛ cache retention وHistory/Settings الدائمين متبقيان |
 | P6 النماذج المتقدمة | قرار مكتمل، runtime متبقٍ | Real-ESRGAN fallback موثق؛ لا يوجد ONNX/NCNN backend، وMI-GAN معطل قانونيًا |
 | P10 اللغات والوصول | جزئي | العربية/الإنجليزية وRTL wiring وSemantics أساسية؛ 16 لغة واختبارات شاملة متبقية |
-| الدفع | متبقٍ | Google Play Billing غير مربوط بالإنتاج أو Sandbox |
+| P7 Credits والدفع | منفذ ككود، Sandbox متبقٍ | BillingService وPaywall وledger idempotent مضافة؛ Play Console والـ Sandbox والتحقق الخلفي متبقية |
 | iOS | مؤجل | لن يدخل في نطاق الإصدار الحالي |
 | Web | مؤجل | لن يدخل في نطاق الإصدار الحالي |
 
@@ -110,11 +110,14 @@
 
 ### 9. Credits والدفع — متبقٍ
 
-- [ ] ربط Google Play Billing في Android.
-- [ ] تعريف المنتجات والاشتراكات.
-- [ ] خصم الرصيد بعد نجاح العملية فقط.
-- [ ] استعادة المشتريات.
-- [ ] اختبار Sandbox.
+- [x] ربط `in_app_purchase` وpurchase stream.
+- [x] تعريف product IDs في كود التطبيق.
+- [x] خصم الرصيد بعد نجاح العملية فقط.
+- [x] منع منح الرصيد مرتين لنفس purchase ID.
+- [x] إضافة Paywall وواجهة restore.
+- [ ] إنشاء المنتجات وتفعيلها في Google Play Console.
+- [ ] اختبار Sandbox على جهاز/حساب اختبار.
+- [ ] إضافة receipt verification/backend ledger للـ consumables واستعادتها عبر الأجهزة.
 - [ ] إضافة طبقة iOS StoreKit لاحقًا.
 
 ### 10. الاختبارات والأداء — متبقٍ
