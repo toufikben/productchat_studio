@@ -7,10 +7,17 @@ import com.productchat.studio.native.SeikaChannel
 
 class MainActivity : FlutterActivity() {
     private val channelName = "productchat/studio/seika"
+    private lateinit var seika: SeikaChannel
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         val channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
-        SeikaChannel(this).attach(channel)
+        seika = SeikaChannel(this)
+        seika.attach(channel)
+    }
+
+    override fun onDestroy() {
+        if (::seika.isInitialized) seika.close()
+        super.onDestroy()
     }
 }

@@ -1,9 +1,40 @@
 # Seika Android engine
 
-The Flutter `SeikaService` is now connected to `MainActivity` through the `productchat/studio/seika` MethodChannel. `SeikaChannel.kt` provides a deterministic local CPU baseline for background removal, masked inpainting, upscaling, shadow compositing, and export.
+## Current implementation
 
-The baseline is intentionally not described as MI-GAN or LaMa inference. It is an executable fallback that keeps the Flutter contract working. The next production step is to replace the corresponding Kotlin operations with ONNX Runtime sessions for the verified MI-GAN, LaMa, and Real-ESRGAN artifacts, while preserving the same method names and output-path contract.
+The Flutter `SeikaService` calls the `productchat/studio/seika` MethodChannel. `MainActivity` attaches `SeikaChannel`, and `SeikaChannel.kt` currently contains:
 
-Inpainting requires a real mask with the same dimensions as the source image. Passing the source image as its own mask is rejected by the Dart layer.
+- a local flood-based background-removal fallback;
+- masked LaMa ONNX session loading and inference code;
+- Bitmap-based upscale fallback;
+- simple shadow compositing;
+- export to the Android cache directory;
+- model load/unload and an NNAPI attempt with CPU fallback.
 
-Hugging Face status: the `Toufikben` account login was verified in the browser, but no public `productchat-models` repository was created and no model weights were uploaded. This remains blocked until the final model artifacts and commercial-license decisions are confirmed.
+## Model status
+
+The public Hugging Face repository [`Toufikben/productchat-models`](https://huggingface.co/Toufikben/productchat-models) contains:
+
+- `lama_fp32.onnx`, SHA-256 `1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6`;
+- `RealESRGAN_x4plus.pth`, SHA-256 `4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1`;
+- no MI-GAN weights because commercial redistribution is not yet legally clear.
+
+LaMa's documented contract is image `[1,3,512,512]`, mask `[1,1,512,512]`, float32, with mask `1` meaning erase and `0` meaning preserve. The Kotlin tensor preparation matches these shapes in source, but this is **not Android runtime verification** until an APK is built and exercised with a fixture image and mask.
+
+The Real-ESRGAN artifact is `.pth`. `runEsrgan` intentionally returns `null`, so the current upscale result falls back to `Bitmap.createScaledBitmap`. It must not be described as Real-ESRGAN inference.
+
+## Required runtime verification
+
+1. Download LaMa through `ModelManager` and verify SHA-256.
+2. Load it through the MethodChannel on an Android device/emulator.
+3. Run a fixed image/mask fixture and verify output dimensions, file validity, mask direction, timing, and memory.
+4. Test decode failure, mismatched dimensions, oversized input, unload/reload, and NNAPI fallback.
+5. Record device, Android version, app commit, model revision, result, and limitations in the feature matrix.
+
+## Current limitations
+
+- No Android build or device result is recorded for the current commit.
+- No memory limit or large-image policy is implemented.
+- Real-ESRGAN inference is not implemented.
+- MI-GAN is not included.
+- The Flutter editor still routes operations through an `AiService` stub, so native capability is not yet equivalent to an end-to-end product feature.

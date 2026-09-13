@@ -81,7 +81,7 @@ class EditorState {
 
 class EditorController extends StateNotifier<EditorState> {
   EditorController() : super(const EditorState());
-  final _ai = const AiService();
+  final _ai = AiService();
   void loadImage(String path) => state = state.copyWith(
       imagePath: path, originalPath: path, history: [path], historyIndex: 0);
   Future<void> _apply(EditOp op) async {
@@ -89,8 +89,12 @@ class EditorController extends StateNotifier<EditorState> {
     if (path == null) return;
     state = state.copyWith(busy: true);
     try {
-      final output = await _ai.apply(path, op);
-      _push(output);
+      final result = await _ai.apply(path, op);
+      if (result.ok && result.outputPath != null) {
+        _push(result.outputPath!);
+      } else {
+        state = state.copyWith(error: result.error ?? 'Image operation failed.');
+      }
     } finally {
       if (mounted) state = state.copyWith(busy: false);
     }

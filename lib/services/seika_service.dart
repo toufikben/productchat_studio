@@ -67,6 +67,16 @@ class SeikaService {
         'size': size,
       });
 
+  Future<bool> cancelInference() async {
+    try {
+      return await _channel.invokeMethod<bool>('cancelInference') ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
   Future<EditResult> _invoke(String method, Map<String, Object?> arguments,
       {int credits = 0}) async {
     try {

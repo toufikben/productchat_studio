@@ -48,6 +48,7 @@ class ModelManager {
 
   final Dio _dio;
   final Future<Directory> Function() _directoryProvider;
+  final Map<String, _VerifiedFile> _verifiedCache = {};
 
   ModelManager({Dio? dio, Future<Directory> Function()? directoryProvider})
       : _dio = dio ?? Dio(),
@@ -63,7 +64,28 @@ class ModelManager {
   Future<bool> isReady(ModelSpec model) async {
     final file = await modelFile(model);
     if (!await file.exists()) return false;
-    return _matchesSha256(file, model.sha256);
+    final length = await file.length();
+    final modified = await file.lastModified();
+    final cached = _verifiedCache[model.id];
+    if (cached != null &&
+        cached.path == file.path &&
+        cached.length == length &&
+        cached.modified == modified &&
+        cached.sha256 == model.sha256) {
+      return true;
+    }
+    final valid = await _matchesSha256(file, model.sha256);
+    if (valid) {
+      _verifiedCache[model.id] = _VerifiedFile(
+        path: file.path,
+        length: length,
+        modified: modified,
+        sha256: model.sha256,
+      );
+    } else {
+      _verifiedCache.remove(model.id);
+    }
+    return valid;
   }
 
   Future<String?> readyPath(ModelSpec model) async {
@@ -141,6 +163,7 @@ class ModelManager {
     final temporary = File('${file.path}.part');
     if (await file.exists()) await file.delete();
     if (await temporary.exists()) await temporary.delete();
+    _verifiedCache.remove(model.id);
   }
 
   Future<void> _finalize(File temporary, File target, ModelSpec model) async {
@@ -150,12 +173,27 @@ class ModelManager {
     }
     if (await target.exists()) await target.delete();
     await temporary.rename(target.path);
+    _verifiedCache.remove(model.id);
   }
 
   Future<bool> _matchesSha256(File file, String expected) async {
     final digest = await sha256.bind(file.openRead()).first;
     return digest.toString().toLowerCase() == expected.toLowerCase();
   }
+}
+
+class _VerifiedFile {
+  final String path;
+  final int length;
+  final DateTime modified;
+  final String sha256;
+
+  const _VerifiedFile({
+    required this.path,
+    required this.length,
+    required this.modified,
+    required this.sha256,
+  });
 }
 
 String modelDownloadProgressToJson(ModelDownloadProgress progress) => jsonEncode({
