@@ -177,6 +177,7 @@
 | 2026-09-13 | بدء البند 5 | بدء دمج LaMa ONNX داخل Android |
 | 2026-09-13 | Model Manager | تنزيل LaMa واستئنافه والتحقق من SHA-256 والحذف؛ `flutter analyze` بلا أخطاء و3 اختبارات ناجحة |
 | 2026-09-13 | Integration Map v3 | استبدال iOS Seika stub بجسر baseline متوافق مع عقد Flutter، وإضافة PerformanceConfig وProGuard؛ ONNX iOS مؤجل لغياب Runner/Pod runtime قابل للبناء |
+| 2026-09-13 | Integration Map v4 | استبدال Editor وBatch stubs، إضافة Controller وPanels وExportDialog وBatchService وتوثيق ONNX edge cases وإضافة مسارات Router؛ `flutter analyze` بلا أخطاء و3 اختبارات ناجحة |
 
 ## قاعدة التحديث المستقبلية
 
