@@ -1,10 +1,9 @@
-# ONNX Runtime bindings. Keep these rules ready for the production runtime.
+# ONNX Runtime native bindings
 -keep class ai.onnxruntime.** { *; }
 -keep class com.microsoft.onnxruntime.** { *; }
 -dontwarn ai.onnxruntime.**
 -dontwarn com.microsoft.onnxruntime.**
 
-# Flutter plugin registration and native bridge.
+# Flutter plugin and bridge classes
 -keep class io.flutter.** { *; }
--keep class io.flutter.plugins.** { *; }
--keep class com.productchat.studio.native.** { *; }
+-keep class com.productchat.studio.** { *; }

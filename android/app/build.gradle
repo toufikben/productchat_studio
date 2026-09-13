@@ -1,2 +1,33 @@
-plugins { id 'com.android.application' }
-android { namespace 'com.productchat.studio'; compileSdk 35; defaultConfig { applicationId 'com.productchat.studio'; minSdk 24; targetSdk 35; versionCode 1; versionName '1.0.0' } }
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.productchat.studio'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.productchat.studio'
+        minSdk 24
+        targetSdk 35
+        versionCode 1
+        versionName '1.0.0'
+    }
+
+    // Keep ONNX artifacts uncompressed for predictable local model access.
+    aaptOptions {
+        noCompress 'onnx'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.19.0'
+}
