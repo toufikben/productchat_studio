@@ -1,0 +1,2 @@
+platform :ios, '13.0'
+# Flutter tooling will extend this Podfile when the iOS project is generated.

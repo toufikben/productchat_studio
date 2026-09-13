@@ -1,0 +1,2 @@
+import 'package:flutter/material.dart';
+class SettingsScreen extends StatelessWidget { const SettingsScreen({super.key}); @override Widget build(BuildContext c) => Scaffold(appBar: AppBar(title: const Text('SettingsScreen')), body: const Center(child: Text('Feature scaffold'))); }
