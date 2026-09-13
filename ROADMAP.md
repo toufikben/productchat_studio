@@ -1,7 +1,7 @@
 # ProductChat Studio — خارطة الطريق الحية
 
-> **آخر تحديث:** 2026-09-13 21:37 UTC  
-> **الحالة:** Android-first، بدأ البند 5: دمج LaMa ONNX فعليًا داخل Android.
+> **آخر تحديث:** 2026-09-13 22:45 UTC
+> **الحالة:** Android-first؛ iOS وWeb مؤجلان عمدًا إلى ما بعد إصدار Android.
 
 ## طريقة استخدام هذه الخارطة
 
@@ -19,8 +19,8 @@
 | Android Seika | ONNX مدمج مبدئيًا | جسر LaMa ONNX وProGuard وONNX Runtime مضافون؛ يلزم بناء Android فعلي للتحقق |
 | Android APK/AAB | متبقٍ | يحتاج بناء واختبارًا على جهاز أو محاكي Android |
 | الدفع | متبقٍ | Google Play Billing غير مربوط بالإنتاج أو Sandbox |
-| iOS | متبقٍ | لم يُبنَ أو يُختبر |
-| Web | متبقٍ | لم يُبنَ أو يُختبر |
+| iOS | مؤجل | لن يدخل في نطاق الإصدار الحالي |
+| Web | مؤجل | لن يدخل في نطاق الإصدار الحالي |
 
 ## خارطة الطريق المرقمة
 
@@ -49,8 +49,8 @@
 - [x] رفع `RealESRGAN_x4plus.pth`.
 - [x] رفع ملفات التراخيص وبطاقة النموذج.
 - [x] تسجيل بصمات SHA-256.
-- [ ] الحصول على تصريح واضح لإعادة توزيع أوزان MI-GAN التجارية.
-- [ ] رفع MI-GAN بعد التحقق من الترخيص فقط.
+- [ ] الحصول على تصريح واضح لإعادة توزيع أوزان MI-GAN التجارية — قرار قانوني خارجي.
+- [ ] رفع MI-GAN بعد التحقق من الترخيص فقط — مؤجل وليس مانعًا لإصدار Android الأساسي.
 
 ### 4. ربط التطبيق بمستودع النماذج — مكتمل جزئيًا
 
@@ -68,21 +68,22 @@
 - [x] إضافة Baseline محلي للمعالجة.
 - [x] دمج ONNX Runtime فعليًا داخل Android.
 - [x] تشغيل LaMa ONNX بالقناع الحقيقي.
-- [ ] تشغيل Real-ESRGAN أو نسخة ONNX/NCNN مناسبة لـ Android.
-- [ ] دمج MI-GAN أو بديله بعد الحسم القانوني.
+- [ ] تشغيل Real-ESRGAN أو نسخة ONNX/NCNN مناسبة لـ Android؛ الملف الحالي `.pth` وليس ONNX.
+- [ ] دمج MI-GAN أو بديله بعد الحسم القانوني — اختياري للإصدار الأساسي.
 - [ ] تنفيذ CPU/NNAPI/GPU fallback.
 - [ ] إضافة حدود الذاكرة وتصغير الصور الكبيرة وتنظيف الملفات المؤقتة.
 
 ### 6. إكمال واجهات Android — متبقٍ
 
-- [ ] تحويل الشاشات Scaffold إلى شاشات وظيفية.
+- [ ] تحويل الشاشات المتبقية من Scaffold إلى شاشات وظيفية.
 - [ ] إكمال Onboarding.
 - [ ] إكمال Paywall وCredits.
 - [ ] إكمال Compliance وRecipes وSettings.
 - [ ] إكمال Chat UI وربطه بمسار التعديل.
-- [ ] إكمال المحرر والطبقات وUndo/Redo وBefore/After.
+- [x] إكمال المحرر والطبقات وUndo/Redo وBefore/After — تنفيذ v4.
 - [ ] إضافة الخلفيات والظلال والإضاءة والتصدير.
-- [ ] إكمال Batch وHistory وBrand Identity.
+- [x] إضافة Batch الأساسي ومعالجة التقدم — تنفيذ v4.
+- [ ] إكمال History وBrand Identity.
 
 ### 7. التخزين والخصوصية — متبقٍ
 
@@ -125,7 +126,7 @@
 - [ ] إعداد signing آمن.
 - [ ] فحص Google Play requirements.
 
-### 12. iOS — متبقٍ بعد Android
+### 12. iOS — مؤجل
 
 - [ ] إنشاء Seika bridge لـ iOS.
 - [ ] اختبار Core ML/ONNX Runtime.
@@ -134,7 +135,7 @@
 - [ ] إعداد signing وBundle Identifier.
 - [ ] بناء IPA واختباره على جهاز حقيقي.
 
-### 13. Web — متبقٍ بعد Android وiOS
+### 13. Web — مؤجل
 
 - [ ] بناء Web.
 - [ ] تحديد عمليات ONNX Runtime Web الممكنة.
@@ -171,8 +172,7 @@
 | 2026-09-13 | Model Manager | تنزيل LaMa واستئنافه والتحقق من SHA-256 والحذف؛ `flutter analyze` بلا أخطاء و3 اختبارات ناجحة |
 | 2026-09-13 | Integration Map v3 | استبدال iOS Seika stub بجسر baseline متوافق مع عقد Flutter، وإضافة PerformanceConfig وProGuard؛ ONNX iOS مؤجل لغياب Runner/Pod runtime قابل للبناء |
 | 2026-09-13 | Integration Map v4 | استبدال Editor وBatch stubs، إضافة Controller وPanels وExportDialog وBatchService وتوثيق ONNX edge cases وإضافة مسارات Router؛ `flutter analyze` بلا أخطاء و3 اختبارات ناجحة |
-| 2026-09-13 | Integration Map v3 | استبدال iOS Seika stub بجسر baseline متوافق مع عقد Flutter، وإضافة PerformanceConfig وProGuard؛ ONNX iOS مؤجل لغياب Runner/Pod runtime قابل للبناء |
-| 2026-09-13 | Integration Map v4 | استبدال Editor وBatch stubs، إضافة Controller وPanels وExportDialog وBatchService وتوثيق ONNX edge cases وإضافة مسارات Router؛ `flutter analyze` بلا أخطاء و3 اختبارات ناجحة |
+| 2026-09-13 | قرار النطاق | تأجيل iOS وWeb؛ المتبقي الحالي يقتصر على إكمال Android والتحقق منه وإعداده للإصدار |
 
 ## قاعدة التحديث المستقبلية
 
