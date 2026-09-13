@@ -127,12 +127,14 @@
 
 ### 12. iOS — متبقٍ بعد Android
 
-- [ ] إنشاء Seika bridge لـ iOS.
+- [x] إنشاء Seika bridge baseline لـ iOS متوافق مع عقد Flutter الحالية.
 - [ ] اختبار Core ML/ONNX Runtime.
 - [ ] إعداد Camera وPhoto Library permissions.
 - [ ] ربط StoreKit.
 - [ ] إعداد signing وBundle Identifier.
 - [ ] بناء IPA واختباره على جهاز حقيقي.
+
+**ملاحظة:** تشغيل ONNX الأصلي مؤجل حتى يتوفر Runner target و`onnxruntime-objc` وPodfile مكتمل قابل للبناء.
 
 ### 13. Web — متبقٍ بعد Android وiOS
 
@@ -148,6 +150,13 @@
 - [ ] إضافة تقارير الأداء والأجهزة.
 - [ ] إضافة GitHub Actions للتحليل والاختبار والبناء.
 - [ ] منع الأسرار وKeystore والنماذج غير المقصودة من Git.
+
+### 15. تحسين الأداء — قيد التأسيس
+
+- [x] إضافة `PerformanceConfig` مركزي لحدود الصور والمهلة وعدد خيوط inference.
+- [x] إضافة قواعد ProGuard لـONNX Runtime والجسر Native.
+- [ ] تطبيق الإعدادات داخل runtime Android/iOS بعد دمج ONNX الفعلي.
+- [ ] قياس الأداء على أجهزة حقيقية.
 
 ## الاقتراحات والمخاطر الحالية
 
@@ -167,6 +176,7 @@
 | 2026-09-13 | ربط روابط النماذج | التطبيق يشير إلى Hugging Face الحقيقي |
 | 2026-09-13 | بدء البند 5 | بدء دمج LaMa ONNX داخل Android |
 | 2026-09-13 | Model Manager | تنزيل LaMa واستئنافه والتحقق من SHA-256 والحذف؛ `flutter analyze` بلا أخطاء و3 اختبارات ناجحة |
+| 2026-09-13 | Integration Map v3 | استبدال iOS Seika stub بجسر baseline متوافق مع عقد Flutter، وإضافة PerformanceConfig وProGuard؛ ONNX iOS مؤجل لغياب Runner/Pod runtime قابل للبناء |
 
 ## قاعدة التحديث المستقبلية
 
