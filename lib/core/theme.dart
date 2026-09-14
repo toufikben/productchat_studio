@@ -9,5 +9,26 @@ class AppColors {
   static const textSecondary = Color(0xFF8B95A8);
 }
 class AppTheme {
+  static final light = ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.light,
+    scaffoldBackgroundColor: const Color(0xFFF7F8FB),
+    colorScheme: const ColorScheme.light(
+      primary: AppColors.primary,
+      surface: Color(0xFFFFFFFF),
+    ),
+    cardTheme: CardThemeData(
+      color: const Color(0xFFFFFFFF),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFE2E6EF)),
+      ),
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+    ),
+  );
   static final dark = ThemeData(useMaterial3: true, brightness: Brightness.dark, scaffoldBackgroundColor: AppColors.bg, colorScheme: const ColorScheme.dark(primary: AppColors.primary, surface: AppColors.surface), cardTheme: CardThemeData(color: AppColors.surface, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(18)), side: BorderSide(color: AppColors.border))));
 }

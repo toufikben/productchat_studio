@@ -39,6 +39,13 @@ class ModelDownloadProgress {
 }
 
 class ModelManager {
+  static const realEsrgan = ModelSpec(
+    id: 'real_esrgan',
+    url: AppConstants.modelRealEsrganUrl,
+    fileName: 'real_esrgan_x4.onnx',
+    sha256: 'REPLACE_WITH_ACTUAL_SHA256',
+  );
+
   static const lama = ModelSpec(
     id: 'lama',
     url: AppConstants.modelLamaUrl,

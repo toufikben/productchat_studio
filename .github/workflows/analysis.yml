@@ -7,7 +7,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.47.4'
+          flutter-version: '3.27.0'
+          channel: 'stable'
+          cache: true
       - run: flutter pub get
+      - run: flutter gen-l10n
       - run: flutter analyze
       - run: flutter test

@@ -22,9 +22,12 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.47.4'
-          channel: stable
+          flutter-version: '3.27.0'
+          channel: 'stable'
           cache: true
+
+      - name: Generate localizations
+        run: flutter gen-l10n
 
       - name: Restore Flutter dependencies
         run: flutter pub get

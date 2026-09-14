@@ -194,6 +194,37 @@ class ProService extends ChangeNotifier {
     _purchaseFingerprint = null;
   }
 
+  bool verifyLocalPurchase({
+    required String productId,
+    required String verificationData,
+  }) {
+    final expectedFingerprint = PurchaseSecurity.fingerprint(
+      productId: productId,
+      verificationData: verificationData,
+    );
+    return expectedFingerprint != null && expectedFingerprint == _purchaseFingerprint;
+  }
+
+  Future<void> applyLocalEntitlement({
+    required String productId,
+    required String verificationData,
+    required bool isLifetime,
+    Duration? duration,
+  }) async {
+    final fingerprint = PurchaseSecurity.fingerprint(
+      productId: productId,
+      verificationData: verificationData,
+    );
+    if (fingerprint == null) return;
+    _isPro = true;
+    _isLifetime = isLifetime;
+    _expiry = isLifetime ? null : (duration != null ? DateTime.now().add(duration) : null);
+    _productId = productId;
+    _purchaseFingerprint = fingerprint;
+    await _persist();
+    notifyListeners();
+  }
+
   Future<void> _persist() async {
     await _storage.set(isProKey, _isPro);
     await _storage.set(lifetimeKey, _isLifetime);
