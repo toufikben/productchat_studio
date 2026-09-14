@@ -2,7 +2,9 @@
 
 > **الحالة المرجعية:** Android-first. لا تُرفع أي ميزة من «موجودة في المصدر» إلى «متحققة» أو «جاهزة للإصدار» دون دليل قابل لإعادة الإنتاج.
 >
-> **آخر تحديث:** 2026-09-14 — دفعة Play Console واللغات
+> **آخر تحديث:** 2026-09-15 — تدقيق حالة المستودع وCI
+>
+> **المستودع:** [`toufikben/productchat_studio`](https://github.com/toufikben/productchat_studio)
 > **الفرع:** `main`
 > **الالتزام المرجعي قبل هذا التحديث:** `4df0a4c`
 > **مصادر الحقيقة:** هذه الخارطة، `docs/FEATURE_VERIFICATION_MATRIX.md`، `docs/MODEL_INVENTORY.md`، ووثائق التحقق المرتبطة.
@@ -325,6 +327,23 @@ All repair work must follow these rules:
 5. اختبار الشراء وPending وError وRestore وتكرار consumable وانتهاء الاشتراك وRefund/Revocation وLifetime على النسخة المثبتة من Play. لا يُنشر الإصدار النهائي؛ يترك الإرسال النهائي لمالك الحساب.
 
 **قرار البوابة الحالي:** اكتملت مراجعة الوثائق والمصدر؛ تنفيذ Play Console محجوب حتى تتوفر أدلة Flutter/build وAndroid runtime وجلسة Play Console الموثقة للمستخدم. لا يوجد تفويض بالنشر النهائي.
+
+## 8. تدقيق حالة المستودع — 2026-09-15
+
+تمت مراجعة المستودع [`toufikben/productchat_studio`](https://github.com/toufikben/productchat_studio) على `main`، وكان آخر commit عند التدقيق هو `ffaa690` (`fix: align free tier AI contract`). النتيجة التالية تميّز بين ما تم تنفيذه في المصدر وما تم إثباته بتشغيل فعلي:
+
+| البند الذي ظهر في سجل العمل | النتيجة في المستودع | الحالة |
+|---|---|---|
+| فحص حالة الريبو والفرع الرئيسي | `main` متزامن مع `origin/main` عند `ffaa690`، ولا توجد تغييرات محلية وقت التدقيق | **متحقق** |
+| إصلاح رسالة Free tier لمسار Chat/Editor | الرسالة أصبحت تذكر PatchMatch واشتراط mask وPro في `ChatController` و`EditorController` | **منفذ في المصدر** |
+| إصلاح أخطاء `flutter analyze` | آخر CI نجح فيه `flutter pub get` و`flutter gen-l10n` و`flutter analyze` | **متحقق في CI** |
+| اختبارات Flutter | آخر تشغيل CI رقم [34883672309](https://github.com/toufikben/productchat_studio/actions/runs/34883672309) فشل: نجح 39 اختبارًا وفشل اختبار واحد هو `chat conversational edit requires a real mask` | **غير مكتمل** |
+| Real-ESRGAN | يوجد fallback موثق فقط؛ لا يوجد ONNX/PTH موصول للتنفيذ، ولم يُثبت inference على Android | **غير مكتمل/مؤجل** |
+| Billing وPlay Console | كتالوج Product IDs موجود جزئيًا في المصدر، لكن التحقق على Play Console، الشراء، Restore، وبيئة Internal Testing لم تُغلق | **غير مكتمل** |
+| Android runtime وLaMa | لا يوجد في هذا التدقيق دليل جهاز أو Emulator لإثبات cold/warm inference والأداء والذاكرة | **غير متحقق** |
+
+**الخلاصة:** تم إنجاز إصلاحات المصدر والتوثيق الظاهرة في سجل الصورة جزئيًا، لكن لا يصح اعتبار المهمة مكتملة أو جاهزة للإصدار؛ الأولوية التالية هي إصلاح اختبار الـmask وإعادة تشغيل CI، ثم تنفيذ تحقق Android وPlay Console الفعلي. بيئة التدقيق الحالية لا تحتوي Flutter أو Dart، لذلك لم يُدّعَ نجاح محلي غير مثبت.
+
 - **Phase 1 — Diagnostic log capture — STARTED 2026-09-14:** Approved temporary workflow-only change. Scope: capture and upload the exact flutter analyze output while preserving a failing job when analysis fails. No application code or test logic changes. Rollback: revert the workflow commit. Acceptance: the next run publishes flutter-analyze.log and still reports the analyzer failure.
 
 - **2026-09-14 — دفعة الإصلاحات الأساسية:** تطبيق إصلاحات Android وiOS وCI وطبقة التطبيق وإضافة فحص الأسرار والثيم الفاتح وonboarding وProviderScope والتحقق المحلي من entitlement. لم يُعتمد Real-ESRGAN ONNX: الرابط أعاد 404 وSHA-256 كان placeholder، لذلك أُعيد upscale إلى fallback الموثق وأزيلت الاعتمادية غير المستخدمة وآثارها من lock/registrant.
