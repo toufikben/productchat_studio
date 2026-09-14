@@ -24,9 +24,9 @@ The source contains Model Manager, Smart Analysis, editor operation contracts, B
 - Real-ESRGAN is not implemented in the Android ONNX path; the available artifact is `.pth`, so the product must call the current result Basic enhancement fallback.
 - MI-GAN weights are not distributed because commercial redistribution permission is not established.
 - Batch is now connected to the local `AiService` editing pipeline and records successful outputs in History; native runtime/performance evidence remains pending.
-- Billing v2 Free/Pro/Lifetime, `ProService`, trusted `ProEntitlement`, Lifetime product setup, and receipt verification are not complete.
+- Billing v2 catalog, `ProService`, local entitlement gates, and Lifetime source wiring are present in part; Play product setup, device purchase/restore evidence, and independent receipt verification are not complete.
 - Several feature routes and screens require completion or explicit removal from the advertised product path.
-- Storage documentation must be reconciled with the actual implementation; older records mention an in-memory map while later handoff documentation mentions SharedPreferences and the new specification mentions Hive.
+- The current implementation uses versioned SharedPreferences metadata plus local files for images/models; older records that mention an in-memory map or Hive are historical and must not be used as the current privacy or Data Safety source of truth.
 
 ## Model repository
 
@@ -34,7 +34,7 @@ The public model repository is `Toufikben/productchat-models`. Its artifact inve
 
 ## Required next checks
 
-1. Rerun dependency resolution, localization generation, analysis, and tests on the current commit.
+1. Install the pinned Flutter toolchain and rerun dependency resolution, localization generation, analysis, and tests on the current commit.
 2. Build Debug APK, signed Release APK, and signed Release AAB from the same commit.
 3. Execute the LaMa fixture flow on an Android device/emulator.
 4. Execute Billing v2 product and entitlement tests only after the required Play Console setup.

@@ -38,8 +38,7 @@
 | `settings` | نعم | نعم | جزئي | Pending | لا | لا | Pro/Lifetime status وexpiry وRestore وروابط المسارات؛ device/Flutter test pending |
 | `onboarding` | نعم | نعم | جزئي | لا | لا | لا | Getting started content and route added; no persistence/widget evidence |
 | `recipes` | نعم | نعم | جزئي | لا | لا | لا | Local editing recipes and route added; action automation remains future work |
-| `compliance` | نعم | نعم | جزئي | لا | لا | لا | Review checklist added; legal certification is explicitly not claimed |
-| `compliance` | جزئي | جزئي | جزئي | لا | لا | لا | قائمة ثابتة وUI غير مكتمل |
+| `compliance` | نعم | نعم | جزئي | لا | لا | لا | Review checklist and UI are present; legal certification and platform-specific runtime verification are not claimed |
 | `localization` | نعم | جزئي | جزئي | لا | لا | لا | العربية/الإنجليزية؛ الهدف 16 غير محسوم |
 | `privacy.terms` | نعم | نعم | جزئي | لا | لا | لا | local-only processing، versioned metadata، وdelete semantics موثقة؛ legal review خارجي متبقٍ |
 | `faq.support.models` | نعم | نعم | جزئي | لا | لا | لا | FAQ, support guidance, and model capability screens added and linked from Settings |

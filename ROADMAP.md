@@ -70,7 +70,7 @@
 | Real-ESRGAN | fallback فقط | `RealESRGAN_x4plus.pth` موجود، وONNX/NCNN غير موصول |
 | MI-GAN | محظور قانونيًا وتقنيًا | لا تُضاف الأوزان قبل تصريح إعادة توزيع تجاري |
 | Editor/Chat | جزئي | contracts وimage picker موجودان؛ mask وE2E/runtime متبقيان |
-| Batch | Pro/Lifetime gate وpipeline محلي عبر AiService | Android runtime/performance واختبار الجهاز متبقية |
+| Batch | Pro/Lifetime gate وpipeline محلي عبر AiService | Android runtime/performance واختبار الجهاز متبقية؛ لا يُعلن كميزة متحققة على Android بعد |
 | Storage/History | SharedPreferences versioned metadata وbounded local History | Android restart/device retention verification متبقية |
 | Credits/Billing | كتالوج v2 محلي منفذ جزئيًا | IDs الستة وLifetime وشراء non-consumable مضافة في المصدر؛ backend وPlay Console ما زالا متبقيين |
 | Free/Pro/Lifetime gates | ProService محلي منفذ جزئيًا | Lifetime/expiry/persistence لها خدمة واختبارات؛ لا تُعد entitlement إنتاجية قبل الخادم |
@@ -176,7 +176,7 @@
 - [x] Chat يعرض حالة Free/Pro والحصة ويطبق gate وwatermark في مسار Free.
 - [x] Batch Pro/Lifetime gate بحد 100 صورة مع رسالة واضحة للمجاني.
 - [x] Brand Identity Pro/Lifetime gate مع حفظ محلي للهوية.
-- [ ] Batch يطبق pipeline التحرير الحقيقي بدل نسخ الملفات فقط.
+- [x] Batch يطبق pipeline التحرير الحقيقي عبر `AiService` بدل نسخ الملفات فقط؛ تحقق Android والأداء ما زال متبقيًا.
 - [ ] الميزات المعتمدة قانونيًا والنماذج المتاحة فعليًا.
 - [ ] تقييد العمليات المذكورة في المواصفة كـPro-only فقط بعد تحديد مسار تنفيذها الفعلي.
 - [ ] Paywall بثلاثة أقسام: Lifetime، Subscriptions، Credits.
@@ -206,7 +206,7 @@
 
 ### المرحلة 7 — التخزين والخصوصية
 
-**الحالة:** جزئية ومتضاربة في الوثائق.
+**الحالة:** جزئية؛ التنفيذ الفعلي موثق، وبعض الوثائق التاريخية تحتاج مواءمة.
 
 - [x] تثبيت SharedPreferences كـmetadata store فعلي؛ الصور والنماذج تبقى ملفات محلية، ولا يُستخدم Hive في هذا المسار.
 - [x] حفظ Brand Identity وHistory بطريقة versioned مع schema version.
@@ -290,3 +290,19 @@ All repair work must follow these rules:
 
 - **2026-09-14 — Pre-repair audit checkpoint:** Full roadmap and release-readiness review completed. Confirmed issues are documented in the audit report. **No application code changes or repair phase has started.**
 - **Phase 1 — CI/analyzer stabilization — STARTED 2026-09-14:** Approved diagnostic phase. Scope: inspect the latest GitHub Actions failure, reproduce or inspect `flutter analyze` failures, identify affected files and exact proposed fixes. No application code changes are authorized yet. Acceptance: a reviewed error list and proposed patch plan are presented before code edits.
+
+- **Phase 1 — Repository/Play readiness audit — COMPLETED 2026-09-14:** تمت مراجعة دليل Google Play المرفق مقابل المصدر الحالي، وخارطة الطريق، ومصفوفة التحقق، ومعرّفات Android، والصلاحيات، وكتالوج Billing، والأصول، وحالة المستودع. تأكد أن Flutter غير متاح في بيئة التدقيق، ولا توجد أدلة جهاز/محاكي Android أو أدلة Play Console. صُحح وضع Batch القديم ووُثقت خطوات Play التي تتطلب جلسة Play Console وحساب اختبار وبناءً مثبتًا. لم تُجرَ تغييرات على كود التطبيق.
+
+## 7. بوابة تنفيذ Google Play
+
+يُعامل الدليل المرفق كـ **قائمة مدخلات للإصدار** وليس دليلًا على وجود الميزات المذكورة. لا يجوز إدخال الادعاءات التالية في Play Console دون تأكيد مالك المنتج ودليل تشغيل: ثلاثة نماذج لإزالة الخلفية، 31 خلفية، معالجة 100 صورة، دعم 16 لغة، عدم رفع أي بيانات للسحابة، وصلاحيات الكاميرا/الميكروفون/الإشعارات، والأسعار أو التوفر الإقليمي الوارد في الدليل.
+
+قبل فتح Play Console، تُنجز الخطوات بالترتيب:
+
+1. تثبيت Flutter 3.47.4/Dart 3.13.3 وتشغيل `pub get` و`gen-l10n` و`analyze` و`test` وبناء Debug APK وRelease APK وRelease AAB من commit واحد.
+2. تشغيل مسار Android smoke على جهاز أو محاكي، بما في ذلك PatchMatch وChat وEditor وBatch وHistory وإعادة تشغيل التخزين والمسارات الظاهرة. تُسجل مواصفات الجهاز/API/ABI/RAM وversionCode وcommit والبصمات والأخطاء.
+3. مطابقة الصلاحيات الفعلية وSDKs والتخزين المحلي وتنزيل النماذج وسلوك Billing مع Privacy/Data Safety. لا تُستخدم إجابات «لا نجمع بيانات» المرفقة قبل إتمام هذه المطابقة.
+4. في Play Console، إنشاء وتفعيل المنتجات الستة (`pro_monthly` و`pro_yearly` و`credits_100` و`credits_500` و`credits_1200` و`lifetime`)، إضافة License Testers، إنشاء Internal Testing، ورفع AAB. لا يمكن إثبات أو تنفيذ هذه الخطوات من GitHub وحده.
+5. اختبار الشراء وPending وError وRestore وتكرار consumable وانتهاء الاشتراك وRefund/Revocation وLifetime على النسخة المثبتة من Play. لا يُنشر الإصدار النهائي؛ يترك الإرسال النهائي لمالك الحساب.
+
+**قرار البوابة الحالي:** اكتملت مراجعة الوثائق والمصدر؛ تنفيذ Play Console محجوب حتى تتوفر أدلة Flutter/build وAndroid runtime وجلسة Play Console الموثقة للمستخدم. لا يوجد تفويض بالنشر النهائي.
