@@ -2,7 +2,7 @@
 
 **Audit date:** 2026-09-14
 
-**Audited commit:** `bf67c11` tree, including Billing fix `1c21e3d` and documentation commit `4fd32cf`.
+**Audited commit:** `70f6a13`, including Billing fix `1c21e3d`, documentation commit `4fd32cf`, and restored-consumable hardening.
 
 **Scope:** Flutter `in_app_purchase` integration, purchase stream handling, consumable Credits ledger, subscription products, restore behavior, and receipt/entitlement verification.
 
