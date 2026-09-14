@@ -128,7 +128,7 @@
 - [ ] إضافة receipt verification/backend ledger للـ consumables واستعادتها عبر الأجهزة.
 - [ ] إضافة طبقة iOS StoreKit لاحقًا.
 
-**Sprint 4 — Billing correctness hardening (2026-09-14):** اكتمل تصحيح الخلل الذي كان يربط `pro_monthly` و`pro_yearly` بمبالغ Credits محلية؛ أصبحت هذه المنتجات entitlement events فقط، بينما تمنح Credits حزم consumable المعروفة وحدها. تم تحديث اختبارات catalog وواجهة Paywall. المتبقي: اختبارات purchase stream الفعلية على Internal testing، تحديد Pro entitlement/renewal/expiry، ثم receipt verification وbackend ledger قبل الإنتاج.
+**Sprint 4 — Billing correctness hardening (2026-09-14, commit `1c21e3d`):** اكتمل تصحيح الخلل الذي كان يربط `pro_monthly` و`pro_yearly` بمبالغ Credits محلية؛ أصبحت هذه المنتجات entitlement events فقط، بينما تمنح Credits حزم consumable المعروفة وحدها. تم تحديث اختبارات catalog وواجهة Paywall. المتبقي: اختبارات purchase stream الفعلية على Internal testing، تحديد Pro entitlement/renewal/expiry، ثم receipt verification وbackend ledger قبل الإنتاج.
 
 **قرار الإعلانات:** لا تُضاف AdMob في الإصدار الحالي. لا يوجد بند إعلانات في خارطة المنتج، والاعتماد على Credits/اشتراك يحافظ على تجربة تحرير الصور والخصوصية المحلية. يُعاد تقييم AdMob فقط إذا ظهرت حاجة تجارية مثبتة.
 

@@ -24,7 +24,7 @@ ProductChat Studio is an Android-first Flutter foundation for conversational pro
 - P5 added durable SharedPreferences storage and in-app privacy/terms route (`045669d`).
 - P6 documented the Real-ESRGAN fallback and MI-GAN licensing decision (`4133d45`).
 - P10 wired persisted Arabic/English locale, theme persistence, localization delegates, and basic semantics.
-- Sprint 1 release hardening added local `android/key.properties` signing with no Debug signing fallback, Release INTERNET permission, Flutter CI version alignment, and [`docs/RELEASE_SIGNING.md`](docs/RELEASE_SIGNING.md). Billing release `1.0.2+3` now matches active `credits_*`, `pro_monthly`, and `pro_yearly` Play products; AAB upload/internal testing and purchase execution remain the next gate.
+- Sprint 1 release hardening added local `android/key.properties` signing with no Debug signing fallback, Release INTERNET permission, Flutter CI version alignment, and [`docs/RELEASE_SIGNING.md`](docs/RELEASE_SIGNING.md). Sprint 4 commit `1c21e3d` corrected subscription handling so `pro_monthly`/`pro_yearly` do not grant Credits locally; AAB upload/internal testing, purchase execution, and trusted entitlement verification remain the next gate.
 
 ## Next execution order
 

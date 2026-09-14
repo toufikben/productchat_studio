@@ -3,6 +3,7 @@
 **Date:** 2026-09-14
 
 **Code release:** `1.0.2+3` is prepared after configuring the subscription products.
+**Sprint 4 hardening commit:** `1c21e3d`.
 
 **Play Console status (2026-09-14):** The one-time products `credits_100`, `credits_500`, and `credits_1200` were created and activated successfully. Each product is Active and available in 173 countries/regions. Google Play applied regional pricing; the visible Algeria prices were approximately 100 DZD, 550 DZD, and 1,100 DZD respectively after price rounding.
 
@@ -37,16 +38,16 @@ Google Play does not restore consumed consumables through `restorePurchases`. Th
 
 The product IDs are code-level contracts only. They must also be created and activated in Google Play Console with matching one-time products and subscriptions before real purchases can succeed.
 
-The approved commercial proposal is 0.99 USD for 100 credits, 3.99 USD for 500 credits, 7.99 USD for 1200 credits, 4.99 USD/month for Pro Monthly with 600 credits per period, and 39.99 USD/year for Pro Yearly with 9000 credits per period. Prices are subject to Google Play regional pricing and tax configuration.
+The approved commercial proposal is 0.99 USD for 100 credits, 3.99 USD for 500 credits, and 7.99 USD for 1200 credits. Pro Monthly is 4.99 USD/month and Pro Yearly is 39.99 USD/year; the subscription benefit, periodic credit policy, and entitlement/expiry behavior are intentionally not considered implemented until they are defined and verified. Prices are subject to Google Play regional pricing and tax configuration.
 
 ## Verification
 
 | Check | Result |
 |---|---|
-| `flutter analyze` | Passed — no issues |
+| `flutter analyze` | Passed on latest pre-Sprint-4 CI run; rerun required on commit `1c21e3d` |
 | `flutter test` | Pending in current sandbox; latest GitHub run `34808617491` passed before this hardening change |
-| Credits duplicate-grant tests | Passed |
-| Negative-balance protection test | Passed |
+| Credits duplicate-grant tests | Source test present; rerun required on commit `1c21e3d` |
+| Negative-balance protection test | Source test present; rerun required on commit `1c21e3d` |
 | Google Play product configuration | Passed for three Active Credits products plus Active `pro_monthly` and `pro_yearly` base plans |
 | Release AAB `1.0.2+3` | Passed — GitHub Actions run `34807820712`; analyze, tests, signed build, and artifact upload completed; downloaded AAB is approximately 76MB |
 | Google Play Sandbox purchase | Pending test device/test account |

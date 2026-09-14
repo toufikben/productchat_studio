@@ -1,6 +1,7 @@
 # Feature verification matrix
 
-**آخر تحقق:** 2026-09-13  
+**آخر تحقق:** 2026-09-14
+**Sprint 4 evidence commit:** `1c21e3d` — subscription entitlement separated from consumable Credits
 **Application commit before P1:** `fb20f125134d381bbc655883008a4f214aebde74`  
 **P1 evidence:** [`P1_BUILD_VALIDATION.md`](P1_BUILD_VALIDATION.md)
 
@@ -27,7 +28,7 @@
 | `editor.state` | `editor_controller.dart`, `ai_service.dart` | نعم | نعم | جزئي | جزئي | لا | لا | Stub removed; operations return explicit `EditResult`; native runtime still unverified |
 | `batch.basic` | `batch_service.dart`, `batch_screen.dart` | نعم | نعم | جزئي | لا | لا | لا | ينسخ الملفات إلى temp ولا يطبق editing pipeline |
 | `storage` | `storage_service.dart` | نعم | لا | لا | لا | لا | لا | Map في الذاكرة فقط |
-| `billing` | `billing_service.dart`, `paywall_screen.dart`, dependency | نعم | نعم | جزئي | جزئي | لا | Purchase stream وledger idempotent؛ حزم Credits فقط تمنح الرصيد، والاشتراكات entitlement events بلا grant محلي؛ Play Sandbox وentitlement/receipt verification غير منفذة |
+| `billing` | `billing_service.dart`, `paywall_screen.dart`, dependency | نعم | نعم | جزئي | جزئي | لا | لا | Purchase stream وledger idempotent؛ حزم Credits فقط تمنح الرصيد، والاشتراكات entitlement events بلا grant محلي؛ اختبارات catalog في `test/billing_service_test.dart`؛ Play Sandbox وentitlement/receipt verification غير منفذة |
 | `chat` | `chat_controller.dart`, `chat_screen.dart` | نعم | نعم | جزئي | لا | لا | لا | يحتاج فحص flow وصور ونتائج حقيقية |
 | `onboarding` | `onboarding_screen.dart` | نعم | لا | لا | لا | لا | لا | `Feature scaffold` |
 | `settings` | settings screens | نعم | لا | لا | لا | لا | لا | عدة شاشات نصية/Scaffold |
