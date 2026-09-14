@@ -2,7 +2,7 @@
 
 > **مصدر الحقيقة للتحقق:** [`docs/MODEL_INVENTORY.md`](docs/MODEL_INVENTORY.md) و[`docs/FEATURE_VERIFICATION_MATRIX.md`](docs/FEATURE_VERIFICATION_MATRIX.md). وجود بند هنا لا يعني أنه runtime-verified؛ الحالة لا تُرفع إلا بدليل قابل لإعادة الإنتاج.
 
-> **آخر تحديث:** 2026-09-14 05:31 UTC
+> **آخر تحديث:** 2026-09-14 05:48 UTC
 > **الحالة:** Android-first؛ iOS وWeb مؤجلان عمدًا إلى ما بعد إصدار Android.
 
 ## طريقة استخدام هذه الخارطة
@@ -24,7 +24,7 @@
 | P5 التخزين والخصوصية | جزئي | SharedPreferences وLegal screen مضافان؛ cache retention وHistory/Settings الدائمين متبقيان |
 | P6 النماذج المتقدمة | قرار مكتمل، runtime متبقٍ | Real-ESRGAN fallback موثق؛ لا يوجد ONNX/NCNN backend، وMI-GAN معطل قانونيًا |
 | P10 اللغات والوصول | جزئي | العربية/الإنجليزية وRTL wiring وSemantics أساسية؛ 16 لغة واختبارات شاملة متبقية |
-| P7 Credits والدفع | الكود محدث إلى `1.0.1+2`، Play products وSandbox متبقية | BillingService يقبل purchased/restored ويمنع transaction IDs الفارغة؛ IDs والأسعار جاهزة؛ يلزم إنشاء المنتجات في Play Console واختبار Sandbox |
+| P7 Credits والدفع | منتجات Credits الفعلية مفعلة، Sandbox متبقية | `credits_100` و`credits_500` و`credits_1200` أصبحت Active في Play Console ومتاحة في 173 دولة/منطقة؛ الكود محدث إلى `1.0.1+2`؛ الاشتراكات واختبار Sandbox والتحقق الخلفي متبقية |
 | الإعلانات | غير مخطط لها حاليًا | لا توجد AdMob SDK أو وحدات إعلانية؛ النموذج التجاري الحالي Credits مع اشتراك اختياري، والإعلانات ستضر بتجربة محرر صور محلي ولم تُطلب في الخارطة |
 | iOS | مؤجل | لن يدخل في نطاق الإصدار الحالي |
 | Web | مؤجل | لن يدخل في نطاق الإصدار الحالي |
@@ -120,9 +120,9 @@
 - [x] إضافة Paywall وواجهة restore.
 - [x] إنشاء مسودة التطبيق في Google Play Console بالمعرف `com.productchat.aiphotostudio`.
 - [x] تحديد أسعار Credits ومزايا وفترات الاشتراك قبل إنشاء المنتجات المالية.
-- [ ] إنشاء منتجات Credits وتفعيلها في Google Play Console.
+- [x] إنشاء وتفعيل `credits_100` و`credits_500` و`credits_1200` في Google Play Console؛ الحالة Active ومتاحة في 173 دولة/منطقة.
 - [x] تعريف subscription products في الكود قبل إنشائها في Play Console.
-- [ ] اختبار Sandbox على جهاز/حساب اختبار.
+- [ ] إنشاء وتفعيل `pro_monthly` و`pro_yearly` في Google Play Console ثم اختبار Sandbox على جهاز/حساب اختبار.
 - [ ] إضافة receipt verification/backend ledger للـ consumables واستعادتها عبر الأجهزة.
 - [ ] إضافة طبقة iOS StoreKit لاحقًا.
 
