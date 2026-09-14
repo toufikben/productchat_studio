@@ -2,7 +2,7 @@
 
 > **مصدر الحقيقة للتحقق:** [`docs/MODEL_INVENTORY.md`](docs/MODEL_INVENTORY.md) و[`docs/FEATURE_VERIFICATION_MATRIX.md`](docs/FEATURE_VERIFICATION_MATRIX.md). وجود بند هنا لا يعني أنه runtime-verified؛ الحالة لا تُرفع إلا بدليل قابل لإعادة الإنتاج.
 
-> **آخر تحديث:** 2026-09-14 00:16 UTC
+> **آخر تحديث:** 2026-09-14 01:05 UTC
 > **الحالة:** Android-first؛ iOS وWeb مؤجلان عمدًا إلى ما بعد إصدار Android.
 
 ## طريقة استخدام هذه الخارطة
@@ -19,12 +19,13 @@
 | تحليل Dart | مكتمل حاليًا | `flutter analyze` بلا أخطاء بعد استعادة البيئة |
 | اختبارات Dart | ناجح حاليًا | `flutter test`: 7 اختبارات ناجحة، تشمل AI operation contracts |
 | Android Seika | مصدر/عقد/بناء مكتمل، runtime متبقٍ | LaMa graph والعقد والتحقق والـ cancellation والـ resource cleanup مضافة؛ يلزم جهاز/محاكي |
-| Android APK/AAB | APK debug مكتمل، الجهاز/release متبقٍ | `app-debug.apk` بُني؛ لا يوجد جهاز أو محاكي في البيئة، وAAB/signing لاحقان |
+| Android APK/AAB | APK debug مكتمل، الجهاز/release متبقٍ | `app-debug.apk` بُني بعد تثبيت `com.productchat.aiphotostudio`؛ لا يوجد جهاز أو محاكي في البيئة، وAAB/signing لاحقان |
 | P4 وظائف المنتج الأساسية | جزئي | image picker وفتح المحرر فعليان؛ mask/chat/batch/history ما زالت متبقية |
 | P5 التخزين والخصوصية | جزئي | SharedPreferences وLegal screen مضافان؛ cache retention وHistory/Settings الدائمين متبقيان |
 | P6 النماذج المتقدمة | قرار مكتمل، runtime متبقٍ | Real-ESRGAN fallback موثق؛ لا يوجد ONNX/NCNN backend، وMI-GAN معطل قانونيًا |
 | P10 اللغات والوصول | جزئي | العربية/الإنجليزية وRTL wiring وSemantics أساسية؛ 16 لغة واختبارات شاملة متبقية |
-| P7 Credits والدفع | منفذ ككود، Sandbox متبقٍ | BillingService وPaywall وledger idempotent مضافة؛ Play Console والـ Sandbox والتحقق الخلفي متبقية |
+| P7 Credits والدفع | مسودة Play Console منشأة، المنتجات وSandbox متبقية | BillingService وPaywall وledger idempotent مضافة؛ مسودة `AI Photo Studio Chat` منشأة بالمعرف `com.productchat.aiphotostudio`، وتبقى أسعار المنتجات/الاشتراكات واختبار Sandbox والتحقق الخلفي |
+| الإعلانات | غير مخطط لها حاليًا | لا توجد AdMob SDK أو وحدات إعلانية؛ النموذج التجاري الحالي Credits مع اشتراك اختياري، والإعلانات ستضر بتجربة محرر صور محلي ولم تُطلب في الخارطة |
 | iOS | مؤجل | لن يدخل في نطاق الإصدار الحالي |
 | Web | مؤجل | لن يدخل في نطاق الإصدار الحالي |
 
@@ -115,10 +116,15 @@
 - [x] خصم الرصيد بعد نجاح العملية فقط.
 - [x] منع منح الرصيد مرتين لنفس purchase ID.
 - [x] إضافة Paywall وواجهة restore.
-- [ ] إنشاء المنتجات وتفعيلها في Google Play Console.
+- [x] إنشاء مسودة التطبيق في Google Play Console بالمعرف `com.productchat.aiphotostudio`.
+- [ ] تحديد أسعار Credits ومزايا وفترات الاشتراك قبل إنشاء المنتجات المالية.
+- [ ] إنشاء منتجات Credits وتفعيلها في Google Play Console.
+- [ ] تعريف subscription products في الكود قبل إنشائها في Play Console.
 - [ ] اختبار Sandbox على جهاز/حساب اختبار.
 - [ ] إضافة receipt verification/backend ledger للـ consumables واستعادتها عبر الأجهزة.
 - [ ] إضافة طبقة iOS StoreKit لاحقًا.
+
+**قرار الإعلانات:** لا تُضاف AdMob في الإصدار الحالي. لا يوجد بند إعلانات في خارطة المنتج، والاعتماد على Credits/اشتراك يحافظ على تجربة تحرير الصور والخصوصية المحلية. يُعاد تقييم AdMob فقط إذا ظهرت حاجة تجارية مثبتة.
 
 ### 10. الاختبارات والأداء — متبقٍ
 
@@ -203,6 +209,8 @@
 | 2026-09-13 | Integration Map v3 | استبدال iOS Seika stub بجسر baseline متوافق مع عقد Flutter، وإضافة PerformanceConfig وProGuard؛ ONNX iOS مؤجل لغياب Runner/Pod runtime قابل للبناء |
 | 2026-09-13 | Integration Map v4 | استبدال Editor وBatch stubs، إضافة Controller وPanels وExportDialog وBatchService وتوثيق ONNX edge cases وإضافة مسارات Router؛ `flutter analyze` بلا أخطاء و3 اختبارات ناجحة |
 | 2026-09-13 | قرار النطاق | تأجيل iOS وWeb؛ المتبقي الحالي يقتصر على إكمال Android والتحقق منه وإعداده للإصدار |
+| 2026-09-14 | Play Console وpackage identity | إنشاء مسودة `AI Photo Studio Chat`، وتثبيت `com.productchat.aiphotostudio` في الكود وPlay Console؛ `com.productchat.studio` بقيت مسودة قديمة ولم تُحذف تلقائيًا |
+| 2026-09-14 | Monetization decision | اعتماد Credits مع اشتراك اختياري، وعدم إضافة AdMob حاليًا؛ إنشاء المنتجات ينتظر الأسعار ومزايا الاشتراك |
 
 ## قاعدة التحديث المستقبلية
 
