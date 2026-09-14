@@ -142,7 +142,7 @@
 - [ ] قياس الذاكرة والزمن وحجم التنزيل.
 - [ ] اختبار انقطاع الشبكة والتنزيل المتقطع.
 
-**Sprint 5 / P8 (2026-09-14):** بدأ العمل بتعريف بروتوكول benchmark وسجل أدلة في [`docs/P8_PERFORMANCE_BENCHMARK.md`](docs/P8_PERFORMANCE_BENCHMARK.md). لا توجد نتائج Android runtime بعد؛ cold/warm inference، cancellation/timeout، memory profiling، CPU/NNAPI، و30–100 عملية متتابعة ما زالت تتطلب جهازًا أو Emulator.
+**Sprint 5 / P8 (2026-09-14):** بدأ العمل بتعريف بروتوكول benchmark وسجل أدلة في [`docs/P8_PERFORMANCE_BENCHMARK.md`](docs/P8_PERFORMANCE_BENCHMARK.md)، وبخطة تنفيذ خادم Receipt Verification في [`docs/SPRINT5_RECEIPT_VERIFICATION_EXECUTION_PLAN.md`](docs/SPRINT5_RECEIPT_VERIFICATION_EXECUTION_PLAN.md). لا توجد نتائج Android runtime بعد؛ cold/warm inference، cancellation/timeout، memory profiling، CPU/NNAPI، و30–100 عملية متتابعة ما زالت تتطلب جهازًا أو Emulator.
 
 ### 11. إعداد Android للإصدار — Sprint 1 قيد التنفيذ
 
