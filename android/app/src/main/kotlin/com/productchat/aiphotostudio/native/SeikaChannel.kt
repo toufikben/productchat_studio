@@ -42,6 +42,7 @@ class SeikaChannel(private val context: Context) : MethodChannel.MethodCallHandl
     private var lamaSession: OrtSession? = null
     private var esrganSession: OrtSession? = null
     private var activeInference: InferenceControl? = null
+    private val patchMatch = PatchMatchRemover()
 
     fun attach(channel: MethodChannel) = channel.setMethodCallHandler(this)
 
@@ -106,11 +107,11 @@ class SeikaChannel(private val context: Context) : MethodChannel.MethodCallHandl
             val output = if (quality != "fast") {
                 val control = beginInference()
                 try {
-                    runLaMa(source, null, control) ?: floodRemove(source)
+                    runLaMa(source, null, control) ?: patchMatch.remove(source)
                 } finally {
                     endInference(control)
                 }
-            } else floodRemove(source)
+            } else patchMatch.remove(source)
             save(output, "remove_bg", "png")
         } finally {
             if (!source.isRecycled) source.recycle()

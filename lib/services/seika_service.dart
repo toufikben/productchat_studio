@@ -50,8 +50,11 @@ class SeikaService {
     return inpaint(imagePath, maskPath);
   }
 
-  Future<EditResult> removeBackground(String imagePath) =>
-      _invoke('removeBackground', {'imagePath': imagePath}, credits: 1);
+  Future<EditResult> removeBackground(String imagePath) => _invoke(
+        'removeBackground',
+        {'imagePath': imagePath, 'quality': 'fast'},
+        credits: 1,
+      );
 
   Future<EditResult> upscale(String imagePath, {required int factor}) =>
       _invoke('upscale', {'imagePath': imagePath, 'factor': factor}, credits: 2);

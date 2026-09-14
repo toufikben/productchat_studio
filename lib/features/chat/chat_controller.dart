@@ -1,5 +1,6 @@
 import '../../models/edit_request.dart';
 import '../../models/edit_result.dart';
+import '../../services/billing_service.dart';
 import '../../services/seika_service.dart';
 
 /// Dispatches chat commands to local image services.
@@ -21,6 +22,22 @@ class ChatController {
     final image = imagePath;
     if (image == null || image.isEmpty) {
       return const EditResult.failure('Select an image before editing.');
+    }
+
+    if (!billingService.proService.isPro) {
+      if (req.op != EditOp.removeBg) {
+        return const EditResult.failure(
+          'Free tier supports PatchMatch background removal only.',
+        );
+      }
+      if (!billingService.freeQuota.canUse()) {
+        return const EditResult.failure(
+          'Free monthly quota is exhausted. Upgrade to Pro to continue.',
+        );
+      }
+      final result = await _seika.removeBackground(image);
+      if (result.ok) await billingService.freeQuota.consume();
+      return result;
     }
 
     switch (req.op) {

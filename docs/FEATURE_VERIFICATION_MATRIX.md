@@ -20,7 +20,7 @@
 | `models.migan` | جزئي | لا | لا | لا | لا | لا | لا weights بسبب الترخيص |
 | `analysis.smart` | نعم | نعم | نعم | جزئي | لا | لا | يحتاج fixtures واختبار جودة الترتيب |
 | `edit.inpaint` | نعم | نعم | جزئي | جزئي | لا | لا | LaMa contract وEditResult؛ native runtime/mask/output pending |
-| `edit.remove_background` | نعم | نعم | جزئي | لا | لا | لا | flood fallback أو LaMa quality غير مقيسة |
+| `edit.remove_background` | نعم | نعم | جزئي | Pending | لا | لا | PatchMatch Android محلي مربوط بـEditor/Chat؛ quality fixtures وdevice runtime pending |
 | `edit.upscale` | نعم | نعم | جزئي | لا | لا | لا | bounded Bitmap fallback |
 | `edit.shadow` | نعم | نعم | جزئي | لا | لا | لا | compositing baseline بلا device test |
 | `edit.export` | نعم | جزئي | جزئي | لا | لا | لا | contract موجود؛ E2E pending |
@@ -30,7 +30,7 @@
 | `billing.local` | نعم | نعم | جزئي | Pending | لا | لا | Credits IDs وstream وlocal ledger وrestore عند init؛ الاختبارات لم تُشغل لغياب Flutter |
 | `billing.v2.catalog` | نعم | نعم | جزئي | Pending | لا | لا | IDs الستة وLifetime non-consumable وPaywall sections مضافة؛ Play Console/backend pending؛ الاختبار لم يُشغل لغياب Flutter |
 | `pro.entitlement` | نعم | جزئي | جزئي | Pending | لا | لا | `ProService` المحلي يدعم expiry/Lifetime/persistence؛ ليس server-authoritative بعد؛ الاختبار لم يُشغل |
-| `free.tier` | نعم | جزئي | جزئي | Pending | لا | لا | عداد 3 صور/شهر وتدوير UTC وPaywall display مضافة؛ PatchMatch الفعلي والربط end-to-end متبقيان |
+| `free.tier` | نعم | نعم | جزئي | Pending | لا | لا | PatchMatch gate وquota-after-success في Editor/Chat؛ watermark وquality/device tests متبقية |
 | `lifetime` | مواصفة فقط | لا | لا | لا | لا | لا | منتج one-time غير منشأ وفق الأدلة المتاحة |
 | `chat` | نعم | نعم | جزئي | لا | لا | لا | يحتاج E2E image/mask/dispatch/result |
 | `history` | جزئي | جزئي | جزئي | لا | لا | لا | نص/تنفيذ مقترح؛ policy Free آخر 5 تحتاج إثباتًا |

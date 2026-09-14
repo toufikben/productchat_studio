@@ -89,7 +89,20 @@ class EditorController extends StateNotifier<EditorState> {
     final path = state.imagePath;
     if (path == null) return;
     final cost = _costFor(op);
-    if (!billingService.canSpend(cost)) {
+    final isPro = billingService.proService.isPro;
+    if (!isPro && op != EditOp.removeBg) {
+      state = state.copyWith(
+        error: 'Free tier supports PatchMatch background removal only.',
+      );
+      return;
+    }
+    if (!isPro && !billingService.freeQuota.canUse()) {
+      state = state.copyWith(
+        error: 'Free monthly quota is exhausted. Upgrade to Pro to continue.',
+      );
+      return;
+    }
+    if (isPro && !billingService.canSpend(cost)) {
       state = state.copyWith(error: 'Not enough credits. Please open the Credits screen.');
       return;
     }
@@ -97,7 +110,9 @@ class EditorController extends StateNotifier<EditorState> {
     try {
       final result = await _ai.apply(path, op);
       if (result.ok && result.outputPath != null) {
-        final spent = await billingService.spend(result.creditsUsed);
+        final spent = !isPro && op == EditOp.removeBg
+            ? await billingService.freeQuota.consume()
+            : await billingService.spend(result.creditsUsed);
         if (spent || result.creditsUsed == 0) {
           _push(result.outputPath!);
         } else {

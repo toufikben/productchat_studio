@@ -165,7 +165,10 @@
 #### 5.3 Gates وتجربة المستخدم
 
 - [x] إضافة عداد Free شهري دائم بحد 3 صور، مع تدوير تلقائي حسب UTC month وعرض المتبقي في Paywall.
-- [ ] Free: ربط العداد بمسار PatchMatch فعلي؛ العمليات الحالية غير PatchMatch ولا تُعلن كمدعومة للمجاني.
+- [x] تنفيذ PatchMatch محليًا في Android عبر corner-seeded connected mask وpatch propagation/random search وشفافية PNG.
+- [x] ربط Free quota بمساري Editor وChat؛ لا تُستهلك الحصة إلا بعد output ناجح.
+- [x] حصر Free في PatchMatch background removal ورفض العمليات الأخرى بوضوح.
+- [ ] اختبار جودة PatchMatch على fixtures وأجهزة Android وضبط thresholds/الأداء.
 - [ ] Pro/Lifetime: إزالة watermark، Batch بحد 100 صورة، Brand Identity، والميزات المعتمدة قانونيًا.
 - [ ] تقييد العمليات المذكورة في المواصفة كـPro-only فقط بعد تحديد مسار تنفيذها الفعلي.
 - [ ] Paywall بثلاثة أقسام: Lifetime، Subscriptions، Credits.
