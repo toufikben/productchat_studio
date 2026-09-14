@@ -5,35 +5,48 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 
 import 'storage_service.dart';
 
+/// Google Play product catalog. Prices are configured by Google Play and must
+/// be read from ProductDetails.price; the roadmap values are reference prices.
 class CreditProducts {
   static const starter = 'credits_100';
   static const standard = 'credits_500';
-  static const pro = 'credits_1200';
+  static const largePack = 'credits_1200';
   static const monthly = 'pro_monthly';
   static const yearly = 'pro_yearly';
+  static const lifetime = 'lifetime';
 
-  /// Only one-time consumable packs have a credit amount.
-  /// Subscription purchases must never be treated as consumable credits.
   static const amounts = <String, int>{
     starter: 100,
     standard: 500,
-    pro: 1200,
+    largePack: 1200,
   };
 
-  static const consumableIds = <String>{starter, standard, pro};
+  static const consumableIds = <String>{starter, standard, largePack};
   static const subscriptionIds = <String>{monthly, yearly};
-  static const ids = <String>{...consumableIds, ...subscriptionIds};
+  static const nonConsumableIds = <String>{lifetime};
+  static const ids = <String>{
+    ...consumableIds,
+    ...subscriptionIds,
+    ...nonConsumableIds,
+  };
 
   static bool isSubscription(String productId) => subscriptionIds.contains(productId);
+  static bool isNonConsumable(String productId) =>
+      nonConsumableIds.contains(productId);
+  static bool isEntitlement(String productId) =>
+      isSubscription(productId) || isNonConsumable(productId);
   static int? creditsFor(String productId) => amounts[productId];
 
+  /// Only a newly purchased consumable with a stable purchase ID can grant
+  /// credits locally. Production grant remains blocked until server receipt
+  /// verification is connected.
   static bool shouldGrantCredits({
     required PurchaseStatus status,
     required String productId,
     required String? purchaseId,
   }) =>
       status == PurchaseStatus.purchased &&
-      !isSubscription(productId) &&
+      consumableIds.contains(productId) &&
       purchaseId != null &&
       purchaseId.trim().isNotEmpty &&
       creditsFor(productId) != null;
@@ -49,10 +62,15 @@ class CreditsLedger {
   int get balance => (storage.get(_balanceKey) as int?) ?? 0;
 
   Set<String> get processedPurchaseIds =>
-      ((storage.get(_processedKey) as List?)?.whereType<String>().toSet()) ?? <String>{};
+      ((storage.get(_processedKey) as List?)?.whereType<String>().toSet()) ??
+      <String>{};
 
   Future<void> addOnce({required String purchaseId, required int amount}) async {
-    if (amount <= 0 || purchaseId.trim().isEmpty || processedPurchaseIds.contains(purchaseId)) return;
+    if (amount <= 0 ||
+        purchaseId.trim().isEmpty ||
+        processedPurchaseIds.contains(purchaseId)) {
+      return;
+    }
     final processed = processedPurchaseIds..add(purchaseId);
     await storage.set(_balanceKey, balance + amount);
     await storage.set(_processedKey, processed.toList(growable: false));
@@ -79,6 +97,7 @@ class BillingService extends ChangeNotifier {
   String? error;
   PurchaseStatus? lastPurchaseStatus;
   String? lastPurchaseProductId;
+  String? lastEntitlementProductId;
 
   int get credits => ledger.balance;
   bool canSpend(int amount) => amount <= 0 || credits >= amount;
@@ -121,9 +140,12 @@ class BillingService extends ChangeNotifier {
     notifyListeners();
     try {
       final purchaseParam = PurchaseParam(productDetails: product);
-      final sent = CreditProducts.isSubscription(product.id)
+      final sent = CreditProducts.isEntitlement(product.id)
           ? await _store.buyNonConsumable(purchaseParam: purchaseParam)
-          : await _store.buyConsumable(purchaseParam: purchaseParam, autoConsume: true);
+          : await _store.buyConsumable(
+              purchaseParam: purchaseParam,
+              autoConsume: true,
+            );
       if (!sent) error = 'Google Play did not start the purchase.';
     } catch (value) {
       error = value.toString();
@@ -138,8 +160,6 @@ class BillingService extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
-      // Google Play does not restore consumed credit packs. This restores
-      // subscription/non-consumable purchase events when Play provides them.
       await _store.restorePurchases();
     } catch (value) {
       error = value.toString();
@@ -151,31 +171,28 @@ class BillingService extends ChangeNotifier {
     for (final purchase in purchases) {
       lastPurchaseStatus = purchase.status;
       lastPurchaseProductId = purchase.productID;
-      if (purchase.status == PurchaseStatus.pending) {
-        loading = true;
-      } else {
-        loading = false;
-      }
+      loading = purchase.status == PurchaseStatus.pending;
+
       if (purchase.status == PurchaseStatus.error) {
         error = purchase.error?.message ?? 'Purchase failed.';
       } else if (purchase.status == PurchaseStatus.purchased ||
           purchase.status == PurchaseStatus.restored) {
-        final purchaseId = purchase.purchaseID;
-        // Subscriptions are entitlement events, not consumable credit packs.
-        // Their entitlement/renewal must be verified separately before any
-        // Pro feature or periodic credit grant is applied.
-        if (CreditProducts.isSubscription(purchase.productID)) {
+        if (CreditProducts.isEntitlement(purchase.productID)) {
+          // This is only a local signal. Pro access must be granted by the
+          // server entitlement response after receipt verification.
+          lastEntitlementProductId = purchase.productID;
           error = null;
         } else if (!CreditProducts.shouldGrantCredits(
-            status: purchase.status,
-            productId: purchase.productID,
-            purchaseId: purchaseId)) {
-          // Consumed products must never be granted from a restored event.
+          status: purchase.status,
+          productId: purchase.productID,
+          purchaseId: purchase.purchaseID,
+        )) {
           error = purchase.status == PurchaseStatus.restored
               ? 'Consumed credit purchases cannot be restored locally.'
               : 'Purchase could not be verified.';
         } else {
           final amount = CreditProducts.creditsFor(purchase.productID);
+          final purchaseId = purchase.purchaseID;
           if (purchaseId == null || amount == null) {
             error = 'Purchase could not be verified.';
           } else {
@@ -184,7 +201,8 @@ class BillingService extends ChangeNotifier {
           }
         }
       }
-      if (purchase.pendingCompletePurchase && purchase.status != PurchaseStatus.pending) {
+      if (purchase.pendingCompletePurchase &&
+          purchase.status != PurchaseStatus.pending) {
         await _store.completePurchase(purchase);
       }
       notifyListeners();

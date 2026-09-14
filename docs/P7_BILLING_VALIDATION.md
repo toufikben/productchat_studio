@@ -14,13 +14,13 @@
 | 1200 Credits | `credits_1200` | one-time consumable | `$39.99` |
 | Lifetime Access | `lifetime` | one-time non-consumable | `$79.99` أو السعر الإقليمي |
 
-المواصفة المرفقة تستهدف Free بثلاث صور شهريًا وPatchMatch وعلامة مائية؛ Pro بصور غير محدودة وBatch وBrand Identity ودون watermark؛ Lifetime بكل مزايا Pro إلى الأبد. لم تُثبت هذه الطبقات كمنفذة في التطبيق الحالي.
+المواصفة المرفقة تستهدف Free بثلاث صور شهريًا وPatchMatch وعلامة مائية؛ Pro بصور غير محدودة وBatch وBrand Identity ودون watermark؛ Lifetime بكل مزايا Pro إلى الأبد. طبقة الكتالوج و`ProService` المحلي أضيفتا الآن، لكن gates الكاملة والـentitlement الخادمي لم تُثبت بعد.
 
 ## الحالة الحالية
 
 المنتجات الثلاثة `credits_100`, `credits_500`, `credits_1200` والاشتراكان `pro_monthly`, `pro_yearly` موثقان كمنتجات مفعلة في Play Console. لا يوجد دليل موثق على إنشاء وتفعيل `lifetime`. يجب أن ينشئه مالك Play Console ويضيف License Tester ويرفع AAB إلى Internal Testing.
 
-الكود الحالي يملك `in_app_purchase` وpurchase stream وlocal ledger. حزم Credits فقط تصل إلى local grant عند purchased وPurchase ID صالح؛ pending/error لا تمنح Credits، وrestored consumables مرفوضة. الاشتراكات لا تمنح Credits محليًا. هذا **ليس** Receipt Verification ولا Pro entitlement خادميًا.
+الكود الحالي يملك `in_app_purchase` وpurchase stream وlocal ledger، ويدعم IDs الستة مع Lifetime كـnon-consumable. حزم Credits فقط تصل إلى local grant عند purchased وPurchase ID صالح؛ pending/error لا تمنح Credits، وrestored consumables مرفوضة. `ProService` يمثل expiry/Lifetime محليًا، لكنه لا يُعد Receipt Verification ولا Pro entitlement خادميًا.
 
 ## اقتصاد Credits
 

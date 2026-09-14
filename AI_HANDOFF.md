@@ -8,7 +8,7 @@ The repository contains a Flutter/Android build foundation, a Dart Seika service
 
 The model repository is [`Toufikben/productchat-models`](https://huggingface.co/Toufikben/productchat-models). LaMa ONNX and Real-ESRGAN `.pth` artifacts have recorded hashes and licenses. Real-ESRGAN inference is not implemented; the product must describe the current bounded result as Basic enhancement fallback. MI-GAN must remain disabled until commercial redistribution permission exists.
 
-The current billing source contains the three Credits products and two Pro subscription IDs with local purchase handling and an idempotent local ledger. It does not yet provide Billing v2: `lifetime`, Free/Pro/Lifetime gates, a trusted Pro entitlement, or backend receipt verification. The new target specification is recorded in [`ROADMAP.md`](ROADMAP.md) and [`docs/P7_BILLING_VALIDATION.md`](docs/P7_BILLING_VALIDATION.md).
+The current billing source now contains all six product IDs, local purchase handling, an idempotent local ledger, the `lifetime` non-consumable path, and a local `ProService` for expiry/Lifetime state. It still does not provide trusted server entitlement or backend receipt verification. The target specification is recorded in [`ROADMAP.md`](ROADMAP.md) and [`docs/P7_BILLING_VALIDATION.md`](docs/P7_BILLING_VALIDATION.md).
 
 ## Billing v2 target
 

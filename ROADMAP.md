@@ -72,8 +72,8 @@
 | Editor/Chat | جزئي | contracts وimage picker موجودان؛ mask وE2E/runtime متبقيان |
 | Batch | واجهة وprogress أساسيان | التنفيذ الحالي لا يزال يحتاج pipeline تحرير حقيقيًا |
 | Storage/History | متضارب توثيقيًا ويحتاج توحيدًا | handoff يذكر SharedPreferences، بينما matrix قديمة تذكر Map؛ يلزم تحقق من commit الحالي |
-| Credits/Billing | أساس محلي ومطابقة منتجات قديمة | المنتجات الثلاثة والاشتراكان موجودة في Play Console؛ Lifetime غير منشأ؛ backend وPro state غير مكتملين |
-| Free/Pro/Lifetime gates | مواصفة مرفقة، غير مكتملة في الكود الحالي | لا تعتمد على تفعيل محلي غير موثق قبل entitlement موثوق |
+| Credits/Billing | كتالوج v2 محلي منفذ جزئيًا | IDs الستة وLifetime وشراء non-consumable مضافة في المصدر؛ backend وPlay Console ما زالا متبقيين |
+| Free/Pro/Lifetime gates | ProService محلي منفذ جزئيًا | Lifetime/expiry/persistence لها خدمة واختبارات؛ لا تُعد entitlement إنتاجية قبل الخادم |
 | Internal Testing | غير مغلق | رفع AAB وقبول Upload Key وتثبيت/اختبار الجهاز متبقية |
 | iOS/Web | مؤجلان | خارج الإصدار Android الحالي |
 
@@ -141,22 +141,22 @@
 
 ### المرحلة 5 — Free/Pro/Lifetime وBilling v2
 
-**الحالة:** مواصفة جديدة غير منفذة بالكامل.
+**الحالة:** تنفيذ المصدر المحلي الأولي مكتمل جزئيًا في commit هذه الدفعة؛ التكامل الخادمي وPlay Console غير مكتملين.
 
 #### 5.1 Product catalog
 
-- [ ] إضافة `lifetime` إلى التطبيق فقط بعد إنشاء المنتج وتفعيله في Play Console.
-- [ ] توحيد constants وdisplay names وfallback prices وcredits-per-pack ومدة الاشتراكات.
-- [ ] إعادة تسمية الثابت الذي يستخدم `pro` لحزمة `credits_1200` إلى اسم غير ملتبس مثل `largePack`.
-- [ ] استخدام أسعار المتجر الفعلية؛ fallback لا يُعرض كسعر مؤكد عند انقطاع المتجر.
+- [x] إضافة `lifetime` إلى كتالوج التطبيق كـnon-consumable؛ إنشاء المنتج وتفعيله في Play Console متبقٍ.
+- [x] توحيد constants وdisplay names وcredits-per-pack ومدة الاشتراكات المرجعية.
+- [x] إعادة تسمية الثابت الذي يستخدم `pro` لحزمة `credits_1200` إلى `largePack`.
+- [x] Paywall يعرض أقسام Lifetime وSubscriptions وCredits، وأسعار المتجر الفعلية عند توفرها.
 
 #### 5.2 Pro entitlement
 
-- [ ] إنشاء `ProStatus` و`ProService` مع `isPro` و`isLifetime` و`expiry` و`daysRemaining`.
-- [ ] تخزين `proExpiry` كسلسلة ISO8601 وفق المواصفة.
+- [x] إنشاء `ProService` مع `isPro` و`isLifetime` و`expiry` و`daysRemaining`.
+- [x] تخزين `proExpiry` كسلسلة ISO8601 وفق المواصفة.
 - [ ] تفعيل Monthly لمدة 30 يومًا وYearly لمدة 365 يومًا **بعد تحقق شراء موثوق**، وليس من event محلي غير متحقق.
-- [ ] تفعيل Lifetime دون expiry بعد تحقق المنتج غير المستهلك.
-- [ ] auto-expiry للاشتراك، مع بقاء Lifetime دائمًا.
+- [x] تمثيل Lifetime دون expiry، مع بقاء Lifetime دائمًا في الخدمة المحلية.
+- [x] auto-expiry للاشتراك في حالة الخدمة المحلية.
 - [ ] restore يزامن entitlement ولا يعيد Credits المستهلكة محليًا.
 
 #### 5.3 Gates وتجربة المستخدم

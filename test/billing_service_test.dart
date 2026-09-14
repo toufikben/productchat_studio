@@ -32,23 +32,26 @@ void main() {
     expect(ledger.balance, 60);
   });
 
-  test('unknown product amounts are not part of the credit catalog', () {
-    expect(CreditProducts.creditsFor('unknown_product'), isNull);
-    expect(CreditProducts.creditsFor(CreditProducts.standard), 500);
+  test('Billing v2 catalog contains six products', () {
+    expect(CreditProducts.ids, hasLength(6));
+    expect(CreditProducts.ids, contains(CreditProducts.lifetime));
+    expect(CreditProducts.isNonConsumable(CreditProducts.lifetime), isTrue);
+    expect(CreditProducts.isEntitlement(CreditProducts.lifetime), isTrue);
   });
 
-  test('subscription products are separated from consumable products', () {
+  test('credit packs map to the specified quantities', () {
+    expect(CreditProducts.creditsFor(CreditProducts.starter), 100);
+    expect(CreditProducts.creditsFor(CreditProducts.standard), 500);
+    expect(CreditProducts.creditsFor(CreditProducts.largePack), 1200);
+    expect(CreditProducts.creditsFor(CreditProducts.lifetime), isNull);
+  });
+
+  test('subscriptions and Lifetime never map to consumable credits', () {
     expect(CreditProducts.isSubscription(CreditProducts.monthly), isTrue);
     expect(CreditProducts.isSubscription(CreditProducts.yearly), isTrue);
-    expect(CreditProducts.isSubscription(CreditProducts.standard), isFalse);
     expect(CreditProducts.creditsFor(CreditProducts.monthly), isNull);
     expect(CreditProducts.creditsFor(CreditProducts.yearly), isNull);
-  });
-
-  test('subscription products never map to consumable credits', () {
-    expect(CreditProducts.amounts.keys, containsAll(CreditProducts.consumableIds));
-    expect(CreditProducts.amounts.keys, isNot(contains(CreditProducts.monthly)));
-    expect(CreditProducts.amounts.keys, isNot(contains(CreditProducts.yearly)));
+    expect(CreditProducts.creditsFor(CreditProducts.lifetime), isNull);
   });
 
   test('only purchased consumable events can grant credits', () {
@@ -71,7 +74,7 @@ void main() {
     expect(
       CreditProducts.shouldGrantCredits(
         status: PurchaseStatus.purchased,
-        productId: CreditProducts.monthly,
+        productId: CreditProducts.lifetime,
         purchaseId: 'txn-5',
       ),
       isFalse,

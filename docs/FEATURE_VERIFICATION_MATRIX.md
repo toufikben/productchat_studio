@@ -28,8 +28,8 @@
 | `batch` | نعم | نعم | جزئي | لا | لا | لا | UI/progress؛ pipeline يحتاج ربطًا بعمليات التحرير |
 | `storage` | نعم | جزئي | جزئي | جزئي | لا | لا | handoff يذكر SharedPreferences، والمواصفة المرفقة تقترح Hive؛ القرار الفعلي pending |
 | `billing.local` | نعم | نعم | جزئي | جزئي | لا | لا | Credits IDs وstream وlocal ledger؛ لا trusted backend |
-| `billing.v2.catalog` | جزئي | لا | لا | لا | لا | لا | مواصفة الستة IDs موجودة في roadmap؛ `lifetime` غير مؤكد في Play Console |
-| `pro.entitlement` | لا/مواصفة فقط | لا | لا | لا | لا | لا | ProStatus/ProService وexpiry/gates مطلوبة ولم تُثبت في التطبيق الحالي |
+| `billing.v2.catalog` | نعم | نعم | جزئي | Pending | لا | لا | IDs الستة وLifetime non-consumable وPaywall sections مضافة؛ Play Console/backend pending؛ الاختبار لم يُشغل لغياب Flutter |
+| `pro.entitlement` | نعم | جزئي | جزئي | Pending | لا | لا | `ProService` المحلي يدعم expiry/Lifetime/persistence؛ ليس server-authoritative بعد؛ الاختبار لم يُشغل |
 | `free.tier` | مواصفة فقط | لا | لا | لا | لا | لا | 3 صور/شهر، PatchMatch، watermark مطلوبة ولم تُثبت |
 | `lifetime` | مواصفة فقط | لا | لا | لا | لا | لا | منتج one-time غير منشأ وفق الأدلة المتاحة |
 | `chat` | نعم | نعم | جزئي | لا | لا | لا | يحتاج E2E image/mask/dispatch/result |
