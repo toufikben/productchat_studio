@@ -2,6 +2,8 @@
 
 **Date:** 2026-09-14
 
+**Code release:** `1.0.1+2` is prepared after the first accepted Play release.
+
 ## Implemented
 
 - `BillingService` uses the Flutter `in_app_purchase` plugin.
@@ -24,6 +26,7 @@
 - Failed native operations do not deduct credits.
 - `/credits` opens the Paywall screen.
 - Paywall displays available balance, configured products, purchase errors, pending state, and restore action.
+- Purchase handling accepts both `purchased` and `restored` events, rejects blank transaction IDs, exposes the last purchase state/product for UI diagnostics, and keeps loading/error state consistent across stream errors.
 
 ## Important platform boundary
 
@@ -43,4 +46,4 @@ The approved commercial proposal is 0.99 USD for 100 credits, 3.99 USD for 500 c
 | Negative-balance protection test | Passed |
 | Google Play Sandbox purchase | Pending Play Console/device setup |
 | Receipt/server verification | Pending; not claimed as implemented |
-| Production product configuration | Pending Play Console |
+| Production product configuration | Pending Play Console; product IDs and price proposal are ready |

@@ -2,7 +2,7 @@
 
 > **مصدر الحقيقة للتحقق:** [`docs/MODEL_INVENTORY.md`](docs/MODEL_INVENTORY.md) و[`docs/FEATURE_VERIFICATION_MATRIX.md`](docs/FEATURE_VERIFICATION_MATRIX.md). وجود بند هنا لا يعني أنه runtime-verified؛ الحالة لا تُرفع إلا بدليل قابل لإعادة الإنتاج.
 
-> **آخر تحديث:** 2026-09-14 04:47 UTC
+> **آخر تحديث:** 2026-09-14 05:31 UTC
 > **الحالة:** Android-first؛ iOS وWeb مؤجلان عمدًا إلى ما بعد إصدار Android.
 
 ## طريقة استخدام هذه الخارطة
@@ -24,7 +24,7 @@
 | P5 التخزين والخصوصية | جزئي | SharedPreferences وLegal screen مضافان؛ cache retention وHistory/Settings الدائمين متبقيان |
 | P6 النماذج المتقدمة | قرار مكتمل، runtime متبقٍ | Real-ESRGAN fallback موثق؛ لا يوجد ONNX/NCNN backend، وMI-GAN معطل قانونيًا |
 | P10 اللغات والوصول | جزئي | العربية/الإنجليزية وRTL wiring وSemantics أساسية؛ 16 لغة واختبارات شاملة متبقية |
-| P7 Credits والدفع | الكود والأسعار معتمدة، Play Console وSandbox متبقية | BillingService وPaywall وledger idempotent تدعم packs وsubscriptions؛ مسودة `AI Photo Studio Chat` منشأة بالمعرف `com.productchat.aiphotostudio`، وتبقى إنشاء المنتجات واختبار Sandbox والتحقق الخلفي |
+| P7 Credits والدفع | الكود محدث إلى `1.0.1+2`، Play products وSandbox متبقية | BillingService يقبل purchased/restored ويمنع transaction IDs الفارغة؛ IDs والأسعار جاهزة؛ يلزم إنشاء المنتجات في Play Console واختبار Sandbox |
 | الإعلانات | غير مخطط لها حاليًا | لا توجد AdMob SDK أو وحدات إعلانية؛ النموذج التجاري الحالي Credits مع اشتراك اختياري، والإعلانات ستضر بتجربة محرر صور محلي ولم تُطلب في الخارطة |
 | iOS | مؤجل | لن يدخل في نطاق الإصدار الحالي |
 | Web | مؤجل | لن يدخل في نطاق الإصدار الحالي |
@@ -119,9 +119,9 @@
 - [x] منع منح الرصيد مرتين لنفس purchase ID.
 - [x] إضافة Paywall وواجهة restore.
 - [x] إنشاء مسودة التطبيق في Google Play Console بالمعرف `com.productchat.aiphotostudio`.
-- [ ] تحديد أسعار Credits ومزايا وفترات الاشتراك قبل إنشاء المنتجات المالية.
+- [x] تحديد أسعار Credits ومزايا وفترات الاشتراك قبل إنشاء المنتجات المالية.
 - [ ] إنشاء منتجات Credits وتفعيلها في Google Play Console.
-- [ ] تعريف subscription products في الكود قبل إنشائها في Play Console.
+- [x] تعريف subscription products في الكود قبل إنشائها في Play Console.
 - [ ] اختبار Sandbox على جهاز/حساب اختبار.
 - [ ] إضافة receipt verification/backend ledger للـ consumables واستعادتها عبر الأجهزة.
 - [ ] إضافة طبقة iOS StoreKit لاحقًا.
@@ -225,6 +225,7 @@
 | 2026-09-14 | إصلاح فشل R8 في Build الثالث | التشغيل `34795926358` تجاوز مشكلة Java ووصل إلى R8، ثم فشل بسبب مراجع Flutter الاختيارية لـ Deferred Components/Play Core غير المستخدمة؛ أضيفت `-dontwarn` محددة دون إضافة Play Core القديم؛ يلزم إعادة بناء AAB |
 | 2026-09-14 | نجاح Sprint 1 Build | التشغيل `34796595278` نجح على commit `229bc72`: الأسرار، التحليل، الاختبارات، R8، التوقيع، وبناء AAB ورفع Artifact؛ الملف `app-release.aab` بحجم 79.1 MB؛ الخطوة التالية Internal Testing |
 | 2026-09-14 | Play Console Upload Key mismatch | Play Console رفض AAB الموقع بالمفتاح الجديد؛ expected SHA1 `20:EE:07:1E:9D:51:09:C1:29:D7:9B:6A:74:C1:AD:DC:81:96:88:5C`، uploaded SHA1 `1A:D8:32:67:8E:A5:BE:19:AF:F4:B0:30:95:A3:5D:7D:89:02:10:00`; يلزم استعادة المفتاح الأصلي أو طلب Reset Upload Key قبل إعادة البناء |
+| 2026-09-14 | Billing code release `1.0.1+2` | تحديث purchase handling لقبول purchased/restored، رفض transaction ID الفارغ، تثبيت loading/error diagnostics، وتوسيع اختبارات Credits؛ إنشاء المنتجات وSandbox يتطلبان حساب Play Console وجهاز اختبار |
 
 ## قاعدة التحديث المستقبلية
 

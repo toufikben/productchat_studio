@@ -25,6 +25,7 @@ class CreditProducts {
   static const ids = <String>{...consumableIds, ...subscriptionIds};
 
   static bool isSubscription(String productId) => subscriptionIds.contains(productId);
+  static int? creditsFor(String productId) => amounts[productId];
 }
 
 class CreditsLedger {
@@ -40,7 +41,7 @@ class CreditsLedger {
       ((storage.get(_processedKey) as List?)?.whereType<String>().toSet()) ?? <String>{};
 
   Future<void> addOnce({required String purchaseId, required int amount}) async {
-    if (amount <= 0 || processedPurchaseIds.contains(purchaseId)) return;
+    if (amount <= 0 || purchaseId.trim().isEmpty || processedPurchaseIds.contains(purchaseId)) return;
     final processed = processedPurchaseIds..add(purchaseId);
     await storage.set(_balanceKey, balance + amount);
     await storage.set(_processedKey, processed.toList(growable: false));
@@ -66,9 +67,9 @@ class BillingService extends ChangeNotifier {
   bool loading = false;
   String? error;
   PurchaseStatus? lastPurchaseStatus;
+  String? lastPurchaseProductId;
 
   int get credits => ledger.balance;
-
   bool canSpend(int amount) => amount <= 0 || credits >= amount;
 
   Future<bool> spend(int amount) async {
@@ -83,6 +84,7 @@ class BillingService extends ChangeNotifier {
       _handlePurchases,
       onError: (Object value) {
         error = value.toString();
+        loading = false;
         notifyListeners();
       },
     );
@@ -110,10 +112,7 @@ class BillingService extends ChangeNotifier {
       final purchaseParam = PurchaseParam(productDetails: product);
       final sent = CreditProducts.isSubscription(product.id)
           ? await _store.buyNonConsumable(purchaseParam: purchaseParam)
-          : await _store.buyConsumable(
-              purchaseParam: purchaseParam,
-              autoConsume: true,
-            );
+          : await _store.buyConsumable(purchaseParam: purchaseParam, autoConsume: true);
       if (!sent) error = 'Google Play did not start the purchase.';
     } catch (value) {
       error = value.toString();
@@ -124,12 +123,12 @@ class BillingService extends ChangeNotifier {
   }
 
   Future<void> restorePurchases() async {
-    if (!available) return;
+    if (!available || loading) return;
     error = null;
     notifyListeners();
     try {
-      // Consumable credits cannot be restored by Google Play. Restore is kept
-      // for platform consistency and future non-consumable products.
+      // Google Play does not restore consumed credit packs. This restores
+      // subscription/non-consumable purchase events when Play provides them.
       await _store.restorePurchases();
     } catch (value) {
       error = value.toString();
@@ -140,22 +139,26 @@ class BillingService extends ChangeNotifier {
   Future<void> _handlePurchases(List<PurchaseDetails> purchases) async {
     for (final purchase in purchases) {
       lastPurchaseStatus = purchase.status;
-      notifyListeners();
-      if (purchase.status == PurchaseStatus.pending) continue;
+      lastPurchaseProductId = purchase.productID;
+      if (purchase.status == PurchaseStatus.pending) {
+        loading = true;
+      } else {
+        loading = false;
+      }
       if (purchase.status == PurchaseStatus.error) {
         error = purchase.error?.message ?? 'Purchase failed.';
-      } else if (purchase.status == PurchaseStatus.purchased) {
+      } else if (purchase.status == PurchaseStatus.purchased ||
+          purchase.status == PurchaseStatus.restored) {
         final purchaseId = purchase.purchaseID;
-        final amount = CreditProducts.amounts[purchase.productID];
-        // Never grant credits without a stable store transaction identifier.
+        final amount = CreditProducts.creditsFor(purchase.productID);
         if (purchaseId == null || amount == null) {
           error = 'Purchase could not be verified.';
         } else {
           await ledger.addOnce(purchaseId: purchaseId, amount: amount);
+          error = null;
         }
       }
-      if (purchase.pendingCompletePurchase &&
-          purchase.status != PurchaseStatus.pending) {
+      if (purchase.pendingCompletePurchase && purchase.status != PurchaseStatus.pending) {
         await _store.completePurchase(purchase);
       }
       notifyListeners();
