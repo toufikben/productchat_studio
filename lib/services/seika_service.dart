@@ -57,20 +57,7 @@ class SeikaService {
       );
 
   Future<EditResult> upscale(String imagePath, {required int factor}) =>
-      _upscale(imagePath, factor);
-
-  Future<EditResult> _upscale(String imagePath, int factor) async {
-    final modelPath = await _models.readyPath(ModelManager.realEsrgan);
-    if (modelPath == null) {
-      return const EditResult.failure(
-          'Real-ESRGAN model is not downloaded or failed SHA-256 verification.');
-    }
-    return _invoke('upscale', {
-      'imagePath': imagePath,
-      'factor': factor,
-      'modelPath': modelPath,
-    }, credits: 2);
-  }
+      _invoke('upscale', {'imagePath': imagePath, 'factor': factor}, credits: 2);
 
   Future<EditResult> addShadow(String imagePath) =>
       _invoke('addShadow', {'imagePath': imagePath}, credits: 1);

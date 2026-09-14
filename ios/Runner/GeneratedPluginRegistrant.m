@@ -24,13 +24,6 @@
 @import flutter_image_compress_common;
 #endif
 
-#if __has_include(<flutter_onnxruntime/FlutterOnnxruntimePlugin.h>)
-#import <flutter_onnxruntime/FlutterOnnxruntimePlugin.h>
-#else
-@import flutter_onnxruntime;
-#endif
-
-#if __has_include(<flutter_secure_storage/FlutterSecureStoragePlugin.h>)
 #import <flutter_secure_storage/FlutterSecureStoragePlugin.h>
 #else
 @import flutter_secure_storage;

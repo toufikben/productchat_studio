@@ -35,7 +35,7 @@ class AppConstants {
   static const modelLamaUrl =
       'https://huggingface.co/Toufikben/productchat-models/resolve/main/lama_fp32.onnx';
   static const modelRealEsrganUrl =
-      'https://huggingface.co/Toufikben/productchat-models/resolve/main/real_esrgan_x4.onnx';
+      'https://huggingface.co/Toufikben/productchat-models/resolve/main/RealESRGAN_x4plus.pth';
   // DreamLite is excluded from commercial builds until a commercial license
   // is obtained. Its weights must not be distributed by the production app.
   static const dreamLiteEnabled = false;

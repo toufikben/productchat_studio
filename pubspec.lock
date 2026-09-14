@@ -331,14 +331,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_onnxruntime:
-    dependency: "direct main"
-    description:
-      name: flutter_onnxruntime
-      sha256: "14cb7872d164d8d2fd52e8137775916ea9d46f67a4100ff11cdc62d41752fe5e"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.8.5"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -981,14 +973,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.28.0"
-  seika:
-    dependency: "direct main"
-    description:
-      name: seika
-      sha256: "5721c3cc825cfc1c06c5c6d02610a55936673a5557e2afc4aa1c380e1ecb1df4"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.0"
   share_plus:
     dependency: "direct main"
     description:

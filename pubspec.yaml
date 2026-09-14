@@ -30,7 +30,6 @@ dependencies:
   dio: ^5.7.0
   crypto: ^3.0.6
   in_app_purchase: ^3.2.0
-  verify_local_purchase: ^1.1.0
   shared_preferences: ^2.3.3
   hive: ^2.2.3
   hive_flutter: ^1.1.0
