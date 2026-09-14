@@ -32,6 +32,7 @@ ProductChat Studio is an Android-first Flutter foundation for conversational pro
 2. Measure LaMa cold/warm latency, peak Java/native memory, cancellation, timeout recovery, and repeated-session stability.
 3. Complete image picker/mask creation and real batch/edit/history/storage flows.
 4. Decide whether Real-ESRGAN will use ONNX/NCNN or be labeled as a basic fallback.
-5. Run Internal testing purchases for Credits and subscriptions, verify that subscriptions never grant Credits without entitlement rules, then implement trusted receipt verification before treating Billing as production-ready.
+5. Execute the Sprint 5/P8 benchmark protocol in [`docs/P8_PERFORMANCE_BENCHMARK.md`](docs/P8_PERFORMANCE_BENCHMARK.md) on an Android emulator/device: cold/warm LaMa, cancellation/timeout, memory, CPU/NNAPI, and repeated inference.
+6. Run Internal testing purchases for Credits and subscriptions, verify that subscriptions never grant Credits without entitlement rules, then implement trusted receipt verification before treating Billing as production-ready.
 
 Do not add MI-GAN weights or claim production readiness without explicit license and runtime evidence. Do not commit model binaries, credentials, or signing keys.
