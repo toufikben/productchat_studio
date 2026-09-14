@@ -2,6 +2,7 @@ import '../../models/edit_request.dart';
 import '../../models/edit_result.dart';
 import '../../services/billing_service.dart';
 import '../../services/free_watermark_service.dart';
+import '../../services/history_service.dart';
 import '../../services/seika_service.dart';
 
 /// Dispatches chat commands to local image services.
@@ -46,6 +47,7 @@ class ChatController {
       if (!consumed) {
         return const EditResult.failure('Free monthly quota changed during processing.');
       }
+      await historyService.record(path: watermarked, operation: 'removeBg');
       return EditResult(
         ok: true,
         outputPath: watermarked,
