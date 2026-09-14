@@ -39,7 +39,7 @@
 | `compliance` | جزئي | جزئي | جزئي | لا | لا | لا | قائمة ثابتة وUI غير مكتمل |
 | `localization` | نعم | جزئي | جزئي | لا | لا | لا | العربية/الإنجليزية؛ الهدف 16 غير محسوم |
 | `privacy.terms` | جزئي | جزئي | جزئي | لا | لا | لا | route/مواد موجودة جزئيًا؛ policy/flow يحتاج مراجعة |
-| `receipt.verification` | لا | لا | لا | لا | لا | لا | API/Google Developer API/ledger/RTDN غير منفذة |
+| `receipt.verification` | نعم | نعم | جزئي | Pending | لا | لا | المسار المحلي يحفظ SHA-256 fingerprint لمرجع Billing ولا يحفظ Token الخام؛ Backend وGoogle Developer API مستبعدان حاليًا |
 | `p8.performance` | بروتوكول فقط | لا | لا | لا | لا | لا | runtime measurements pending device/emulator |
 
 ## Billing v2 acceptance evidence

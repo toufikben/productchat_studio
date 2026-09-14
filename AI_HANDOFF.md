@@ -10,6 +10,8 @@ The model repository is [`Toufikben/productchat-models`](https://huggingface.co/
 
 The current billing source now contains all six product IDs, local purchase handling, an idempotent local ledger, the `lifetime` non-consumable path, and a local `ProService` for expiry/Lifetime state. It still does not provide trusted server entitlement or backend receipt verification. The target specification is recorded in [`ROADMAP.md`](ROADMAP.md) and [`docs/P7_BILLING_VALIDATION.md`](docs/P7_BILLING_VALIDATION.md).
 
+The current architecture is intentionally **Local Google Play Entitlement**: no Firebase, Supabase, Cloud Functions, or Backend SaaS. Lifetime is activated only from a Google Play Billing event containing non-empty `serverVerificationData`; the app stores a SHA-256 fingerprint and never persists the raw purchase reference. This protects normal replay and storage errors, but it is not an independent server-side guarantee against a modified APK or delayed refund/revocation while offline.
+
 ## Billing v2 target
 
 The target catalog is `pro_monthly`, `pro_yearly`, `credits_100`, `credits_500`, `credits_1200`, and `lifetime`. The target reference prices are `$4.99/month`, `$29.99/year`, `$4.99`, `$19.99`, `$39.99`, and `$79.99` respectively; Google Play regional prices are authoritative in the app. Free is specified as three images per month with PatchMatch and watermark; Pro is specified as unlimited images, legally available models, no watermark, Batch, and Brand Identity; Lifetime provides Pro forever. These are target requirements, not current verification claims.

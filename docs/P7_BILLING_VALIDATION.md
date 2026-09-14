@@ -20,7 +20,7 @@
 
 المنتجات الثلاثة `credits_100`, `credits_500`, `credits_1200` والاشتراكان `pro_monthly`, `pro_yearly` موثقان كمنتجات مفعلة في Play Console. لا يوجد دليل موثق على إنشاء وتفعيل `lifetime`. يجب أن ينشئه مالك Play Console ويضيف License Tester ويرفع AAB إلى Internal Testing.
 
-الكود الحالي يملك `in_app_purchase` وpurchase stream وlocal ledger، ويدعم IDs الستة مع Lifetime كـnon-consumable. حزم Credits فقط تصل إلى local grant عند purchased وPurchase ID صالح؛ pending/error لا تمنح Credits، وrestored consumables مرفوضة. `ProService` يمثل expiry/Lifetime محليًا، لكنه لا يُعد Receipt Verification ولا Pro entitlement خادميًا.
+الكود الحالي يملك `in_app_purchase` وpurchase stream وlocal ledger، ويدعم IDs الستة مع Lifetime كـnon-consumable. حزم Credits فقط تصل إلى local grant عند purchased وPurchase ID صالح؛ pending/error لا تمنح Credits، وrestored consumables مرفوضة. `ProService` يمثل expiry/Lifetime محليًا ويحفظ SHA-256 fingerprint لمرجع Google Play دون حفظ المرجع الخام.
 
 ## اقتصاد Credits
 
@@ -37,11 +37,11 @@
 - عدم استخدام fallback price كسعر مؤكد؛ السعر الظاهر يجب أن يأتي من Google Play عندما يتوفر.
 - عدم إعلان «كل النماذج» بما يشمل MI-GAN غير المرخص أو Real-ESRGAN غير الموصول.
 
-## Receipt Verification قبل الإنتاج
+## قرار Local-first
 
-يلزم backend موثوق مع مصادقة المستخدم، `POST /v1/billing/google-play/purchases/verify`، `GET /v1/billing/entitlements`، Google Play Developer API، unique token hash، transactional credit ledger، subscription state/expiry، RTDN dedup/retry، واختبارات replay/mismatch/pending/refund/expiry/revocation. يجب أن يبقى service account خارج التطبيق وGit.
+لا يستخدم الإصدار الحالي Firebase أو Supabase أو Cloud Functions أو Backend SaaS. يعتمد التطبيق على Google Play Billing و`restorePurchases` ومرجع `serverVerificationData` الذي توفره مكتبة Billing، ثم يحفظ بصمة SHA-256 محلية فقط. هذا يمنع التكرار والأخطاء العادية ويحافظ على Lifetime بعد الاستعادة، لكنه لا يساوي تحققًا خادميًا مستقلًا ولا يمنع APK معدلًا.
 
-ينبغي أن يبقى purchase في `pendingVerification` حتى يرد الخادم `verified` أو `already_processed`. لا يكفي `purchaseID` المحلي أو `completePurchase` لإثبات الملكية.
+يُعاد فحص Google Play عند الشراء والاستعادة وعند فتح التطبيق متى كان Billing متاحًا. إذا لم توجد عملية Lifetime صالحة في نتائج Google Play، يُزال entitlement المحلي. لا يُستخدم Email وحده كمصدر ملكية ولا يُحفظ Purchase Token الخام.
 
 ## الحالة والتحقق
 
@@ -52,7 +52,7 @@
 | Local purchase stream/ledger | موجود جزئيًا؛ يحتاج إعادة تشغيل tests على آخر commit |
 | ProService/ProEntitlement | غير منفذ في التطبيق الحالي حسب الأدلة المتاحة |
 | Sandbox/Test Card | Pending device وLicense Tester |
-| Receipt/server verification | غير منفذ |
+| Receipt/server verification | مستبعد في الإصدار Local-first؛ خيار مستقبلي فقط |
 | Cross-device consumable restore | غير منفذ |
 | Production billing | غير جاهز |
 

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
+import 'pro_service.dart';
 import 'storage_service.dart';
 
 /// Google Play product catalog. Prices are configured by Google Play and must
@@ -86,10 +87,12 @@ class CreditsLedger {
 class BillingService extends ChangeNotifier {
   BillingService({InAppPurchase? store, StorageService? storage})
       : _store = store ?? InAppPurchase.instance,
-        ledger = CreditsLedger(storage ?? storageService);
+        ledger = CreditsLedger(storage ?? storageService),
+        proService = ProService(storage: storage ?? storageService);
 
   final InAppPurchase _store;
   final CreditsLedger ledger;
+  final ProService proService;
   StreamSubscription<List<PurchaseDetails>>? _subscription;
   List<ProductDetails> products = const [];
   bool available = false;
@@ -178,10 +181,23 @@ class BillingService extends ChangeNotifier {
       } else if (purchase.status == PurchaseStatus.purchased ||
           purchase.status == PurchaseStatus.restored) {
         if (CreditProducts.isEntitlement(purchase.productID)) {
-          // This is only a local signal. Pro access must be granted by the
-          // server entitlement response after receipt verification.
           lastEntitlementProductId = purchase.productID;
-          error = null;
+          final verificationData =
+              purchase.verificationData.serverVerificationData.trim();
+          if (purchase.productID == CreditProducts.lifetime &&
+              verificationData.isNotEmpty) {
+            await proService.activateLifetime(
+              verificationData: verificationData,
+            );
+            error = proService.isLifetime
+                ? null
+                : 'Lifetime purchase could not be stored safely.';
+          } else {
+            // Subscription expiry is not inferred locally from a purchase
+            // event. Keep it pending until Google Play supplies a verified
+            // entitlement source that includes expiry.
+            error = 'Subscription entitlement requires a verified expiry.';
+          }
         } else if (!CreditProducts.shouldGrantCredits(
           status: purchase.status,
           productId: purchase.productID,

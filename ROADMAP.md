@@ -141,7 +141,7 @@
 
 ### المرحلة 5 — Free/Pro/Lifetime وBilling v2
 
-**الحالة:** تنفيذ المصدر المحلي الأولي مكتمل جزئيًا في commit هذه الدفعة؛ التكامل الخادمي وPlay Console غير مكتملين.
+**الحالة:** تنفيذ المصدر المحلي الأولي مكتمل جزئيًا في commit هذه الدفعة؛ التكامل مع Play Console واختبارات الجهاز متبقية، وBackend الخارجي مستبعد بقرار Local-first.
 
 #### 5.1 Product catalog
 
@@ -150,14 +150,16 @@
 - [x] إعادة تسمية الثابت الذي يستخدم `pro` لحزمة `credits_1200` إلى `largePack`.
 - [x] Paywall يعرض أقسام Lifetime وSubscriptions وCredits، وأسعار المتجر الفعلية عند توفرها.
 
-#### 5.2 Pro entitlement
+#### 5.2 Pro entitlement — Local Google Play Entitlement
 
 - [x] إنشاء `ProService` مع `isPro` و`isLifetime` و`expiry` و`daysRemaining`.
 - [x] تخزين `proExpiry` كسلسلة ISO8601 وفق المواصفة.
-- [ ] تفعيل Monthly لمدة 30 يومًا وYearly لمدة 365 يومًا **بعد تحقق شراء موثوق**، وليس من event محلي غير متحقق.
-- [x] تمثيل Lifetime دون expiry، مع بقاء Lifetime دائمًا في الخدمة المحلية.
+- [ ] تفعيل Monthly لمدة 30 يومًا وYearly لمدة 365 يومًا بعد event Google Play صالح؛ لا تُستنتج مدة الاشتراك من callback محلي وحده.
+- [x] تمثيل Lifetime دون expiry بعد event Google Play، مع بقاء Lifetime دائمًا في الخدمة المحلية.
 - [x] auto-expiry للاشتراك في حالة الخدمة المحلية.
-- [ ] restore يزامن entitlement ولا يعيد Credits المستهلكة محليًا.
+- [x] حفظ SHA-256 fingerprint لمرجع الشراء وعدم حفظ المرجع الخام.
+- [x] رفض تفعيل Lifetime من Boolean أو Product ID دون `serverVerificationData` صادر عن Billing.
+- [ ] restore يعيد فحص Google Play عند الاتصال ولا يعيد Credits المستهلكة محليًا.
 
 #### 5.3 Gates وتجربة المستخدم
 
@@ -180,21 +182,14 @@
 
 ### المرحلة 6 — Receipt Verification وEntitlement Backend
 
-**الحالة:** مخطط فقط.
+**الحالة:** مستبعد وفق قرار Local-first؛ Google Play Billing وRestore هما مصدر الملكية، مع توثيق حدود الحماية المحلية.
 
-- [ ] اختيار بنية الاستضافة من الخيارين الموثقين: API مخصص مع PostgreSQL/worker أو Backend Serverless مُدار.
-- [ ] إنشاء API contract لـ`POST /v1/billing/google-play/purchases/verify`.
-- [ ] إنشاء `GET /v1/billing/entitlements`.
-- [ ] إضافة authenticated user identity وعدم قبول `userId` من جسم الطلب كمصدر ثقة.
-- [ ] التحقق من consumables عبر `purchases.products.get`.
-- [ ] التحقق من subscriptions عبر `purchases.subscriptionsv2.get`.
-- [ ] إنشاء unique token hash وtransactional `credit_ledger`.
-- [ ] إنشاء `subscription_entitlements` للحالة والانتهاء والتجديد والإلغاء.
-- [ ] إضافة RTDN endpoint وdeduplication وretry/dead-letter.
-- [ ] إبقاء service account خارج التطبيق وGit.
-- [ ] تغيير Flutter إلى `pendingVerification` ثم منح القيمة فقط عند `verified` أو `already_processed`.
-- [ ] ربط `ProEntitlement` بالحالة الخادمية لا بالـcallback المحلي.
-- [ ] اختبار active/expired/canceled/grace/hold/revoked/refunded/replay/mismatch.
+- [x] استبعاد Firebase وSupabase وServerless وBackend SaaS من التصميم.
+- [x] اعتماد Google Play Billing و`restorePurchases` و`serverVerificationData` المحلي كمصدر الملكية المتاح للتطبيق.
+- [x] توثيق أن SHA-256 fingerprint وledger المحلي يمنعان التكرار العرضي ولا يمثلان تحققًا ماليًا خادميًا.
+- [ ] إعادة فحص Google Play عند فتح التطبيق وعند Restore، مع إزالة entitlement عند غياب عملية Lifetime.
+- [ ] اختبار حالات Purchased/Restored/Pending/Error وRefund/Revocation عند عودة الاتصال.
+- [ ] إبقاء خيار Backend ذاتي مستقبليًا فقط إذا أصبح منع APK المعدل أو التحقق المالي المستقل شرطًا تجاريًا.
 
 ### المرحلة 7 — التخزين والخصوصية
 

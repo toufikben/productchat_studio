@@ -1,9 +1,13 @@
 import 'package:flutter/foundation.dart';
 
+import 'purchase_security.dart';
 import 'storage_service.dart';
 
-/// Local representation of entitlement state. Production access must be
-/// synchronized from the receipt-verification backend before activation.
+/// Local representation of Google Play entitlement state.
+///
+/// This protects the normal app flow and supports restore/offline use after a
+/// valid Play event. It is not a replacement for Google Play's own billing
+/// service or server-side purchase verification.
 class ProService extends ChangeNotifier {
   ProService({StorageService? storage}) : _storage = storage ?? storageService {
     _load();
@@ -12,11 +16,15 @@ class ProService extends ChangeNotifier {
   static const isProKey = 'pro.isPro';
   static const lifetimeKey = 'pro.isLifetime';
   static const expiryKey = 'pro.expiry';
+  static const productKey = 'pro.productId';
+  static const purchaseFingerprintKey = 'pro.purchaseFingerprint';
 
   final StorageService _storage;
   bool _isPro = false;
   bool _isLifetime = false;
   DateTime? _expiry;
+  String? _productId;
+  String? _purchaseFingerprint;
 
   bool get isPro {
     if (_isLifetime) return true;
@@ -26,6 +34,8 @@ class ProService extends ChangeNotifier {
 
   bool get isLifetime => _isLifetime && _isPro;
   DateTime? get expiry => _expiry;
+  String? get productId => _productId;
+  String? get purchaseFingerprint => _purchaseFingerprint;
 
   int get daysRemaining {
     if (isLifetime) return -1;
@@ -37,83 +47,158 @@ class ProService extends ChangeNotifier {
   void _load() {
     _isPro = _storage.get(isProKey) as bool? ?? false;
     _isLifetime = _storage.get(lifetimeKey) as bool? ?? false;
+    _productId = _storage.getString(productKey);
+    _purchaseFingerprint = _storage.getString(purchaseFingerprintKey);
     final value = _storage.getString(expiryKey);
     _expiry = value == null ? null : DateTime.tryParse(value);
-    if (_isLifetime) {
-      _isPro = true;
-    } else if (_isPro && (_expiry == null || !_expiry!.isAfter(DateTime.now()))) {
-      _isPro = false;
-      _expiry = null;
+
+    final validLifetime =
+        _isLifetime && _isPro && _productId == 'lifetime' && _purchaseFingerprint != null;
+    if (validLifetime) return;
+
+    if (_isLifetime || (_isPro && (_expiry == null || !_expiry!.isAfter(DateTime.now())))) {
+      _clearInMemory();
       _persist();
     }
   }
 
-  Future<void> activateSubscription(Duration duration) async {
-    await _activateUntil(DateTime.now().add(duration));
+  Future<void> activateSubscription(
+    Duration duration, {
+    required String productId,
+    required String verificationData,
+  }) async {
+    if (productId != 'pro_monthly' && productId != 'pro_yearly') return;
+    final fingerprint = PurchaseSecurity.fingerprint(
+      productId: productId,
+      verificationData: verificationData,
+    );
+    if (fingerprint == null) return;
+    _isPro = true;
+    _isLifetime = false;
+    _expiry = DateTime.now().add(duration);
+    _productId = productId;
+    _purchaseFingerprint = fingerprint;
+    await _persist();
+    notifyListeners();
   }
 
-  Future<void> activateMonthly() => activateSubscription(const Duration(days: 30));
+  Future<void> activateMonthly({
+    required String verificationData,
+  }) =>
+      activateSubscription(
+        const Duration(days: 30),
+        productId: 'pro_monthly',
+        verificationData: verificationData,
+      );
 
-  Future<void> activateYearly() => activateSubscription(const Duration(days: 365));
+  Future<void> activateYearly({
+    required String verificationData,
+  }) =>
+      activateSubscription(
+        const Duration(days: 365),
+        productId: 'pro_yearly',
+        verificationData: verificationData,
+      );
 
-  Future<void> activateLifetime() async {
+  Future<void> activateLifetime({required String verificationData}) async {
+    final fingerprint = PurchaseSecurity.fingerprint(
+      productId: 'lifetime',
+      verificationData: verificationData,
+    );
+    if (fingerprint == null) return;
     _isPro = true;
     _isLifetime = true;
     _expiry = null;
+    _productId = 'lifetime';
+    _purchaseFingerprint = fingerprint;
     await _persist();
     notifyListeners();
   }
 
-  /// Applies a server-authoritative entitlement. A lifetime entitlement takes
-  /// precedence over an expiry; an inactive/expired entitlement is cleared.
-  Future<void> applyEntitlement({
-    required bool active,
-    required bool lifetime,
-    DateTime? expiresAt,
+  /// Applies a locally observed Google Play entitlement. The caller must pass
+  /// verificationData supplied by Google Play; callers cannot activate a
+  /// state with only a product ID or a client-provided expiry.
+  Future<void> restoreFromPurchase({
+    required String productId,
+    required String verificationData,
+    DateTime? expiry,
   }) async {
-    if (!active || (!lifetime && (expiresAt == null || !expiresAt.isAfter(DateTime.now())))) {
-      await deactivate();
-      return;
+    if (productId == 'lifetime') {
+      await activateLifetime(verificationData: verificationData);
+    } else if (productId == 'pro_monthly' && expiry != null) {
+      await _activateUntil(
+        productId: productId,
+        expiry: expiry,
+        verificationData: verificationData,
+      );
+    } else if (productId == 'pro_yearly' && expiry != null) {
+      await _activateUntil(
+        productId: productId,
+        expiry: expiry,
+        verificationData: verificationData,
+      );
     }
-    _isPro = true;
-    _isLifetime = lifetime;
-    _expiry = lifetime ? null : expiresAt;
-    await _persist();
-    notifyListeners();
   }
 
+  /// Retained for migration callers; it now requires a Play reference and
+  /// never activates an entitlement from a boolean alone.
   Future<void> restoreFromPurchases({
     required bool hasLifetime,
     required DateTime? proExpiry,
+    required String verificationData,
   }) async {
     if (hasLifetime) {
-      await activateLifetime();
-    } else if (proExpiry != null && proExpiry.isAfter(DateTime.now())) {
-      await _activateUntil(proExpiry);
+      await activateLifetime(verificationData: verificationData);
+    } else if (proExpiry != null) {
+      await restoreFromPurchase(
+        productId: 'pro_monthly',
+        verificationData: verificationData,
+        expiry: proExpiry,
+      );
     } else {
       await deactivate();
     }
   }
 
   Future<void> deactivate() async {
-    _isPro = false;
-    _isLifetime = false;
-    _expiry = null;
+    _clearInMemory();
     await _persist();
     notifyListeners();
   }
 
-  Future<void> _activateUntil(DateTime expiry) async {
+  Future<void> _activateUntil({
+    required String productId,
+    required DateTime expiry,
+    required String verificationData,
+  }) async {
+    if (!expiry.isAfter(DateTime.now())) return;
+    final fingerprint = PurchaseSecurity.fingerprint(
+      productId: productId,
+      verificationData: verificationData,
+    );
+    if (fingerprint == null) return;
     _isPro = true;
     _isLifetime = false;
     _expiry = expiry;
+    _productId = productId;
+    _purchaseFingerprint = fingerprint;
     await _persist();
     notifyListeners();
+  }
+
+  void _clearInMemory() {
+    _isPro = false;
+    _isLifetime = false;
+    _expiry = null;
+    _productId = null;
+    _purchaseFingerprint = null;
   }
 
   Future<void> _persist() async {
     await _storage.set(isProKey, _isPro);
     await _storage.set(lifetimeKey, _isLifetime);
     await _storage.set(expiryKey, _expiry?.toIso8601String());
+    await _storage.set(productKey, _productId);
+    await _storage.set(purchaseFingerprintKey, _purchaseFingerprint);
   }
 }
