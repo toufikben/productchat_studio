@@ -306,3 +306,4 @@ All repair work must follow these rules:
 5. اختبار الشراء وPending وError وRestore وتكرار consumable وانتهاء الاشتراك وRefund/Revocation وLifetime على النسخة المثبتة من Play. لا يُنشر الإصدار النهائي؛ يترك الإرسال النهائي لمالك الحساب.
 
 **قرار البوابة الحالي:** اكتملت مراجعة الوثائق والمصدر؛ تنفيذ Play Console محجوب حتى تتوفر أدلة Flutter/build وAndroid runtime وجلسة Play Console الموثقة للمستخدم. لا يوجد تفويض بالنشر النهائي.
+- **Phase 1 — Diagnostic log capture — STARTED 2026-09-14:** Approved temporary workflow-only change. Scope: capture and upload the exact flutter analyze output while preserving a failing job when analysis fails. No application code or test logic changes. Rollback: revert the workflow commit. Acceptance: the next run publishes flutter-analyze.log and still reports the analyzer failure.
