@@ -4,7 +4,7 @@
 >
 > **آخر تحديث:** 2026-09-14
 > **الفرع:** `main`
-> **الالتزام المرجعي قبل هذا التحديث:** `bcc8455`
+> **الالتزام المرجعي قبل هذا التحديث:** `c070172`
 > **مصادر الحقيقة:** هذه الخارطة، `docs/FEATURE_VERIFICATION_MATRIX.md`، `docs/MODEL_INVENTORY.md`، ووثائق التحقق المرتبطة.
 
 ## 1. قاعدة الحالة
@@ -26,7 +26,7 @@
 
 | الطبقة | ما يحصل عليه المستخدم | الحالة التصميمية |
 |---|---|---|
-| **Free** | 3 صور شهريًا، PatchMatch فقط، مع علامة مائية | مواصفة مطلوبة؛ لم تُنفذ كاملة بعد |
+| **Free** | 3 صور شهريًا، PatchMatch فقط، مع علامة مائية | منفذ محليًا؛ device/quality verification متبقية |
 | **Pro** | صور غير محدودة، النماذج المتاحة قانونيًا، دون علامة مائية، Batch، Brand Identity | مواصفة مطلوبة؛ entitlement وgates غير مكتملة |
 | **Lifetime** | كل مزايا Pro إلى الأبد | مواصفة مطلوبة؛ منتج Google Play لم يُنشأ بعد |
 
@@ -168,7 +168,11 @@
 - [x] تنفيذ PatchMatch محليًا في Android عبر corner-seeded connected mask وpatch propagation/random search وشفافية PNG.
 - [x] ربط Free quota بمساري Editor وChat؛ لا تُستهلك الحصة إلا بعد output ناجح.
 - [x] حصر Free في PatchMatch background removal ورفض العمليات الأخرى بوضوح.
-- [ ] اختبار جودة PatchMatch على fixtures وأجهزة Android وضبط thresholds/الأداء.
+- [x] إضافة fixtures قابلة لإعادة التوليد واختبارات حفظ الأبعاد وPNG وFree watermark.
+- [x] تطبيق Free watermark بعد نجاح PatchMatch وقبل استهلاك الحصة.
+- [ ] اختبار جودة alpha على fixtures وأجهزة Android وضبط thresholds/الأداء.
+- [x] Editor يوضح أدوات Pro المقفلة للمجاني ويعرض أخطاء gate بدل إسقاطها بصمت.
+- [x] Chat يعرض حالة Free/Pro والحصة ويطبق gate وwatermark في مسار Free.
 - [ ] Pro/Lifetime: إزالة watermark، Batch بحد 100 صورة، Brand Identity، والميزات المعتمدة قانونيًا.
 - [ ] تقييد العمليات المذكورة في المواصفة كـPro-only فقط بعد تحديد مسار تنفيذها الفعلي.
 - [ ] Paywall بثلاثة أقسام: Lifetime، Subscriptions، Credits.

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/ai_service.dart';
 import '../../services/billing_service.dart';
+import '../../services/free_watermark_service.dart';
 import '../../models/edit_request.dart';
 
 class EditorText {
@@ -110,11 +111,20 @@ class EditorController extends StateNotifier<EditorState> {
     try {
       final result = await _ai.apply(path, op);
       if (result.ok && result.outputPath != null) {
+        var outputPath = result.outputPath!;
+        if (!isPro && op == EditOp.removeBg) {
+          final watermarked = await freeWatermarkService.apply(outputPath);
+          if (watermarked == null) {
+            state = state.copyWith(error: 'Unable to apply the Free watermark.');
+            return;
+          }
+          outputPath = watermarked;
+        }
         final spent = !isPro && op == EditOp.removeBg
             ? await billingService.freeQuota.consume()
             : await billingService.spend(result.creditsUsed);
         if (spent || result.creditsUsed == 0) {
-          _push(result.outputPath!);
+          _push(outputPath);
         } else {
           state = state.copyWith(error: 'Credits changed before the operation completed.');
         }

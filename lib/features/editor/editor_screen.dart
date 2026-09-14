@@ -6,6 +6,7 @@ import 'layer_panel.dart';
 import 'text_panel.dart';
 import 'export_dialog.dart';
 import '../../core/theme.dart';
+import '../../services/billing_service.dart';
 
 class EditorScreen extends ConsumerStatefulWidget {
   final String? imagePath;
@@ -74,6 +75,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                           child: Center(child: CircularProgressIndicator()))
                   ]))),
           _tools(c),
+          if (s.error != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: Text(
+                s.error!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
           if (s.showLayers) const LayerPanel(),
           if (s.selectedTextIndex != null) const TextPanel(),
           Padding(
@@ -91,17 +101,20 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         ]));
   }
 
-  Widget _tools(EditorController c) => Container(
+  Widget _tools(EditorController c) {
+    final isPro = billingService.proService.isPro;
+    return Container(
       height: 64,
       color: AppColors.surface,
       child: ListView(scrollDirection: Axis.horizontal, children: [
         _tool('BG', c.removeBg),
-        _tool('Shadow', c.addShadow),
-        _tool('Enhance', c.enhance),
+        _tool('Shadow${isPro ? '' : ' (Pro)'}', c.addShadow),
+        _tool('Enhance${isPro ? '' : ' (Pro)'}', c.enhance),
         _tool('Text', c.addText),
         _tool('Layers', c.toggleLayers),
-        _tool('Relight', c.relight)
+        _tool('Relight${isPro ? '' : ' (Pro)'}', c.relight)
       ]));
+  }
   Widget _tool(String label, VoidCallback onTap) => Padding(
       padding: const EdgeInsets.all(8),
       child: OutlinedButton(onPressed: onTap, child: Text(label)));

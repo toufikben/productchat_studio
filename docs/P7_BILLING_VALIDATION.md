@@ -34,7 +34,7 @@
 
 ## PatchMatch المحلي للمجاني
 
-يستخدم مسار `removeBackground` في Android الآن `PatchMatchRemover` محليًا بدل `floodRemove` وحده. يبدأ المسار ببذور زوايا الصورة، يبني قناعًا متصلًا محافظًا للخلفية، ثم يحسن مراجع الرقع عبر propagation وrandom search لرقع 3×3، ويصدر PNG بخلفية شفافة. لا يحتاج هذا المسار شبكة أو نموذجًا خارجيًا. يسمح Free بهذا المسار فقط؛ العمليات الأخرى تُرفض، وتبقى اختبارات الجودة على fixtures وAndroid runtime وwatermark متبقية.
+يستخدم مسار `removeBackground` في Android الآن `PatchMatchRemover` محليًا بدل `floodRemove` وحده. يبدأ المسار ببذور زوايا الصورة، يبني قناعًا متصلًا محافظًا للخلفية، ثم يحسن مراجع الرقع عبر propagation وrandom search لرقع 3×3، ويصدر PNG بخلفية شفافة. لا يحتاج هذا المسار شبكة أو نموذجًا خارجيًا. يسمح Free بهذا المسار فقط؛ وبعد نجاحه يطبق `FreeWatermarkService` علامة `PRODUCTCHAT STUDIO  •  FREE` قبل استهلاك الحصة. توجد fixtures واختبارات أبعاد/PNG، بينما alpha quality وAndroid runtime ما زالت متبقية.
 
 ## Billing v2 المطلوب
 

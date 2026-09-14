@@ -3,6 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../core/constants.dart';
+import '../../models/edit_request.dart';
+import '../../services/billing_service.dart';
+import 'chat_controller.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -15,6 +19,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final _picker = ImagePicker();
   String? _imagePath;
   String? _error;
+  bool _busy = false;
 
   Future<void> _pickImage() async {
     setState(() => _error = null);
@@ -30,6 +35,27 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (error) {
       if (mounted) setState(() => _error = 'Unable to select image: $error');
     }
+  }
+
+  Future<void> _runPatchMatch() async {
+    final image = _imagePath;
+    if (image == null || _busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final result = await ChatController(imagePath: image).dispatch(
+      const EditRequest(op: EditOp.removeBg),
+    );
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      if (result.ok && result.outputPath != null) {
+        _imagePath = result.outputPath;
+      } else {
+        _error = result.error ?? 'PatchMatch failed.';
+      }
+    });
   }
 
   @override
@@ -49,6 +75,28 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: Image.file(File(_imagePath!), fit: BoxFit.contain),
                       ),
               ),
+              Card(
+                child: ListTile(
+                  leading: Icon(
+                    billingService.proService.isPro
+                        ? Icons.verified_outlined
+                        : Icons.photo_outlined,
+                  ),
+                  title: Text(
+                    billingService.proService.isPro ? 'Pro enabled' : 'Free tier',
+                  ),
+                  subtitle: Text(
+                    billingService.proService.isPro
+                        ? 'All available local operations are enabled.'
+                        : 'PatchMatch only • watermark enabled',
+                  ),
+                  trailing: billingService.proService.isPro
+                      ? null
+                      : Text(
+                          '${billingService.freeQuota.remaining}/${AppConstants.freeMonthlyQuota}',
+                        ),
+                ),
+              ),
               if (_error != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -61,6 +109,22 @@ class _ChatScreenState extends State<ChatScreen> {
                   onPressed: _pickImage,
                   icon: const Icon(Icons.photo_library),
                   label: Text(_imagePath == null ? 'Select product image' : 'Change image'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Semantics(
+                button: true,
+                label: 'Run local PatchMatch background removal',
+                child: FilledButton.tonalIcon(
+                  onPressed: _imagePath == null || _busy ? null : _runPatchMatch,
+                  icon: _busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.auto_fix_high),
+                  label: const Text('Remove background (PatchMatch)'),
                 ),
               ),
               const SizedBox(height: 12),

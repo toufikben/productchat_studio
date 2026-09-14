@@ -35,7 +35,7 @@
 | Editor/Chat | contracts وimage picker موجودان؛ E2E جزئي | mask، dispatch، output، history |
 | Batch | progress/UI موجود؛ pipeline الحقيقي متبقٍ | ربط jobs بعمليات التحرير/export |
 | Storage | الوثائق متضاربة بين SharedPreferences وHive | تثبيت storage الفعلي ثم تحديث docs/tests |
-| Billing | local handler؛ لا backend/entitlement | Billing v2 ثم receipt verification |
+| Billing | local handler وLocal Google Play entitlement؛ لا backend خارجي | Play Console وdevice testing، وreceipt backend مستبعد حاليًا |
 | Internal Testing | غير مغلق | lifetime، license tester، AAB، device purchase |
 
 ## المراحل
@@ -84,19 +84,19 @@
 - [ ] إنشاء `ProStatus` و`ProService` مع expiry ISO8601 وauto-expiry وLifetime دائم.
 - [ ] ربط Monthly بـ30 يومًا وYearly بـ365 يومًا بعد تحقق موثوق، لا callback محلي فقط.
 - [ ] Paywall بثلاثة أقسام Lifetime/Subscriptions/Credits.
-- [ ] Free quota وwatermark وPatchMatch؛ Pro gates لـBatch/Brand/النماذج المعتمدة؛ History آخر 5 للمجاني والكامل لـPro إذا ثبتت السياسة.
+- [x] Free quota وwatermark وPatchMatch وEditor/Chat gates منفذة محليًا؛ fixtures أضيفت.
+- [ ] Pro gates لـBatch/Brand/النماذج المعتمدة؛ History آخر 5 للمجاني والكامل لـPro إذا ثبتت السياسة.
 - [ ] لا grant للـCredits عند pending/error/restored؛ ولا خصم قبل نجاح العملية.
 - [ ] Settings/Batch/History تعرض الحالة الحقيقية فقط.
 
 ### 6. Receipt Verification backend
 
-- [ ] اختيار API مخصص أو Serverless وفق الخطة المعتمدة.
-- [ ] `POST /v1/billing/google-play/purchases/verify` و`GET /v1/billing/entitlements`.
-- [ ] user identity ومصادقة وallow-list وrate limit وrequest ID.
-- [ ] `purchases.products.get` للـconsumables و`subscriptionsv2.get` للاشتراكات.
-- [ ] token hash unique، transactional credit ledger، entitlement state/expiry، RTDN dedup/retry.
-- [ ] جعل Flutter في `pendingVerification` ومنح القيمة فقط عند `verified` أو `already_processed`.
-- [ ] اختبارات replay، mismatch، pending، refund، expiry، revoked، grace، hold.
+**الحالة:** مستبعد وفق قرار Local-first. يعتمد الإصدار الحالي على Google Play Billing وRestore داخل التطبيق، مع توثيق أن ذلك لا يوفر إثباتًا ماليًا مستقلًا ضد APK معدل أو refund أثناء offline.
+
+- [x] استبعاد Firebase وSupabase وServerless وBackend SaaS.
+- [x] حفظ fingerprint محلي بدل Purchase Token الخام.
+- [ ] اختبار Purchased/Restored/Pending/Error وRefund/Revocation عند توفر جهاز وGoogle Play.
+- [ ] يبقى Backend ذاتي خيارًا مستقبليًا فقط إذا أصبح التحقق المالي المستقل شرطًا تجاريًا.
 
 ### 7. Storage/privacy
 

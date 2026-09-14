@@ -1,6 +1,7 @@
 import '../../models/edit_request.dart';
 import '../../models/edit_result.dart';
 import '../../services/billing_service.dart';
+import '../../services/free_watermark_service.dart';
 import '../../services/seika_service.dart';
 
 /// Dispatches chat commands to local image services.
@@ -36,8 +37,20 @@ class ChatController {
         );
       }
       final result = await _seika.removeBackground(image);
-      if (result.ok) await billingService.freeQuota.consume();
-      return result;
+      if (!result.ok || result.outputPath == null) return result;
+      final watermarked = await freeWatermarkService.apply(result.outputPath!);
+      if (watermarked == null) {
+        return const EditResult.failure('Unable to apply the Free watermark.');
+      }
+      final consumed = await billingService.freeQuota.consume();
+      if (!consumed) {
+        return const EditResult.failure('Free monthly quota changed during processing.');
+      }
+      return EditResult(
+        ok: true,
+        outputPath: watermarked,
+        creditsUsed: result.creditsUsed,
+      );
     }
 
     switch (req.op) {
