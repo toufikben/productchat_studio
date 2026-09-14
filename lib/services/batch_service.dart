@@ -43,11 +43,13 @@ class BatchService extends StateNotifier<BatchProgress> {
 
   bool get _isPro => _isProOverride ?? billingService.proService.isPro;
 
+  /// Runs the same local operation (remove background or add shadow) over
+  /// every input path. Batch does not currently support a configurable
+  /// export format/size step; if that is added later, wire real parameters
+  /// through to an export EditOp instead of accepting unused ones here.
   Future<void> processAll(
     List<String> inputs, {
     bool addShadow = false,
-    String format = 'jpg',
-    int size = 2000,
   }) async {
     if (state.running) return;
     if (!_isPro) {
