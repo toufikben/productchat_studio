@@ -74,7 +74,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.language),
             title: const Text('Language'),
-            subtitle: Text(_languageName(localeProvider.locale.languageCode)),
+            subtitle: Text(_languageName(localeController.locale.languageCode)),
             onTap: _chooseLanguage,
           ),
           const Divider(height: 28),
@@ -192,7 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
     if (!mounted || selected == null) return;
-    await localeProvider.setLocale(Locale(selected));
+    await localeController.setLocale(Locale(selected));
     if (mounted) setState(() {});
   }
 }
