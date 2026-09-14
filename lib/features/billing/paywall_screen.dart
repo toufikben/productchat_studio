@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
+import '../../core/constants.dart';
 import '../../services/billing_service.dart';
 
 class PaywallScreen extends StatefulWidget {
@@ -49,6 +50,25 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   ),
                 ),
               ),
+              if (!billingService.proService.isPro) ...[
+                const SizedBox(height: 8),
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.photo_outlined),
+                    title: const Text('Free monthly images'),
+                    subtitle: const Text(
+                      'PatchMatch-only tier with watermark',
+                    ),
+                    trailing: Text(
+                      '${billingService.freeQuota.remaining}/${AppConstants.freeMonthlyQuota}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
               const _SectionTitle('Lifetime'),
               _productSection(CreditProducts.lifetime),

@@ -159,11 +159,13 @@
 - [x] auto-expiry للاشتراك في حالة الخدمة المحلية.
 - [x] حفظ SHA-256 fingerprint لمرجع الشراء وعدم حفظ المرجع الخام.
 - [x] رفض تفعيل Lifetime من Boolean أو Product ID دون `serverVerificationData` صادر عن Billing.
-- [ ] restore يعيد فحص Google Play عند الاتصال ولا يعيد Credits المستهلكة محليًا.
+- [x] Billing يطلب `restorePurchases` عند بدء جلسة Billing؛ restored consumables لا تمنح Credits.
+- [ ] restore يزيل entitlement عند إثبات غياب Lifetime من Google Play.
 
 #### 5.3 Gates وتجربة المستخدم
 
-- [ ] Free: quota شهرية 3، PatchMatch فقط، watermark.
+- [x] إضافة عداد Free شهري دائم بحد 3 صور، مع تدوير تلقائي حسب UTC month وعرض المتبقي في Paywall.
+- [ ] Free: ربط العداد بمسار PatchMatch فعلي؛ العمليات الحالية غير PatchMatch ولا تُعلن كمدعومة للمجاني.
 - [ ] Pro/Lifetime: إزالة watermark، Batch بحد 100 صورة، Brand Identity، والميزات المعتمدة قانونيًا.
 - [ ] تقييد العمليات المذكورة في المواصفة كـPro-only فقط بعد تحديد مسار تنفيذها الفعلي.
 - [ ] Paywall بثلاثة أقسام: Lifetime، Subscriptions، Credits.

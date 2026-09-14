@@ -26,6 +26,12 @@
 
 إزالة الخلفية 1، shadow 1، enhance 2، conversational/inpaint 3، compliance 0، export 0. لا تخصم العملية قبل نجاحها، ولا تُسجل نتيجة فاشلة كنجاح.
 
+## Free quota وRestore المحلي
+
+يحتفظ التطبيق بعداد دائم مستقل عن Credits لثلاث صور مجانية في كل شهر UTC. عند تحميل شهر جديد يُصفّر العداد تلقائيًا، ولا يسمح العداد بطلبات صفرية أو تتجاوز الحد. يظهر المتبقي في Paywall. ما زال ربط العداد بعملية PatchMatch فعلية متبقيًا لأن العمليات الحالية ليست PatchMatch.
+
+عند بدء جلسة Billing يطلب التطبيق `restorePurchases`. أحداث restored للمنتجات الاستهلاكية تُرفض ولا تمنح Credits، بينما Lifetime يمكن حفظه محليًا بعد وجود `serverVerificationData` غير فارغ. فشل Restore لا يمسح entitlement محليًا، لأن التطبيق يعمل Local-first، لكن إعادة فحص الإبطال/الاسترداد الفوري تتطلب توفر Google Play.
+
 ## Billing v2 المطلوب
 
 - إضافة المنتج السادس `lifetime` بعد Play Console.

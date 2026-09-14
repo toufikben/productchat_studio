@@ -27,10 +27,10 @@
 | `editor.state` | نعم | نعم | جزئي | جزئي | لا | لا | history/undo/state؛ output runtime pending |
 | `batch` | نعم | نعم | جزئي | لا | لا | لا | UI/progress؛ pipeline يحتاج ربطًا بعمليات التحرير |
 | `storage` | نعم | جزئي | جزئي | جزئي | لا | لا | handoff يذكر SharedPreferences، والمواصفة المرفقة تقترح Hive؛ القرار الفعلي pending |
-| `billing.local` | نعم | نعم | جزئي | جزئي | لا | لا | Credits IDs وstream وlocal ledger؛ لا trusted backend |
+| `billing.local` | نعم | نعم | جزئي | Pending | لا | لا | Credits IDs وstream وlocal ledger وrestore عند init؛ الاختبارات لم تُشغل لغياب Flutter |
 | `billing.v2.catalog` | نعم | نعم | جزئي | Pending | لا | لا | IDs الستة وLifetime non-consumable وPaywall sections مضافة؛ Play Console/backend pending؛ الاختبار لم يُشغل لغياب Flutter |
 | `pro.entitlement` | نعم | جزئي | جزئي | Pending | لا | لا | `ProService` المحلي يدعم expiry/Lifetime/persistence؛ ليس server-authoritative بعد؛ الاختبار لم يُشغل |
-| `free.tier` | مواصفة فقط | لا | لا | لا | لا | لا | 3 صور/شهر، PatchMatch، watermark مطلوبة ولم تُثبت |
+| `free.tier` | نعم | جزئي | جزئي | Pending | لا | لا | عداد 3 صور/شهر وتدوير UTC وPaywall display مضافة؛ PatchMatch الفعلي والربط end-to-end متبقيان |
 | `lifetime` | مواصفة فقط | لا | لا | لا | لا | لا | منتج one-time غير منشأ وفق الأدلة المتاحة |
 | `chat` | نعم | نعم | جزئي | لا | لا | لا | يحتاج E2E image/mask/dispatch/result |
 | `history` | جزئي | جزئي | جزئي | لا | لا | لا | نص/تنفيذ مقترح؛ policy Free آخر 5 تحتاج إثباتًا |

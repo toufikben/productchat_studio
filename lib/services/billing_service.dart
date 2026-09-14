@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
+import 'free_quota_service.dart';
 import 'pro_service.dart';
 import 'storage_service.dart';
 
@@ -88,10 +89,12 @@ class BillingService extends ChangeNotifier {
   BillingService({InAppPurchase? store, StorageService? storage})
       : _store = store ?? InAppPurchase.instance,
         ledger = CreditsLedger(storage ?? storageService),
+        freeQuota = FreeQuotaService(storage: storage ?? storageService),
         proService = ProService(storage: storage ?? storageService);
 
   final InAppPurchase _store;
   final CreditsLedger ledger;
+  final FreeQuotaService freeQuota;
   final ProService proService;
   StreamSubscription<List<PurchaseDetails>>? _subscription;
   List<ProductDetails> products = const [];
@@ -132,6 +135,16 @@ class BillingService extends ChangeNotifier {
     if (response.error != null) error = response.error!.message;
     if (response.notFoundIDs.isNotEmpty) {
       error = 'Products not configured: ${response.notFoundIDs.join(', ')}';
+    }
+    // Ask Google Play for owned non-consumables/subscriptions on every fresh
+    // Billing session. Restored consumables are deliberately ignored by the
+    // purchase handler and never grant Credits.
+    try {
+      await _store.restorePurchases();
+    } catch (value) {
+      // A restore failure must not erase a cached local entitlement or block
+      // the rest of the offline-first app from opening.
+      error ??= 'Google Play restore unavailable: $value';
     }
     notifyListeners();
   }
