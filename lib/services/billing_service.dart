@@ -12,12 +12,12 @@ class CreditProducts {
   static const monthly = 'pro_monthly';
   static const yearly = 'pro_yearly';
 
+  /// Only one-time consumable packs have a credit amount.
+  /// Subscription purchases must never be treated as consumable credits.
   static const amounts = <String, int>{
     starter: 100,
     standard: 500,
     pro: 1200,
-    monthly: 600,
-    yearly: 9000,
   };
 
   static const consumableIds = <String>{starter, standard, pro};
@@ -150,12 +150,19 @@ class BillingService extends ChangeNotifier {
       } else if (purchase.status == PurchaseStatus.purchased ||
           purchase.status == PurchaseStatus.restored) {
         final purchaseId = purchase.purchaseID;
-        final amount = CreditProducts.creditsFor(purchase.productID);
-        if (purchaseId == null || amount == null) {
-          error = 'Purchase could not be verified.';
-        } else {
-          await ledger.addOnce(purchaseId: purchaseId, amount: amount);
+        // Subscriptions are entitlement events, not consumable credit packs.
+        // Their entitlement/renewal must be verified separately before any
+        // Pro feature or periodic credit grant is applied.
+        if (CreditProducts.isSubscription(purchase.productID)) {
           error = null;
+        } else {
+          final amount = CreditProducts.creditsFor(purchase.productID);
+          if (purchaseId == null || amount == null) {
+            error = 'Purchase could not be verified.';
+          } else {
+            await ledger.addOnce(purchaseId: purchaseId, amount: amount);
+            error = null;
+          }
         }
       }
       if (purchase.pendingCompletePurchase && purchase.status != PurchaseStatus.pending) {

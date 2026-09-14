@@ -9,7 +9,7 @@ ProductChat Studio is an Android-first Flutter foundation for conversational pro
 - LaMa ONNX and Real-ESRGAN `.pth` artifacts are present with recorded hashes and license notices.
 - Android source contains a LaMa ONNX path; Flutter analysis/tests and debug APK build are verified, but Android runtime/inference is still not verified because no device/emulator is available.
 - Real-ESRGAN inference is not implemented: the available artifact is `.pth` and the Kotlin method falls back to Bitmap scaling.
-- Editor AI stub is removed and operation contracts, cancellation, native timeout, sampled decode, and resource cleanup are implemented. Billing product IDs are wired to active Play Console products and subscriptions; Sandbox purchase execution, receipt verification, several screens, runtime integration tests, and release readiness remain incomplete as recorded in [`FEATURE_VERIFICATION_MATRIX.md`](docs/FEATURE_VERIFICATION_MATRIX.md) and [`ROADMAP.md`](ROADMAP.md).
+- Editor AI stub is removed and operation contracts, cancellation, native timeout, sampled decode, and resource cleanup are implemented. Billing product IDs are wired to active Play Console products; consumable packs alone can grant Credits, while subscription events are intentionally separated pending entitlement/receipt verification. Sandbox purchase execution, receipt verification, several screens, runtime integration tests, and release readiness remain incomplete as recorded in [`FEATURE_VERIFICATION_MATRIX.md`](docs/FEATURE_VERIFICATION_MATRIX.md) and [`ROADMAP.md`](ROADMAP.md).
 - The current environment has Flutter 3.47.4 and can produce a debug APK, but it has no Android device/emulator for runtime validation.
 
 ## P0–P2 completed for source/build validation
@@ -32,6 +32,6 @@ ProductChat Studio is an Android-first Flutter foundation for conversational pro
 2. Measure LaMa cold/warm latency, peak Java/native memory, cancellation, timeout recovery, and repeated-session stability.
 3. Complete image picker/mask creation and real batch/edit/history/storage flows.
 4. Decide whether Real-ESRGAN will use ONNX/NCNN or be labeled as a basic fallback.
-5. Run Internal testing purchases for Credits and subscriptions, then implement trusted receipt verification before treating Billing as production-ready.
+5. Run Internal testing purchases for Credits and subscriptions, verify that subscriptions never grant Credits without entitlement rules, then implement trusted receipt verification before treating Billing as production-ready.
 
 Do not add MI-GAN weights or claim production readiness without explicit license and runtime evidence. Do not commit model binaries, credentials, or signing keys.

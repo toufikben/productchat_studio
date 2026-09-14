@@ -109,7 +109,7 @@
 - [ ] اختبار النصوص الطويلة والثيمات.
 - [ ] إضافة Semantics وأحجام لمس مناسبة.
 
-### 9. Credits والدفع — متبقٍ
+### 9. Credits والدفع — Sprint 4 قيد التنفيذ
 
 - [x] ربط `in_app_purchase` وpurchase stream.
 - [x] تعريف product IDs في كود التطبيق.
@@ -117,6 +117,7 @@
 - [x] اعتماد الأسعار: 0.99/3.99/7.99 USD للـ Credits و4.99 شهريًا/39.99 سنويًا لـ Pro.
 - [x] خصم الرصيد بعد نجاح العملية فقط.
 - [x] منع منح الرصيد مرتين لنفس purchase ID.
+- [x] فصل الاشتراكات عن حزم Credits؛ الاشتراك لا يمنح رصيدًا تلقائيًا قبل تحقق entitlement/backend.
 - [x] إضافة Paywall وواجهة restore.
 - [x] إنشاء مسودة التطبيق في Google Play Console بالمعرف `com.productchat.aiphotostudio`.
 - [x] تحديد أسعار Credits ومزايا وفترات الاشتراك قبل إنشاء المنتجات المالية.
@@ -126,6 +127,8 @@
 - [ ] اختبار الشراء والاستعادة في Internal testing على جهاز وحساب اختبار مرخّص.
 - [ ] إضافة receipt verification/backend ledger للـ consumables واستعادتها عبر الأجهزة.
 - [ ] إضافة طبقة iOS StoreKit لاحقًا.
+
+**Sprint 4 — Billing correctness hardening (2026-09-14):** اكتمل تصحيح الخلل الذي كان يربط `pro_monthly` و`pro_yearly` بمبالغ Credits محلية؛ أصبحت هذه المنتجات entitlement events فقط، بينما تمنح Credits حزم consumable المعروفة وحدها. تم تحديث اختبارات catalog وواجهة Paywall. المتبقي: اختبارات purchase stream الفعلية على Internal testing، تحديد Pro entitlement/renewal/expiry، ثم receipt verification وbackend ledger قبل الإنتاج.
 
 **قرار الإعلانات:** لا تُضاف AdMob في الإصدار الحالي. لا يوجد بند إعلانات في خارطة المنتج، والاعتماد على Credits/اشتراك يحافظ على تجربة تحرير الصور والخصوصية المحلية. يُعاد تقييم AdMob فقط إذا ظهرت حاجة تجارية مثبتة.
 

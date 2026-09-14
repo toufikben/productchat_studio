@@ -69,7 +69,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
               ? '${product.title} — Pro subscription'
               : product.title),
           subtitle: Text(
-              '${CreditProducts.amounts[product.id] ?? 0} credits ${CreditProducts.isSubscription(product.id) ? 'per period' : ''}'),
+              CreditProducts.isSubscription(product.id)
+                  ? 'Subscription entitlement; Pro access is verified separately'
+                  : '${CreditProducts.amounts[product.id] ?? 0} credits'),
           trailing: FilledButton(
             onPressed: billingService.loading ? null : () => billingService.buy(product),
             child: Text(product.price),

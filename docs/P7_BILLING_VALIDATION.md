@@ -15,8 +15,7 @@ The subscriptions `pro_monthly` and `pro_yearly` were also created. Their auto-r
   - `credits_100` → 100 credits
   - `credits_500` → 500 credits
 - `credits_1200` → 1200 credits
-- `pro_monthly` → 600 credits per month plus Pro features
-- `pro_yearly` → 9000 credits per year plus Pro features
+- `pro_monthly` و`pro_yearly` → subscription entitlement events فقط؛ لا تُحوّل محليًا إلى Credits
 - Product details are queried from the store.
 - The purchase stream is subscribed to once during service initialization.
 - `pending` purchases do not grant credits.
@@ -30,7 +29,7 @@ The subscriptions `pro_monthly` and `pro_yearly` were also created. Their auto-r
 - Failed native operations do not deduct credits.
 - `/credits` opens the Paywall screen.
 - Paywall displays available balance, configured products, purchase errors, pending state, and restore action.
-- Purchase handling accepts both `purchased` and `restored` events, rejects blank transaction IDs, exposes the last purchase state/product for UI diagnostics, and keeps loading/error state consistent across stream errors.
+- Purchase handling accepts both `purchased` and `restored` events for diagnostics; only recognized consumable packs with a non-null transaction ID reach the Credits ledger. Subscription events do not grant Credits until entitlement and renewal rules are implemented and verified.
 
 ## Important platform boundary
 
@@ -45,11 +44,11 @@ The approved commercial proposal is 0.99 USD for 100 credits, 3.99 USD for 500 c
 | Check | Result |
 |---|---|
 | `flutter analyze` | Passed — no issues |
-| `flutter test` | Passed — 10 tests |
+| `flutter test` | Pending in current sandbox; latest GitHub run `34808617491` passed before this hardening change |
 | Credits duplicate-grant tests | Passed |
 | Negative-balance protection test | Passed |
 | Google Play product configuration | Passed for three Active Credits products plus Active `pro_monthly` and `pro_yearly` base plans |
 | Release AAB `1.0.2+3` | Passed — GitHub Actions run `34807820712`; analyze, tests, signed build, and artifact upload completed; downloaded AAB is approximately 76MB |
 | Google Play Sandbox purchase | Pending test device/test account |
 | Receipt/server verification | Pending; not claimed as implemented |
-| Production product configuration | Products and subscription base plans created/activated; purchase execution remains pending on a licensed test device |
+| Production product configuration | Products and subscription base plans created/activated; purchase execution and entitlement verification remain pending on a licensed test device |

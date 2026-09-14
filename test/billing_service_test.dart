@@ -40,7 +40,13 @@ void main() {
     expect(CreditProducts.isSubscription(CreditProducts.monthly), isTrue);
     expect(CreditProducts.isSubscription(CreditProducts.yearly), isTrue);
     expect(CreditProducts.isSubscription(CreditProducts.standard), isFalse);
-    expect(CreditProducts.creditsFor(CreditProducts.monthly), 600);
-    expect(CreditProducts.creditsFor(CreditProducts.yearly), 9000);
+    expect(CreditProducts.creditsFor(CreditProducts.monthly), isNull);
+    expect(CreditProducts.creditsFor(CreditProducts.yearly), isNull);
+  });
+
+  test('subscription products never map to consumable credits', () {
+    expect(CreditProducts.amounts.keys, containsAll(CreditProducts.consumableIds));
+    expect(CreditProducts.amounts.keys, isNot(contains(CreditProducts.monthly)));
+    expect(CreditProducts.amounts.keys, isNot(contains(CreditProducts.yearly)));
   });
 }
