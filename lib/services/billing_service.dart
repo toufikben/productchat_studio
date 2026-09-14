@@ -87,12 +87,13 @@ class CreditsLedger {
 
 class BillingService extends ChangeNotifier {
   BillingService({InAppPurchase? store, StorageService? storage})
-      : _store = store ?? InAppPurchase.instance,
+      : _store = store,
         ledger = CreditsLedger(storage ?? storageService),
         freeQuota = FreeQuotaService(storage: storage ?? storageService),
         proService = ProService(storage: storage ?? storageService);
 
-  final InAppPurchase _store;
+  final InAppPurchase? _store;
+  InAppPurchase get _storeOrDefault => _store ?? InAppPurchase.instance;
   final CreditsLedger ledger;
   final FreeQuotaService freeQuota;
   final ProService proService;
@@ -116,7 +117,8 @@ class BillingService extends ChangeNotifier {
 
   Future<void> init() async {
     if (_subscription != null) return;
-    _subscription = _store.purchaseStream.listen(
+    final store = _storeOrDefault;
+    _subscription = store.purchaseStream.listen(
       _handlePurchases,
       onError: (Object value) {
         error = value.toString();
@@ -124,13 +126,13 @@ class BillingService extends ChangeNotifier {
         notifyListeners();
       },
     );
-    available = await _store.isAvailable();
+    available = await store.isAvailable();
     if (!available) {
       error = 'Google Play Billing is unavailable on this device.';
       notifyListeners();
       return;
     }
-    final response = await _store.queryProductDetails(CreditProducts.ids);
+    final response = await store.queryProductDetails(CreditProducts.ids);
     products = response.productDetails;
     if (response.error != null) error = response.error!.message;
     if (response.notFoundIDs.isNotEmpty) {
@@ -140,7 +142,7 @@ class BillingService extends ChangeNotifier {
     // Billing session. Restored consumables are deliberately ignored by the
     // purchase handler and never grant Credits.
     try {
-      await _store.restorePurchases();
+      await store.restorePurchases();
     } catch (value) {
       // A restore failure must not erase a cached local entitlement or block
       // the rest of the offline-first app from opening.
@@ -157,8 +159,8 @@ class BillingService extends ChangeNotifier {
     try {
       final purchaseParam = PurchaseParam(productDetails: product);
       final sent = CreditProducts.isEntitlement(product.id)
-          ? await _store.buyNonConsumable(purchaseParam: purchaseParam)
-          : await _store.buyConsumable(
+          ? await _storeOrDefault.buyNonConsumable(purchaseParam: purchaseParam)
+          : await _storeOrDefault.buyConsumable(
               purchaseParam: purchaseParam,
               autoConsume: true,
             );
@@ -177,7 +179,7 @@ class BillingService extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
-      await _store.restorePurchases();
+      await _storeOrDefault.restorePurchases();
     } catch (value) {
       error = value.toString();
     } finally {
@@ -235,7 +237,7 @@ class BillingService extends ChangeNotifier {
       }
       if (purchase.pendingCompletePurchase &&
           purchase.status != PurchaseStatus.pending) {
-        await _store.completePurchase(purchase);
+        await _storeOrDefault.completePurchase(purchase);
       }
       notifyListeners();
     }

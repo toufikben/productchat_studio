@@ -11,12 +11,15 @@ class ChatController {
   final String? imagePath;
   final String? maskPath;
   final SeikaService _seika;
+  final BillingService _billing;
 
   ChatController({
     required this.imagePath,
     this.maskPath,
     SeikaService? seika,
-  }) : _seika = seika ?? SeikaService();
+    BillingService? billing,
+  })  : _seika = seika ?? SeikaService(),
+        _billing = billing ?? billingService;
 
   Future<EditResult> dispatch(EditRequest req) => _dispatch(req);
 
@@ -26,13 +29,13 @@ class ChatController {
       return const EditResult.failure('Select an image before editing.');
     }
 
-    if (!billingService.proService.isPro) {
+    if (!_billing.proService.isPro) {
       if (req.op != EditOp.removeBg) {
         return const EditResult.failure(
           'Free tier supports PatchMatch background removal only; conversational edits require a mask and Pro.',
         );
       }
-      if (!billingService.freeQuota.canUse()) {
+      if (!_billing.freeQuota.canUse()) {
         return const EditResult.failure(
           'Free monthly quota is exhausted. Upgrade to Pro to continue.',
         );
@@ -43,7 +46,7 @@ class ChatController {
       if (watermarked == null) {
         return const EditResult.failure('Unable to apply the Free watermark.');
       }
-      final consumed = await billingService.freeQuota.consume();
+      final consumed = await _billing.freeQuota.consume();
       if (!consumed) {
         return const EditResult.failure('Free monthly quota changed during processing.');
       }
