@@ -14,3 +14,5 @@ android/local.properties
 .env
 *.jks
 *.keystore
+android/key.properties
+android/app/upload-keystore.jks

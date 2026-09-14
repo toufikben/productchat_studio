@@ -27,14 +27,14 @@
 | `editor.state` | `editor_controller.dart`, `ai_service.dart` | نعم | نعم | جزئي | جزئي | لا | لا | Stub removed; operations return explicit `EditResult`; native runtime still unverified |
 | `batch.basic` | `batch_service.dart`, `batch_screen.dart` | نعم | نعم | جزئي | لا | لا | لا | ينسخ الملفات إلى temp ولا يطبق editing pipeline |
 | `storage` | `storage_service.dart` | نعم | لا | لا | لا | لا | لا | Map في الذاكرة فقط |
-| `billing` | `billing_service.dart`, dependency | جزئي | لا | لا | لا | لا | لا | `init` فارغ ولا purchase flow |
+| `billing` | `billing_service.dart`, `paywall_screen.dart`, dependency | نعم | نعم | جزئي | جزئي | لا | Purchase stream وledger idempotent واختبارات الرصيد موجودة؛ Play Console products وSandbox وreceipt verification غير منفذة |
 | `chat` | `chat_controller.dart`, `chat_screen.dart` | نعم | نعم | جزئي | لا | لا | لا | يحتاج فحص flow وصور ونتائج حقيقية |
 | `onboarding` | `onboarding_screen.dart` | نعم | لا | لا | لا | لا | لا | `Feature scaffold` |
 | `settings` | settings screens | نعم | لا | لا | لا | لا | لا | عدة شاشات نصية/Scaffold |
 | `history` | `history_screen.dart` | نعم | لا | لا | لا | لا | لا | نص فقط وتخزين غير موجود |
 | `compliance` | `compliance_service.dart`, screen | نعم | جزئي | جزئي | لا | لا | لا | قائمة منصات ثابتة؛ UI scaffold |
 | `localization` | `app_en.arb`, `app_ar.arb` | نعم | جزئي | جزئي | لا | لا | لا | لغتان ظاهرتان؛ RTL/overflow غير مختبر |
-| `android.build` | Android files | نعم | نعم | نعم | نعم | لا | لا | Flutter 3.47.4؛ analyze/test passed؛ debug APK built; no Android device/emulator available |
+| `android.build` | Android files | نعم | نعم | جزئي | نعم | لا | لا | Release signing يعتمد على `android/key.properties` المحلي؛ INTERNET في main Manifest؛ يلزم بناء AAB موقع واختبار Internal Testing؛ لا يوجد Android device/emulator متاح |
 | `privacy.terms` | feature files | جزئي | لا | لا | لا | لا | لا | لا توجد سياسة مكتملة داخل المسار المنتج |
 
 ## Rules for updates

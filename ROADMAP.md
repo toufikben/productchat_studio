@@ -2,7 +2,7 @@
 
 > **مصدر الحقيقة للتحقق:** [`docs/MODEL_INVENTORY.md`](docs/MODEL_INVENTORY.md) و[`docs/FEATURE_VERIFICATION_MATRIX.md`](docs/FEATURE_VERIFICATION_MATRIX.md). وجود بند هنا لا يعني أنه runtime-verified؛ الحالة لا تُرفع إلا بدليل قابل لإعادة الإنتاج.
 
-> **آخر تحديث:** 2026-09-14 01:05 UTC
+> **آخر تحديث:** 2026-09-14 01:49 UTC
 > **الحالة:** Android-first؛ iOS وWeb مؤجلان عمدًا إلى ما بعد إصدار Android.
 
 ## طريقة استخدام هذه الخارطة
@@ -19,7 +19,7 @@
 | تحليل Dart | مكتمل حاليًا | `flutter analyze` بلا أخطاء بعد استعادة البيئة |
 | اختبارات Dart | ناجح حاليًا | `flutter test`: 7 اختبارات ناجحة، تشمل AI operation contracts |
 | Android Seika | مصدر/عقد/بناء مكتمل، runtime متبقٍ | LaMa graph والعقد والتحقق والـ cancellation والـ resource cleanup مضافة؛ يلزم جهاز/محاكي |
-| Android APK/AAB | APK debug مكتمل، الجهاز/release متبقٍ | `app-debug.apk` بُني بعد تثبيت `com.productchat.aiphotostudio`؛ لا يوجد جهاز أو محاكي في البيئة، وAAB/signing لاحقان |
+| Android APK/AAB | Sprint 1 منفذ جزئيًا، التحقق متبقٍ | Release يستخدم `android/key.properties` محليًا ويفشل بوضوح عند غيابه بدل Debug signing؛ أضيفت INTERNET إلى main Manifest؛ لا يوجد جهاز أو محاكي في البيئة |
 | P4 وظائف المنتج الأساسية | جزئي | image picker وفتح المحرر فعليان؛ mask/chat/batch/history ما زالت متبقية |
 | P5 التخزين والخصوصية | جزئي | SharedPreferences وLegal screen مضافان؛ cache retention وHistory/Settings الدائمين متبقيان |
 | P6 النماذج المتقدمة | قرار مكتمل، runtime متبقٍ | Real-ESRGAN fallback موثق؛ لا يوجد ONNX/NCNN backend، وMI-GAN معطل قانونيًا |
@@ -138,13 +138,16 @@
 - [ ] قياس الذاكرة والزمن وحجم التنزيل.
 - [ ] اختبار انقطاع الشبكة والتنزيل المتقطع.
 
-### 11. إعداد Android للإصدار — متبقٍ
+### 11. إعداد Android للإصدار — Sprint 1 قيد التنفيذ
 
+- [x] إضافة INTERNET إلى Manifest الأساسي للـ Release.
 - [ ] مراجعة Manifest والأذونات وFileProvider.
 - [ ] إعداد الأيقونات وSplash واسم الحزمة.
-- [ ] إنشاء Keystore خارج Git.
-- [ ] إعداد signing آمن.
+- [ ] إنشاء Keystore خارج Git (ينفذه مالك المشروع محليًا).
+- [x] إعداد signing آمن عبر `android/key.properties` دون أسرار في Git؛ بناء Release يفشل بوضوح عند غياب الملف.
 - [ ] فحص Google Play requirements.
+
+**Sprint 1 — بوابة الرفع الداخلي:** تم تحديث إعداد Release وCI وManifest، وتوثيق إعداد الأسرار في [`docs/RELEASE_SIGNING.md`](docs/RELEASE_SIGNING.md). المتبقي: إعداد Upload Key محليًا، تشغيل التحقق، بناء AAB، ثم رفعه إلى Internal Testing وتسجيل أخطاء Play Console.
 
 ### 11.1 بوابة قبول Android — متبقٍ قبل Release
 
@@ -213,6 +216,7 @@
 | 2026-09-13 | قرار النطاق | تأجيل iOS وWeb؛ المتبقي الحالي يقتصر على إكمال Android والتحقق منه وإعداده للإصدار |
 | 2026-09-14 | Play Console وpackage identity | إنشاء مسودة `AI Photo Studio Chat`، وتثبيت `com.productchat.aiphotostudio` في الكود وPlay Console؛ `com.productchat.studio` بقيت مسودة قديمة ولم تُحذف تلقائيًا |
 | 2026-09-14 | Monetization decision | اعتماد Credits مع اشتراك اختياري، وعدم إضافة AdMob حاليًا؛ أضيفت subscription IDs وميزات Pro المقترحة إلى Flutter، وإنشاء المنتجات ينتظر Play Console |
+| 2026-09-14 | Sprint 1 release hardening | إزالة Debug signing من Release، اعتماد `android/key.properties` المحلي مع فشل واضح عند غيابه، إضافة INTERNET إلى main Manifest، توحيد Flutter CI إلى 3.47.4، وإضافة وثيقة إعداد الأسرار؛ التحقق وبناء AAB والرفع الداخلي متبقية |
 
 ## قاعدة التحديث المستقبلية
 

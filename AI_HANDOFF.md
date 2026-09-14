@@ -9,7 +9,7 @@ ProductChat Studio is an Android-first Flutter foundation for conversational pro
 - LaMa ONNX and Real-ESRGAN `.pth` artifacts are present with recorded hashes and license notices.
 - Android source contains a LaMa ONNX path; Flutter analysis/tests and debug APK build are verified, but Android runtime/inference is still not verified because no device/emulator is available.
 - Real-ESRGAN inference is not implemented: the available artifact is `.pth` and the Kotlin method falls back to Bitmap scaling.
-- Editor AI stub is removed and operation contracts, cancellation, native timeout, sampled decode, and resource cleanup are implemented; storage, billing, several screens, runtime integration tests, and release readiness remain incomplete as recorded in [`FEATURE_VERIFICATION_MATRIX.md`](docs/FEATURE_VERIFICATION_MATRIX.md) and [`ROADMAP.md`](ROADMAP.md).
+- Editor AI stub is removed and operation contracts, cancellation, native timeout, sampled decode, and resource cleanup are implemented; storage, billing production verification, several screens, runtime integration tests, and release readiness remain incomplete as recorded in [`FEATURE_VERIFICATION_MATRIX.md`](docs/FEATURE_VERIFICATION_MATRIX.md) and [`ROADMAP.md`](ROADMAP.md).
 - The current environment has Flutter 3.47.4 and can produce a debug APK, but it has no Android device/emulator for runtime validation.
 
 ## P0–P2 completed for source/build validation
@@ -24,6 +24,7 @@ ProductChat Studio is an Android-first Flutter foundation for conversational pro
 - P5 added durable SharedPreferences storage and in-app privacy/terms route (`045669d`).
 - P6 documented the Real-ESRGAN fallback and MI-GAN licensing decision (`4133d45`).
 - P10 wired persisted Arabic/English locale, theme persistence, localization delegates, and basic semantics.
+- Sprint 1 release hardening added local `android/key.properties` signing with no Debug signing fallback, Release INTERNET permission, Flutter CI version alignment, and [`docs/RELEASE_SIGNING.md`](docs/RELEASE_SIGNING.md); AAB build and Internal Testing remain pending because signing secrets are intentionally supplied by the owner.
 
 ## Next execution order
 
