@@ -1,247 +1,265 @@
-# ProductChat Studio — خارطة الطريق الحية
+# ProductChat Studio — خارطة الطريق التنفيذية الموحدة
 
-> **مصدر الحقيقة للتحقق:** [`docs/MODEL_INVENTORY.md`](docs/MODEL_INVENTORY.md) و[`docs/FEATURE_VERIFICATION_MATRIX.md`](docs/FEATURE_VERIFICATION_MATRIX.md). وجود بند هنا لا يعني أنه runtime-verified؛ الحالة لا تُرفع إلا بدليل قابل لإعادة الإنتاج.
+> **الحالة المرجعية:** Android-first. لا تُرفع أي ميزة من «موجودة في المصدر» إلى «متحققة» أو «جاهزة للإصدار» دون دليل قابل لإعادة الإنتاج.
+>
+> **آخر تحديث:** 2026-09-14
+> **الفرع:** `main`
+> **الالتزام المرجعي قبل هذا التحديث:** `bcc8455`
+> **مصادر الحقيقة:** هذه الخارطة، `docs/FEATURE_VERIFICATION_MATRIX.md`، `docs/MODEL_INVENTORY.md`، ووثائق التحقق المرتبطة.
 
-> **آخر تحديث:** 2026-09-14 05:55 UTC
-> **الحالة:** Android-first؛ iOS وWeb مؤجلان عمدًا إلى ما بعد إصدار Android.
+## 1. قاعدة الحالة
 
-## طريقة استخدام هذه الخارطة
+| الحالة | المعنى |
+|---|---|
+| **موجود في المصدر** | يوجد ملف أو class أو artifact يمكن الإشارة إليه. |
+| **موصول** | يوجد مسار UI/controller إلى الخدمة أو الجسر. |
+| **قابل للتنفيذ** | لا يعتمد على stub ويُنتج السلوك المتوقع أو فشلًا صريحًا. |
+| **متحقق آليًا** | يوجد اختبار آلي ناجح مرتبط بالميزة. |
+| **متحقق على Android** | بُني التطبيق وشُغّل المسار على جهاز أو Emulator مع دليل مسجل. |
+| **جاهز للإصدار** | اجتاز التشغيل، الأداء، الأخطاء، الخصوصية، الترخيص، الدفع، التوقيع، وCI عند الحاجة. |
 
-هذه الوثيقة هي سجل العمل المركزي للمشروع. بعد كل مهمة مكتملة أو اكتشاف خطأ أو قرار تقني أو قانوني، تُحدَّث الحالة والملاحظات والاختبارات والالتزام المرتبط بها. لا تُعتبر أي ميزة مكتملة اعتمادًا على وجود واجهة فقط؛ يجب أن يكون لها تنفيذ واختبار موثق.
+وجود شاشة أو dependency أو model file لا يثبت اكتمال الميزة.
 
-## الحالة المختصرة
+## 2. قرار المنتج التجاري المعتمد من المواصفات المرفقة
 
-| المجال | الحالة | الملاحظة |
+### 2.1 الطبقات
+
+| الطبقة | ما يحصل عليه المستخدم | الحالة التصميمية |
 |---|---|---|
-| بيئة Flutter وAndroid | مكتمل للبناء المحلي | Flutter 3.47.4 وDart 3.13.3 وAndroid SDK 36 متاحة؛ `flutter analyze` و`flutter test` ناجحان |
-| تدقيق المستودع | مكتمل كجرد، جزئي كتنفيذ | الجرد ومصفوفة التحقق محدثان؛ ما زالت شاشات وخدمات تحتاج تنفيذًا إنتاجيًا |
-| Hugging Face | مكتمل كوجود، جزئي كتكامل | المستودع العام موجود وفيه LaMa وReal-ESRGAN؛ MI-GAN متوقف قانونيًا، وReal-ESRGAN غير موصول runtime |
-| تحليل Dart | مكتمل حاليًا | `flutter analyze` بلا أخطاء بعد استعادة البيئة |
-| اختبارات Dart | ناجح حاليًا | `flutter test`: 7 اختبارات ناجحة، تشمل AI operation contracts |
-| Android Seika | مصدر/عقد/بناء مكتمل، runtime متبقٍ | LaMa graph والعقد والتحقق والـ cancellation والـ resource cleanup مضافة؛ يلزم جهاز/محاكي |
-| Android APK/AAB | AAB الإصدار `1.0.2+3` مبني وموقع | Workflow `34807820712` نجح في `flutter analyze` و`flutter test` وبناء ورفع Artifact؛ يتبقى رفع `app-release.aab` إلى Internal testing والتحقق من قبول Upload Key |
-| P4 وظائف المنتج الأساسية | جزئي | image picker وفتح المحرر فعليان؛ mask/chat/batch/history ما زالت متبقية |
-| P5 التخزين والخصوصية | جزئي | SharedPreferences وLegal screen مضافان؛ cache retention وHistory/Settings الدائمين متبقيان |
-| P6 النماذج المتقدمة | قرار مكتمل، runtime متبقٍ | Real-ESRGAN fallback موثق؛ لا يوجد ONNX/NCNN backend، وMI-GAN معطل قانونيًا |
-| P10 اللغات والوصول | جزئي | العربية/الإنجليزية وRTL wiring وSemantics أساسية؛ 16 لغة واختبارات شاملة متبقية |
-| P7 Credits والدفع | المنتجات والاشتراكات مفعلة، Sandbox متبقية | `credits_100` و`credits_500` و`credits_1200` و`pro_monthly` و`pro_yearly` مفعلة في Play Console؛ الكود محدث إلى `1.0.2+3`؛ اختبار Sandbox والتحقق الخلفي متبقيان |
-| الإعلانات | غير مخطط لها حاليًا | لا توجد AdMob SDK أو وحدات إعلانية؛ النموذج التجاري الحالي Credits مع اشتراك اختياري، والإعلانات ستضر بتجربة محرر صور محلي ولم تُطلب في الخارطة |
-| iOS | مؤجل | لن يدخل في نطاق الإصدار الحالي |
-| Web | مؤجل | لن يدخل في نطاق الإصدار الحالي |
+| **Free** | 3 صور شهريًا، PatchMatch فقط، مع علامة مائية | مواصفة مطلوبة؛ لم تُنفذ كاملة بعد |
+| **Pro** | صور غير محدودة، النماذج المتاحة قانونيًا، دون علامة مائية، Batch، Brand Identity | مواصفة مطلوبة؛ entitlement وgates غير مكتملة |
+| **Lifetime** | كل مزايا Pro إلى الأبد | مواصفة مطلوبة؛ منتج Google Play لم يُنشأ بعد |
 
-## خارطة الطريق المرقمة
+**قيد قانوني:** عبارة «كل النماذج» لا تشمل MI-GAN أو أي نموذج غير مرخص. MI-GAN يبقى معطلًا حتى تصريح واضح لإعادة التوزيع التجاري، وReal-ESRGAN لا يُسمى AI inference ما دام artifact المتاح `.pth` غير موصول.
 
-### 1. تأسيس بيئة البناء — مكتمل
+### 2.2 منتجات Google Play والأسعار المرجعية
 
-- [x] تثبيت Flutter وDart.
-- [x] تثبيت Android SDK وPlatform Tools وBuild Tools.
-- [x] تثبيت Clang وCMake وNinja لدعم Native hooks.
-- [x] قبول تراخيص Android.
-- [x] تشغيل `flutter pub get` و`flutter gen-l10n`.
+الأسعار التالية هي المواصفة التجارية المرفقة، بينما السعر النهائي المعروض للمستخدم يجب أن يأتي من `ProductDetails.price` ومن إعدادات Google Play الإقليمية:
 
-**التحقق:** `flutter analyze` و`flutter test` ناجحان.
+| المنتج | Product ID | النوع | السعر المرجعي |
+|---|---|---|---:|
+| Pro Monthly | `pro_monthly` | اشتراك auto-renewing | `$4.99/month` |
+| Pro Yearly | `pro_yearly` | اشتراك auto-renewing | `$29.99/year` |
+| 100 Credits | `credits_100` | One-time consumable | `$4.99` |
+| 500 Credits | `credits_500` | One-time consumable | `$19.99` |
+| 1200 Credits | `credits_1200` | One-time consumable | `$39.99` |
+| Lifetime Access | `lifetime` | One-time non-consumable | `$79.99` أو ما يضبطه Play إقليميًا؛ المواصفة المرفقة تذكر نحو `22,000 DZD` للجزائر |
 
-### 2. تدقيق المستودع والاعتماديات — مكتمل
+**تعارض يجب اعتباره مغلقًا في التوثيق:** الأسعار القديمة `$0.99/$3.99/$7.99` لـCredits و`$39.99/year` لـPro Yearly لم تعد هي المواصفة التجارية المستهدفة بعد وصول Billing v2. لا يعني ذلك أن Play Console محدث؛ يلزم إجراء بشري لمراجعة الأسعار هناك.
 
-- [x] فحص بنية الملفات الأساسية.
-- [x] إصلاح تعارض `intl` مع Flutter 3.47.4.
-- [x] إزالة مولدات الكود غير المستخدمة والمتعارضة مع Dart 3.13.
-- [x] تسجيل الفجوات في `docs/BUILD_AND_REPOSITORY_AUDIT.md`.
-- [x] منع ملفات Flutter المؤقتة من Git.
+### 2.3 اقتصاد Credits
 
-### 3. مستودع النماذج والتراخيص — مكتمل جزئيًا
+| العملية | التكلفة |
+|---|---:|
+| إزالة الخلفية | 1 Credit |
+| إضافة ظل | 1 Credit |
+| تحسين/Enhance | 2 Credits |
+| تحرير محادثي / Inpaint | 3 Credits |
+| فحص التوافق | 0 Credits |
+| التصدير | 0 Credits |
 
-- [x] إنشاء [Toufikben/productchat-models](https://huggingface.co/Toufikben/productchat-models).
-- [x] رفع `lama_fp32.onnx`.
-- [x] رفع `RealESRGAN_x4plus.pth`.
-- [x] رفع ملفات التراخيص وبطاقة النموذج.
-- [x] تسجيل بصمات SHA-256.
-- [ ] الحصول على تصريح واضح لإعادة توزيع أوزان MI-GAN التجارية — قرار قانوني خارجي.
-- [ ] رفع MI-GAN بعد التحقق من الترخيص فقط — مؤجل وليس مانعًا لإصدار Android الأساسي.
+القاعدة الذهبية: لا يُخصم الرصيد قبل نجاح العملية، ولا يُمنح رصيد شراء نهائيًا اعتمادًا على callback محلي فقط قبل Receipt Verification خادمي.
 
-### 4. ربط التطبيق بمستودع النماذج — مكتمل جزئيًا
+## 3. الحالة الحالية المختصرة
 
-- [x] ربط رابط LaMa الحقيقي.
-- [x] ربط رابط Real-ESRGAN الحقيقي.
-- [x] تعطيل رابط MI-GAN الوهمي بدل توزيعه دون ترخيص.
-- [x] إضافة Model Manager فعلي للتنزيل والاستئناف والتحقق من checksum.
-- [x] إضافة حذف وإعادة تنزيل النماذج.
-- [x] إضافة جاهزية Offline بعد اكتمال التنزيل.
-
-### 5. محرك Seika وONNX — مصدره مكتمل، runtime متبقٍ
-
-- [x] إنشاء `SeikaService` في Dart.
-- [x] إنشاء MethodChannel Android.
-- [x] إضافة Baseline محلي للمعالجة.
-- [x] دمج ONNX Runtime فعليًا داخل Android.
-- [x] تشغيل LaMa ONNX بالقناع الحقيقي.
-- [ ] تشغيل Real-ESRGAN أو نسخة ONNX/NCNN مناسبة لـ Android؛ الملف الحالي `.pth` وليس ONNX.
-- [ ] دمج MI-GAN أو بديله بعد الحسم القانوني — اختياري للإصدار الأساسي.
-- [x] تنفيذ CPU/NNAPI fallback مبدئي مع `RunOptions` للإلغاء والمهلة.
-- [x] إضافة حدود الذاكرة وتصغير الصور الكبيرة وتنظيف الموارد المؤقتة.
-- [x] إضافة verification cache للنموذج، cancellation، وnative hard timeout.
-- [ ] تنفيذ Integration Tests على Android والتحقق من inference والذاكرة والزمن.
-
-### 6. إكمال واجهات Android — متبقٍ
-
-- [ ] تحويل الشاشات المتبقية من Scaffold إلى شاشات وظيفية.
-- [ ] إكمال Onboarding.
-- [ ] إكمال Paywall وCredits.
-- [ ] إكمال Compliance وRecipes وSettings.
-- [ ] إكمال Chat UI وربطه بمسار التعديل.
-- [x] إكمال المحرر والطبقات وUndo/Redo وBefore/After — تنفيذ v4.
-- [ ] إضافة الخلفيات والظلال والإضاءة والتصدير.
-- [x] إضافة Batch الأساسي ومعالجة التقدم — تنفيذ v4.
-- [ ] إكمال History وBrand Identity.
-
-### 7. التخزين والخصوصية — متبقٍ
-
-- [ ] ربط التخزين المحلي فعليًا بالتاريخ والإعدادات والأرصدة.
-- [ ] إدارة الملفات المؤقتة والملفات المحفوظة.
-- [ ] إضافة Privacy Policy وTerms داخل التطبيق.
-- [ ] التأكد من عدم رفع صور المستخدمين دون موافقة.
-- [ ] اختبار Offline والخصوصية.
-
-### 8. اللغات وإمكانية الوصول — متبقٍ
-
-- [ ] إكمال اللغات الـ16.
-- [ ] اختبار RTL للعربية والفارسية والأردية.
-- [ ] اختبار النصوص الطويلة والثيمات.
-- [ ] إضافة Semantics وأحجام لمس مناسبة.
-
-### 9. Credits والدفع — Sprint 4 قيد التنفيذ
-
-- [x] ربط `in_app_purchase` وpurchase stream.
-- [x] تعريف product IDs في كود التطبيق.
-- [x] تعريف `pro_monthly` و`pro_yearly` واستخدام purchase API المناسب للاشتراكات.
-- [x] اعتماد الأسعار: 0.99/3.99/7.99 USD للـ Credits و4.99 شهريًا/39.99 سنويًا لـ Pro.
-- [x] خصم الرصيد بعد نجاح العملية فقط.
-- [x] منع منح الرصيد مرتين لنفس purchase ID.
-- [x] فصل الاشتراكات عن حزم Credits؛ الاشتراك لا يمنح رصيدًا تلقائيًا قبل تحقق entitlement/backend.
-- [x] إضافة Paywall وواجهة restore.
-- [x] إنشاء مسودة التطبيق في Google Play Console بالمعرف `com.productchat.aiphotostudio`.
-- [x] تحديد أسعار Credits ومزايا وفترات الاشتراك قبل إنشاء المنتجات المالية.
-- [x] إنشاء وتفعيل `credits_100` و`credits_500` و`credits_1200` في Google Play Console؛ الحالة Active ومتاحة في 173 دولة/منطقة.
-- [x] تعريف subscription products في الكود قبل إنشائها في Play Console.
-- [x] إنشاء وتفعيل `pro_monthly` و`pro_yearly` في Google Play Console؛ الخطتان `monthly` و`yearly` من نوع auto-renewing ومفعّلتان.
-- [x] تأكيد مرئي من Play Console بتاريخ 2026-09-14 لظهور حزم Credits الثلاث والاشتراكين مع Active purchase/base plan؛ الدليل يثبت إعداد Play Console فقط، وليس الشراء داخل التطبيق.
-- [x] تدقيق ربط الواجهة: Paywall يعرض المنتجات الخمسة ويرسل الاشتراكات عبر `buyNonConsumable` وحزم Credits عبر `buyConsumable`.
-- [ ] تنفيذ `ProEntitlement` وربط الاشتراك بميزات Pro فعلية؛ لا يوجد حاليًا فتح Pro أو منح Credits دورية للاشتراك.
-- [ ] إضافة اختبارات PurchaseDetails/stream وواجهة Pro بعد تحديد مزايا الاشتراك وسياسة الانتهاء/الإلغاء.
-- [ ] اختبار الشراء والاستعادة في Internal testing على جهاز وحساب اختبار مرخّص.
-- [ ] إضافة receipt verification/backend ledger للـ consumables واستعادتها عبر الأجهزة.
-- [ ] إضافة طبقة iOS StoreKit لاحقًا.
-
-**Sprint 4 — Billing correctness hardening (2026-09-14, commit `1c21e3d`):** اكتمل تصحيح الخلل الذي كان يربط `pro_monthly` و`pro_yearly` بمبالغ Credits محلية؛ أصبحت هذه المنتجات entitlement events فقط، بينما تمنح Credits حزم consumable المعروفة وحدها. تم تحديث اختبارات catalog وواجهة Paywall. المتبقي: اختبارات purchase stream الفعلية على Internal testing، تحديد Pro entitlement/renewal/expiry، ثم receipt verification وbackend ledger قبل الإنتاج.
-
-**Play Console evidence (2026-09-14):** لقطات الشاشة المرسلة تؤكد أن `credits_100` و`credits_500` و`credits_1200` موجودة ضمن **One-time products**، وأن `pro_monthly` و`pro_yearly` موجودتان ضمن **Subscriptions** ولكل منهما Base Plan مفعّل. لا تُرفع حالة Android verified أو purchase verified قبل تثبيت التطبيق من Internal Testing وتشغيل شراء فعلي.
-
-**UI wiring audit (2026-09-14):** تم العثور على ربط Paywall و`BillingService` بالمنتجات والشراء، لكن لم يُعثر على `proEntitled` أو gate لميزات Pro داخل التطبيق؛ لذلك الاشتراكات حاليًا قابلة للشراء فقط، وليست ميزة Pro مكتملة.
-
-**قرار الإعلانات:** لا تُضاف AdMob في الإصدار الحالي. لا يوجد بند إعلانات في خارطة المنتج، والاعتماد على Credits/اشتراك يحافظ على تجربة تحرير الصور والخصوصية المحلية. يُعاد تقييم AdMob فقط إذا ظهرت حاجة تجارية مثبتة.
-
-### 10. الاختبارات والأداء — Sprint 5 / P8 قيد التنفيذ
-
-- [ ] توسيع اختبارات Smart Analysis.
-- [x] إضافة اختبارات contract لـ Seika/AI/Model Manager.
-- [ ] إضافة اختبارات MethodChannel وIntegration Tests على Android.
-- [ ] بناء APK Debug وRelease وAAB.
-- [ ] اختبار جهاز Android منخفض ومتوسط وحديث.
-- [ ] قياس الذاكرة والزمن وحجم التنزيل.
-- [ ] اختبار انقطاع الشبكة والتنزيل المتقطع.
-
-**Sprint 5 / P8 (2026-09-14):** بدأ العمل بتعريف بروتوكول benchmark وسجل أدلة في [`docs/P8_PERFORMANCE_BENCHMARK.md`](docs/P8_PERFORMANCE_BENCHMARK.md)، وبخطة تنفيذ خادم Receipt Verification في [`docs/SPRINT5_RECEIPT_VERIFICATION_EXECUTION_PLAN.md`](docs/SPRINT5_RECEIPT_VERIFICATION_EXECUTION_PLAN.md). لا توجد نتائج Android runtime بعد؛ cold/warm inference، cancellation/timeout، memory profiling، CPU/NNAPI، و30–100 عملية متتابعة ما زالت تتطلب جهازًا أو Emulator.
-
-### 11. إعداد Android للإصدار — Sprint 1 قيد التنفيذ
-
-- [x] إضافة INTERNET إلى Manifest الأساسي للـ Release.
-- [ ] مراجعة Manifest والأذونات وFileProvider.
-- [ ] إعداد الأيقونات وSplash واسم الحزمة.
-- [ ] إنشاء Keystore خارج Git (ينفذه مالك المشروع محليًا).
-- [x] إعداد signing آمن عبر `android/key.properties` دون أسرار في Git؛ بناء Release يفشل بوضوح عند غياب الملف.
-- [ ] فحص Google Play requirements.
-
-**Sprint 1 — بوابة الرفع الداخلي:** تم تحديث إعداد Release وCI وManifest، وإضافة Workflow توقيع، وتشغيل `flutter analyze` و`flutter test` وبناء AAB Release موقع بنجاح. تم تنزيل Artifact `productchat-studio-release-aab` والتحقق من وجود `app-release.aab` بحجم يقارب 76MB. المتبقي: رفعه إلى Internal Testing، وتسجيل أخطاء Play Console أو بدء اختبار التطبيق.
-
-**تصحيح خطأ الرفع القديم:** رسالة Play Console كانت تخص `app-release.aab` سابقًا يستهدف API 34 ويضم Play Core 1.10.3. تم رفع `targetSdk` في المصدر إلى 36، وبُني AAB جديد بالإصدار `1.0.2+3`. يجب رفع Artifact الجديد فقط وعدم إعادة رفع الملف القديم. مشكلة Upload Key السابقة ما زالت تحتاج تأكيدًا عند الرفع؛ إذا تكرر الرفض سنستخدم المفتاح الأصلي أو نطلب Reset Upload Key من Play Console.
-
-### 11.1 بوابة قبول Android — متبقٍ قبل Release
-
-- [ ] تشغيل LaMa cold/warm على emulator أو جهاز حقيقي.
-- [ ] اختبار cancellation أثناء `session.run` وhard timeout.
-- [ ] اختبار 30–100 inference مع heap/native profiling.
-- [ ] التحقق من output image quality وportrait/landscape.
-- [ ] قياس latency وpeak memory وCPU/NNAPI.
-- [ ] تنظيف cache files وتحديد retention policy.
-
-### 11.2 إكمال المنتج الأساسي — متبقٍ قبل Release
-
-- [ ] إكمال image picker وmask creation وربطهما بالـ Chat/Editor.
-- [ ] تطبيق editing pipeline الحقيقي في Batch بدل نسخ الملفات فقط.
-- [ ] ربط History وSettings وBrand Identity بتخزين دائم.
-- [ ] إكمال Privacy Policy وTerms وCompliance flow.
-- [ ] تحديد استراتيجية Real-ESRGAN: ONNX/NCNN أو إعلان fallback بوضوح.
-- [x] تنفيذ Credits وGoogle Play Billing وربط product IDs والاشتراكات الفعلية.
-- [ ] تنفيذ اختبار Sandbox/بيئة Internal testing وتوثيق purchase callbacks.
-
-### 12. iOS — مؤجل
-
-- [ ] إنشاء Seika bridge لـ iOS.
-- [ ] اختبار Core ML/ONNX Runtime.
-- [ ] إعداد Camera وPhoto Library permissions.
-- [ ] ربط StoreKit.
-- [ ] إعداد signing وBundle Identifier.
-- [ ] بناء IPA واختباره على جهاز حقيقي.
-
-### 13. Web — مؤجل
-
-- [ ] بناء Web.
-- [ ] تحديد عمليات ONNX Runtime Web الممكنة.
-- [ ] توفير fallback للميزات Native.
-- [ ] اختبار الرفع والتصدير والنشر.
-
-### 14. التوثيق وCI/CD — قيد التوسع
-
-- [x] توثيق تدقيق البناء والمستودع.
-- [x] توثيق نماذج Hugging Face وتراخيصها.
-- [ ] إضافة تقارير الأداء والأجهزة.
-- [ ] إضافة GitHub Actions للتحليل والاختبار والبناء.
-- [ ] منع الأسرار وKeystore والنماذج غير المقصودة من Git.
-
-## الاقتراحات والمخاطر الحالية
-
-1. **الأولوية التقنية:** دمج LaMa ONNX أولًا لأنه متاح بترخيص واضح وبعقد إدخال/إخراج موثق.
-2. **الأولوية القانونية:** لا تُرفع أوزان MI-GAN قبل الحصول على تصريح كتابي أو بطاقة نموذج واضحة تسمح بإعادة التوزيع التجاري.
-3. **خطر Android:** لا يوجد حاليًا تحقق على جهاز Android حقيقي؛ نجاح تحليل Dart لا يثبت نجاح APK أو أداء ONNX على الهاتف.
-4. **خطر المنتج:** وجود شاشات Scaffold وخدمات Stub يعني أن التطبيق ليس إصدارًا إنتاجيًا بعد، حتى لو كان البناء الأساسي ناجحًا.
-5. **اقتراح الاختبارات:** إنشاء اختبارات لكل نموذج مع صور وقناع اصطناعي صغير، ثم اختبار checksum وذاكرة الجهاز قبل ربط الدفع.
-
-## سجل التحديثات
-
-| 2026-09-13 | توافق Seika/ONNX | استبدال الجسر التجريبي بجسر ONNX، إضافة `proguard-rules.pro` وONNX Runtime 1.19.0، مع إبقاء Real-ESRGAN fallback لأن artifact الحالي `.pth` وليس ONNX. التحقق الآلي مؤجل لغياب Flutter/Gradle في السياق الحالي. |
-
-| التاريخ | التغيير | النتيجة |
+| المجال | الحالة الحالية | الدليل أو الفجوة |
 |---|---|---|
-| 2026-09-13 | إنشاء الخارطة الحية | توثيق الحالة والفجوات وآلية التحديث |
-| 2026-09-13 | تأسيس بيئة Flutter/Android | `flutter analyze` و`flutter test` ناجحان |
-| 2026-09-13 | إنشاء مستودع النماذج | LaMa وReal-ESRGAN مرفوعان؛ MI-GAN مؤجل قانونيًا |
-| 2026-09-13 | ربط روابط النماذج | التطبيق يشير إلى Hugging Face الحقيقي |
-| 2026-09-13 | بدء البند 5 | بدء دمج LaMa ONNX داخل Android |
-| 2026-09-13 | Model Manager | تنزيل LaMa واستئنافه والتحقق من SHA-256 والحذف؛ `flutter analyze` بلا أخطاء و3 اختبارات ناجحة |
-| 2026-09-13 | Integration Map v3 | استبدال iOS Seika stub بجسر baseline متوافق مع عقد Flutter، وإضافة PerformanceConfig وProGuard؛ ONNX iOS مؤجل لغياب Runner/Pod runtime قابل للبناء |
-| 2026-09-13 | Integration Map v4 | استبدال Editor وBatch stubs، إضافة Controller وPanels وExportDialog وBatchService وتوثيق ONNX edge cases وإضافة مسارات Router؛ `flutter analyze` بلا أخطاء و3 اختبارات ناجحة |
-| 2026-09-13 | قرار النطاق | تأجيل iOS وWeb؛ المتبقي الحالي يقتصر على إكمال Android والتحقق منه وإعداده للإصدار |
-| 2026-09-14 | Play Console وpackage identity | إنشاء مسودة `AI Photo Studio Chat`، وتثبيت `com.productchat.aiphotostudio` في الكود وPlay Console؛ `com.productchat.studio` بقيت مسودة قديمة ولم تُحذف تلقائيًا |
-| 2026-09-14 | Monetization decision | اعتماد Credits مع اشتراك اختياري، وعدم إضافة AdMob حاليًا؛ أضيفت subscription IDs وميزات Pro المقترحة إلى Flutter، وإنشاء المنتجات ينتظر Play Console |
-| 2026-09-14 | Sprint 1 release hardening | إزالة Debug signing من Release، اعتماد `android/key.properties` المحلي مع فشل واضح عند غيابه، إضافة INTERNET إلى main Manifest، توحيد Flutter CI إلى 3.47.4، وإضافة وثيقة إعداد الأسرار؛ التحقق وبناء AAB والرفع الداخلي متبقية |
-| 2026-09-14 | إصلاح رفض AAB القديم | توثيق رسالة Play Console الخاصة بـ targetSdk 34 وPlay Core 1.10.3، ورفع `targetSdk` إلى API 36؛ يلزم بناء AAB جديد والتحقق من dependency tree قبل الرفع |
-| 2026-09-14 | بناء AAB عبر GitHub Actions | إضافة workflow يدوي `build-release-aab.yml` يبني AAB موقعًا باستخدام أسرار يضيفها المالك، ويرفع artifact للتنزيل؛ لم تُحفظ أي أسرار في الريبو |
-| 2026-09-14 | إصلاح فشل Build الأول | فشل التشغيل `34795627452` بسبب مسار Java ثابت غير صالح في `android/gradle.properties`؛ أزيل المسار ليستخدم Gradle `JAVA_HOME` الذي يضبطه GitHub Actions؛ التحليل والاختبارات والأسرار كانت ناجحة |
-| 2026-09-14 | إصلاح فشل R8 في Build الثالث | التشغيل `34795926358` تجاوز مشكلة Java ووصل إلى R8، ثم فشل بسبب مراجع Flutter الاختيارية لـ Deferred Components/Play Core غير المستخدمة؛ أضيفت `-dontwarn` محددة دون إضافة Play Core القديم؛ يلزم إعادة بناء AAB |
-| 2026-09-14 | نجاح Sprint 1 Build | التشغيل `34796595278` نجح على commit `229bc72`: الأسرار، التحليل، الاختبارات، R8، التوقيع، وبناء AAB ورفع Artifact؛ الملف `app-release.aab` بحجم 79.1 MB؛ الخطوة التالية Internal Testing |
-| 2026-09-14 | Play Console Upload Key mismatch | Play Console رفض AAB الموقع بالمفتاح الجديد؛ expected SHA1 `20:EE:07:1E:9D:51:09:C1:29:D7:9B:6A:74:C1:AD:DC:81:96:88:5C`، uploaded SHA1 `1A:D8:32:67:8E:A5:BE:19:AF:F4:B0:30:95:A3:5D:7D:89:02:10:00`; يلزم استعادة المفتاح الأصلي أو طلب Reset Upload Key قبل إعادة البناء |
-| 2026-09-14 | Billing code release `1.0.1+2` | تحديث purchase handling لقبول purchased/restored، رفض transaction ID الفارغ، تثبيت loading/error diagnostics، وتوسيع اختبارات Credits؛ إنشاء المنتجات وSandbox يتطلبان حساب Play Console وجهاز اختبار |
+| Flutter/Android build | متحقق للبناء المحلي وCI وفق السجلات | Flutter 3.47.4، Dart 3.13.3، SDK 36، وأدلة analyze/test/build سابقة |
+| Android runtime | غير متحقق | لا يوجد جهاز أو Emulator مسجل في الأدلة |
+| LaMa ONNX | implementation وعقد مصدرية موجودة | cold/warm inference وoutput والذاكرة ما زالت بلا دليل جهاز |
+| Real-ESRGAN | fallback فقط | `RealESRGAN_x4plus.pth` موجود، وONNX/NCNN غير موصول |
+| MI-GAN | محظور قانونيًا وتقنيًا | لا تُضاف الأوزان قبل تصريح إعادة توزيع تجاري |
+| Editor/Chat | جزئي | contracts وimage picker موجودان؛ mask وE2E/runtime متبقيان |
+| Batch | واجهة وprogress أساسيان | التنفيذ الحالي لا يزال يحتاج pipeline تحرير حقيقيًا |
+| Storage/History | متضارب توثيقيًا ويحتاج توحيدًا | handoff يذكر SharedPreferences، بينما matrix قديمة تذكر Map؛ يلزم تحقق من commit الحالي |
+| Credits/Billing | أساس محلي ومطابقة منتجات قديمة | المنتجات الثلاثة والاشتراكان موجودة في Play Console؛ Lifetime غير منشأ؛ backend وPro state غير مكتملين |
+| Free/Pro/Lifetime gates | مواصفة مرفقة، غير مكتملة في الكود الحالي | لا تعتمد على تفعيل محلي غير موثق قبل entitlement موثوق |
+| Internal Testing | غير مغلق | رفع AAB وقبول Upload Key وتثبيت/اختبار الجهاز متبقية |
+| iOS/Web | مؤجلان | خارج الإصدار Android الحالي |
 
-## قاعدة التحديث المستقبلية
+## 4. خارطة التنفيذ المرحلية
 
-بعد كل مهمة، سأقوم بثلاثة أشياء: تحديث مربعات الإنجاز والحالة، إضافة سجل مختصر بالتاريخ والالتزام، ثم إبلاغك بأي اقتراح أو خطأ أو تغيير في القرار قبل الانتقال للمرحلة التالية.
+### المرحلة 0 — توحيد الحقائق والوثائق
+
+**الحالة:** قيد التنفيذ في هذا التحديث.
+
+- [x] قراءة جميع ملفات Markdown الحالية والمرفقات الأربعة.
+- [x] توحيد نموذج Free/Pro/Lifetime كهدف منتج.
+- [x] توثيق Product IDs الجديدة بما فيها `lifetime`.
+- [x] توثيق اقتصاد Credits الجديد.
+- [x] فصل المواصفة المطلوبة عن الحالة المثبتة.
+- [ ] تحديث الكود ومصفوفة الاختبار بعد تنفيذ Billing v2 الفعلي.
+- [ ] التأكد من عدم وجود وثيقة لاحقة تعيد الأسعار القديمة أو تدعي تفعيل Lifetime.
+
+**معيار الخروج:** كل سعر، gate، وميزة لها حالة صريحة: مطلوب، موجود، متحقق، محجوب، أو يحتاج إجراءً بشريًا.
+
+### المرحلة 1 — تثبيت البناء وإعادة التحقق
+
+**الحالة:** متحقق للبناء وفق الأدلة السابقة، وإعادة التشغيل على آخر commit مطلوبة.
+
+- [x] Flutter/Dart وAndroid SDK وJDK موثقة.
+- [x] ملفات Android الأساسية وAAB workflow موجودة.
+- [x] Release signing عبر `android/key.properties` دون أسرار في Git.
+- [ ] إعادة تشغيل `flutter pub get` و`flutter gen-l10n` و`flutter analyze` و`flutter test` من آخر commit.
+- [ ] بناء Debug APK وRelease AAB من نفس commit وتسجيل الأرقام.
+- [ ] توحيد نتائج CI مع مصفوفة التحقق.
+
+### المرحلة 2 — عقد الخدمات والمسار الأساسي
+
+**الحالة:** جزئية.
+
+- [x] `SeikaService` وMethodChannel ومسارات العمليات الأساسية موجودة.
+- [x] `AiService` لا يعيد input كنجاح وهمي وفق أحدث handoff.
+- [ ] إكمال image picker + mask creation + Chat dispatch + Editor result end-to-end.
+- [ ] جعل Batch يطبق pipeline التحرير الحقيقي بدل نسخ الملفات فقط.
+- [ ] حفظ History بعد نجاح العملية فقط وربطه بمخرجات قابلة لإعادة الفتح.
+- [ ] إبقاء الفشل صريحًا وعدم تسجيل نتيجة أو خصم Credits عند الفشل.
+
+### المرحلة 3 — LaMa Android runtime
+
+**الحالة:** source/build complete، runtime متبقٍ.
+
+- [x] LaMa artifact وعقد graph وSHA-256 موثقة.
+- [x] CPU/NNAPI fallback وcancellation وnative timeout وresource cleanup موجودة في المصدر.
+- [ ] تشغيل cold/warm inference على Emulator أو جهاز.
+- [ ] اختبار input/mask names وmask semantics والصور portrait/landscape.
+- [ ] اختبار decode failure، أبعاد غير متطابقة، oversized input، unload/reload.
+- [ ] اختبار cancellation داخل `session.run` وhard timeout ثم retry.
+- [ ] تسجيل latency وpeak Java/native memory وprovider.
+- [ ] تنفيذ 30–100 عملية متتابعة وعدم وجود crash/OOM/deadlock أو نمو ذاكرة غير مفسر.
+
+**معيار الخروج:** output صالح ومختلف عن source، مع سجل جهاز وAndroid API وABI وRAM وcommit وchecksum.
+
+### المرحلة 4 — نماذج التحسين والقرارات القانونية
+
+**الحالة:** قرار المنتج الحالي مكتمل، runtime اختياري.
+
+- [x] تسمية fallback بأنه Basic enhancement لا Real-ESRGAN.
+- [ ] اختيار ONNX export أو NCNN/TFLite بترخيص وbenchmark، أو إبقاء fallback نهائيًا مع تغيير الواجهة بوضوح.
+- [ ] الحصول على تصريح MI-GAN إن كان مطلوبًا، ثم مراجعة artifact/license/runtime قبل الإضافة.
+- [ ] عدم إضافة أي model binary أو claim غير مثبت.
+
+### المرحلة 5 — Free/Pro/Lifetime وBilling v2
+
+**الحالة:** مواصفة جديدة غير منفذة بالكامل.
+
+#### 5.1 Product catalog
+
+- [ ] إضافة `lifetime` إلى التطبيق فقط بعد إنشاء المنتج وتفعيله في Play Console.
+- [ ] توحيد constants وdisplay names وfallback prices وcredits-per-pack ومدة الاشتراكات.
+- [ ] إعادة تسمية الثابت الذي يستخدم `pro` لحزمة `credits_1200` إلى اسم غير ملتبس مثل `largePack`.
+- [ ] استخدام أسعار المتجر الفعلية؛ fallback لا يُعرض كسعر مؤكد عند انقطاع المتجر.
+
+#### 5.2 Pro entitlement
+
+- [ ] إنشاء `ProStatus` و`ProService` مع `isPro` و`isLifetime` و`expiry` و`daysRemaining`.
+- [ ] تخزين `proExpiry` كسلسلة ISO8601 وفق المواصفة.
+- [ ] تفعيل Monthly لمدة 30 يومًا وYearly لمدة 365 يومًا **بعد تحقق شراء موثوق**، وليس من event محلي غير متحقق.
+- [ ] تفعيل Lifetime دون expiry بعد تحقق المنتج غير المستهلك.
+- [ ] auto-expiry للاشتراك، مع بقاء Lifetime دائمًا.
+- [ ] restore يزامن entitlement ولا يعيد Credits المستهلكة محليًا.
+
+#### 5.3 Gates وتجربة المستخدم
+
+- [ ] Free: quota شهرية 3، PatchMatch فقط، watermark.
+- [ ] Pro/Lifetime: إزالة watermark، Batch بحد 100 صورة، Brand Identity، والميزات المعتمدة قانونيًا.
+- [ ] تقييد العمليات المذكورة في المواصفة كـPro-only فقط بعد تحديد مسار تنفيذها الفعلي.
+- [ ] Paywall بثلاثة أقسام: Lifetime، Subscriptions، Credits.
+- [ ] Settings يعرض حالة Pro/ Lifetime وRestore.
+- [ ] Batch يعرض Pro Gate لغير المشتركين.
+- [ ] History يعرض آخر 5 للمستخدم المجاني، والتاريخ الكامل لـPro/Lifetime، بعد التأكد من سياسة المنتج وتخزينه الفعلي.
+- [ ] عدم عرض ميزة على أنها متاحة إذا كانت غير منفذة أو محظورة قانونيًا.
+
+#### 5.4 Credits delivery
+
+- [ ] حزم Credits الثلاث تستخدم purchase flow المناسب للـconsumables.
+- [ ] لا grant عند pending أو error أو restored consumable.
+- [ ] لا خصم قبل نجاح العملية؛ التكلفة مركزية وفق جدول الاقتصاد أعلاه.
+- [ ] منع duplicate grant محليًا وخادميًا.
+- [ ] عدم تحويل الاشتراك أو Lifetime إلى Credits دورية ما لم تُعتمد سياسة منفصلة صراحة.
+
+### المرحلة 6 — Receipt Verification وEntitlement Backend
+
+**الحالة:** مخطط فقط.
+
+- [ ] اختيار بنية الاستضافة من الخيارين الموثقين: API مخصص مع PostgreSQL/worker أو Backend Serverless مُدار.
+- [ ] إنشاء API contract لـ`POST /v1/billing/google-play/purchases/verify`.
+- [ ] إنشاء `GET /v1/billing/entitlements`.
+- [ ] إضافة authenticated user identity وعدم قبول `userId` من جسم الطلب كمصدر ثقة.
+- [ ] التحقق من consumables عبر `purchases.products.get`.
+- [ ] التحقق من subscriptions عبر `purchases.subscriptionsv2.get`.
+- [ ] إنشاء unique token hash وtransactional `credit_ledger`.
+- [ ] إنشاء `subscription_entitlements` للحالة والانتهاء والتجديد والإلغاء.
+- [ ] إضافة RTDN endpoint وdeduplication وretry/dead-letter.
+- [ ] إبقاء service account خارج التطبيق وGit.
+- [ ] تغيير Flutter إلى `pendingVerification` ثم منح القيمة فقط عند `verified` أو `already_processed`.
+- [ ] ربط `ProEntitlement` بالحالة الخادمية لا بالـcallback المحلي.
+- [ ] اختبار active/expired/canceled/grace/hold/revoked/refunded/replay/mismatch.
+
+### المرحلة 7 — التخزين والخصوصية
+
+**الحالة:** جزئية ومتضاربة في الوثائق.
+
+- [ ] تثبيت قرار storage الفعلي في الكود والوثائق؛ المواصفات المرفقة تستخدم Hive، بينما handoff الحالي يذكر SharedPreferences.
+- [ ] حفظ credits/history/settings/locale/theme بطريقة versioned.
+- [ ] منع الرصيد السالب.
+- [ ] إدارة cache/output retention وdelete semantics.
+- [ ] إكمال Privacy Policy وTerms وCompliance داخل المسار المعلن.
+- [ ] توثيق عدم رفع الصور دون موافقة صريحة.
+- [ ] اختبار إغلاق/إعادة فتح التطبيق وOffline بعد تنزيل النموذج.
+
+### المرحلة 8 — الاختبارات والأداء وCI
+
+**الحالة:** قيد التنفيذ على مستوى البروتوكول.
+
+- [ ] تشغيل `integration_test/` الفعلي، إذ إن الخطة موجودة والمجلد غير مثبت حاليًا.
+- [ ] اختبارات ProService: البداية، 30 يومًا، 365 يومًا، Lifetime، auto-expiry، restore.
+- [ ] اختبارات Billing: المنتجات الستة، purchase statuses، completePurchase، duplicate grant، restored consumables.
+- [ ] اختبارات Credits: 100/500/1200، stacking، refund، وعدم النزول تحت الصفر.
+- [ ] اختبارات widget لـPaywall وSettings وBatch وHistory والراوتر.
+- [ ] Fixtures للصور والأقنعة دون تخزين النموذج داخل Git.
+- [ ] benchmark cold/warm، cancellation، timeout، memory، CPU/NNAPI، 30–100 inference.
+- [ ] CI للتحليل والاختبار والبناء وفحص الأسرار.
+
+### المرحلة 9 — Internal Testing والإصدار
+
+**الحالة:** غير مغلقة.
+
+#### إجراءات Play Console البشرية المطلوبة
+
+- [ ] إنشاء one-time product باسم `lifetime`، وصف Lifetime Access، السعر المرجعي `$79.99` أو السعر الإقليمي المعتمد، ثم تفعيله.
+- [ ] إضافة حساب المالك إلى License Testing وانتظار propagation وفق تعليمات Play Console.
+- [ ] مراجعة أسعار المنتجات الستة في Play Console وفق المواصفة الجديدة.
+- [ ] رفع AAB إلى Internal Testing.
+- [ ] معالجة Upload Key mismatch إن تكرر؛ المطلوب استخدام المفتاح الأصلي أو إجراء Reset رسمي من Play Console.
+- [ ] تثبيت النسخة بحساب اختبار مرخص وتسجيل callbacks والشراء والاستعادة.
+
+#### معيار قبول الإصدار Android
+
+- [ ] Analyze وTest وDebug/Release build من clean checkout.
+- [ ] smoke flow بلا MissingPlugin أو crash.
+- [ ] LaMa output صالح ومتحقق على Android.
+- [ ] cancellation/timeout/retry وmemory evidence مسجلة.
+- [ ] كل زر ظاهر ينفذ وظيفة حقيقية أو يذكر أنه غير متاح.
+- [ ] Free/Pro/Lifetime gates مطابقة لـentitlement موثوق.
+- [ ] Receipt verification وledger وRTDN مكتملة أو لا توجد واجهة شراء إنتاجية.
+- [ ] التوقيع والخصوصية والتراخيص وData Safety وrollback موثقة.
+
+## 5. مؤجل عمدًا
+
+- iOS وStoreKit وCore ML.
+- Web وONNX Runtime Web.
+- إضافة MI-GAN دون ترخيص مكتوب.
+- Real-ESRGAN backend ما لم يُعتمد مسار ONNX/NCNN/TFLite.
+- توسيع اللغات إلى 16 قبل تثبيت كونها شرط إصدار.
+- AdMob؛ لا توجد مواصفة له في المنتج الحالي.
+
+## 6. سجل هذا التحديث
+
+| التاريخ | التغيير |
+|---|---|
+| 2026-09-14 | قراءة خارطة الطريق الحالية ووثائق التحقق والدفع والأداء والمرفقات الأربعة كاملًا على مستوى المحتوى المتاح. |
+| 2026-09-14 | اعتماد Billing v2 كمواصفة هدف: ستة Product IDs، Lifetime، Free/Pro/Lifetime، الأسعار الجديدة، واقتصاد Credits. |
+| 2026-09-14 | فصل المواصفة المطلوبة عن حالة المصدر وPlay Console، وتسجيل الإجراءات البشرية التي لا ينفذها GitHub أو الكود تلقائيًا. |
+
+لا تُعتبر المواصفات الجديدة منفذة لمجرد إدراجها هنا؛ كل بند سيُرفع فقط مع commit واختبار ودليل مناسب.
