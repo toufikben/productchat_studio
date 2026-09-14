@@ -289,4 +289,4 @@ All repair work must follow these rules:
 ### Change Log
 
 - **2026-09-14 — Pre-repair audit checkpoint:** Full roadmap and release-readiness review completed. Confirmed issues are documented in the audit report. **No application code changes or repair phase has started.**
-
+- **Phase 1 — CI/analyzer stabilization — STARTED 2026-09-14:** Approved diagnostic phase. Scope: inspect the latest GitHub Actions failure, reproduce or inspect `flutter analyze` failures, identify affected files and exact proposed fixes. No application code changes are authorized yet. Acceptance: a reviewed error list and proposed patch plan are presented before code edits.
