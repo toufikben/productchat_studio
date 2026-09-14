@@ -143,24 +143,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   String _languageName(String code) => switch (code) {
         'ar' => 'العربية',
+        'de' => 'Deutsch',
+        'es' => 'Español',
         'fr' => 'Français',
+        'hi' => 'हिन्दी',
+        'id' => 'Bahasa Indonesia',
+        'it' => 'Italiano',
+        'ja' => '日本語',
+        'ko' => '한국어',
+        'pt' => 'Português',
+        'ru' => 'Русский',
+        'tr' => 'Türkçe',
+        'ur' => 'اردو',
+        'fa' => 'فارسی',
+        'zh' => '中文',
         _ => 'English',
       };
 
   Future<void> _chooseLanguage() async {
     final selected = await showDialog<String>(
-      context: context,
+        context: context,
       builder: (context) => SimpleDialog(
         title: const Text('Language'),
         children: [
-          for (final option in const [
-            ('en', 'English'),
-            ('ar', 'العربية'),
-            ('fr', 'Français'),
+          for (final code in const [
+            'en',
+            'ar',
+            'fr',
+            'es',
+            'de',
+            'it',
+            'pt',
+            'ru',
+            'tr',
+            'zh',
+            'ja',
+            'ko',
+            'hi',
+            'id',
+            'fa',
+            'ur',
           ])
             SimpleDialogOption(
-              onPressed: () => Navigator.pop(context, option.$1),
-              child: Text(option.$2),
+              onPressed: () => Navigator.pop(context, code),
+              child: Text(_languageName(code)),
             ),
         ],
       ),

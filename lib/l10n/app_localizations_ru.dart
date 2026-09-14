@@ -1,0 +1,19 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for ru.
+class AppLocalizationsRU extends AppLocalizations {
+  AppLocalizationsRU([String locale = 'ru']) : super(locale);
+
+  @override
+  String get appTitle => "ProductChat Studio";
+
+  @override
+  String get smartAnalysis => "Умный анализ";
+
+  @override
+  String get uploadPrompt => "Загрузите изображение товара, чтобы начать";
+}
