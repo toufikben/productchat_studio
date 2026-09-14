@@ -49,6 +49,7 @@ The approved commercial proposal is 0.99 USD for 100 credits, 3.99 USD for 500 c
 | Credits duplicate-grant tests | Passed |
 | Negative-balance protection test | Passed |
 | Google Play product configuration | Passed for three Active Credits products plus Active `pro_monthly` and `pro_yearly` base plans |
+| Release AAB `1.0.2+3` | Passed — GitHub Actions run `34807820712`; analyze, tests, signed build, and artifact upload completed; downloaded AAB is approximately 76MB |
 | Google Play Sandbox purchase | Pending test device/test account |
 | Receipt/server verification | Pending; not claimed as implemented |
 | Production product configuration | Products and subscription base plans created/activated; purchase execution remains pending on a licensed test device |

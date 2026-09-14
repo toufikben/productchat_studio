@@ -19,7 +19,7 @@
 | تحليل Dart | مكتمل حاليًا | `flutter analyze` بلا أخطاء بعد استعادة البيئة |
 | اختبارات Dart | ناجح حاليًا | `flutter test`: 7 اختبارات ناجحة، تشمل AI operation contracts |
 | Android Seika | مصدر/عقد/بناء مكتمل، runtime متبقٍ | LaMa graph والعقد والتحقق والـ cancellation والـ resource cleanup مضافة؛ يلزم جهاز/محاكي |
-| Android APK/AAB | AAB مبني، Upload Key يحتاج مطابقة Play Console | Workflow `34796595278` نجح؛ Play Console رفض الرفع لأن المتوقع SHA1 `20:EE:07:1E:9D:51:09:C1:29:D7:9B:6A:74:C1:AD:DC:81:96:88:5C` بينما AAB الحالي موقّع بـ `1A:D8:32:67:8E:A5:BE:19:AF:F4:B0:30:95:A3:5D:7D:89:02:10:00`; يلزم استخدام المفتاح الأصلي أو Reset Upload Key |
+| Android APK/AAB | AAB الإصدار `1.0.2+3` مبني وموقع | Workflow `34807820712` نجح في `flutter analyze` و`flutter test` وبناء ورفع Artifact؛ يتبقى رفع `app-release.aab` إلى Internal testing والتحقق من قبول Upload Key |
 | P4 وظائف المنتج الأساسية | جزئي | image picker وفتح المحرر فعليان؛ mask/chat/batch/history ما زالت متبقية |
 | P5 التخزين والخصوصية | جزئي | SharedPreferences وLegal screen مضافان؛ cache retention وHistory/Settings الدائمين متبقيان |
 | P6 النماذج المتقدمة | قرار مكتمل، runtime متبقٍ | Real-ESRGAN fallback موثق؛ لا يوجد ONNX/NCNN backend، وMI-GAN معطل قانونيًا |
@@ -148,9 +148,9 @@
 - [x] إعداد signing آمن عبر `android/key.properties` دون أسرار في Git؛ بناء Release يفشل بوضوح عند غياب الملف.
 - [ ] فحص Google Play requirements.
 
-**Sprint 1 — بوابة الرفع الداخلي:** تم تحديث إعداد Release وCI وManifest، وإضافة Workflow توقيع، وتشغيل `flutter analyze` و`flutter test` وبناء AAB Release موقع بنجاح. المتبقي: تنزيل Artifact `productchat-studio-release-aab`، رفعه إلى Internal Testing، وتسجيل أخطاء Play Console أو بدء اختبار التطبيق.
+**Sprint 1 — بوابة الرفع الداخلي:** تم تحديث إعداد Release وCI وManifest، وإضافة Workflow توقيع، وتشغيل `flutter analyze` و`flutter test` وبناء AAB Release موقع بنجاح. تم تنزيل Artifact `productchat-studio-release-aab` والتحقق من وجود `app-release.aab` بحجم يقارب 76MB. المتبقي: رفعه إلى Internal Testing، وتسجيل أخطاء Play Console أو بدء اختبار التطبيق.
 
-**تصحيح خطأ الرفع القديم:** رسالة Play Console كانت تخص `app-release.aab` سابقًا يستهدف API 34 ويضم Play Core 1.10.3. تم رفع `targetSdk` في المصدر إلى 36؛ يجب بناء AAB جديد وعدم إعادة رفع الملف القديم. أكد المالك أن الرفع السابق فشل ولم يُسجّل أي إصدار، لذلك يبقى `versionCode=1` (`1.0.0+1`) صالحًا للنسخة التالية.
+**تصحيح خطأ الرفع القديم:** رسالة Play Console كانت تخص `app-release.aab` سابقًا يستهدف API 34 ويضم Play Core 1.10.3. تم رفع `targetSdk` في المصدر إلى 36، وبُني AAB جديد بالإصدار `1.0.2+3`. يجب رفع Artifact الجديد فقط وعدم إعادة رفع الملف القديم. مشكلة Upload Key السابقة ما زالت تحتاج تأكيدًا عند الرفع؛ إذا تكرر الرفض سنستخدم المفتاح الأصلي أو نطلب Reset Upload Key من Play Console.
 
 ### 11.1 بوابة قبول Android — متبقٍ قبل Release
 
