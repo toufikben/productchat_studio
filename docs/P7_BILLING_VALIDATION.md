@@ -5,6 +5,8 @@
 **Code release:** `1.0.2+3` is prepared after configuring the subscription products.
 **Sprint 4 hardening commit:** `1c21e3d`.
 
+**Receipt/subscription audit:** [`SPRINT4_RECEIPT_SUBSCRIPTION_AUDIT.md`](SPRINT4_RECEIPT_SUBSCRIPTION_AUDIT.md)
+
 **Play Console status (2026-09-14):** The one-time products `credits_100`, `credits_500`, and `credits_1200` were created and activated successfully. Each product is Active and available in 173 countries/regions. Google Play applied regional pricing; the visible Algeria prices were approximately 100 DZD, 550 DZD, and 1,100 DZD respectively after price rounding.
 
 The subscriptions `pro_monthly` and `pro_yearly` were also created. Their auto-renewing base plans `monthly` and `yearly` are Active, with regional pricing applied from approximately 675 DZD/month and 6,800 DZD/year in Algeria. The product IDs match the Flutter code contracts.
@@ -30,7 +32,7 @@ The subscriptions `pro_monthly` and `pro_yearly` were also created. Their auto-r
 - Failed native operations do not deduct credits.
 - `/credits` opens the Paywall screen.
 - Paywall displays available balance, configured products, purchase errors, pending state, and restore action.
-- Purchase handling accepts both `purchased` and `restored` events for diagnostics; only recognized consumable packs with a non-null transaction ID reach the Credits ledger. Subscription events do not grant Credits until entitlement and renewal rules are implemented and verified.
+- Purchase handling observes `purchased` and `restored` events for diagnostics; only recognized consumable `purchased` events with a non-null transaction ID reach the Credits ledger. Restored consumables are rejected locally, and subscription events do not grant Credits until entitlement and renewal rules are implemented and verified.
 
 ## Important platform boundary
 
@@ -48,8 +50,11 @@ The approved commercial proposal is 0.99 USD for 100 credits, 3.99 USD for 500 c
 | `flutter test` | Pending in current sandbox; latest GitHub run `34808617491` passed before this hardening change |
 | Credits duplicate-grant tests | Source test present; rerun required on commit `1c21e3d` |
 | Negative-balance protection test | Source test present; rerun required on commit `1c21e3d` |
+| Restored-consumable rejection test | Added in current audit change; CI rerun required |
 | Google Play product configuration | Passed for three Active Credits products plus Active `pro_monthly` and `pro_yearly` base plans |
 | Release AAB `1.0.2+3` | Passed — GitHub Actions run `34807820712`; analyze, tests, signed build, and artifact upload completed; downloaded AAB is approximately 76MB |
 | Google Play Sandbox purchase | Pending test device/test account |
 | Receipt/server verification | Pending; not claimed as implemented |
 | Production product configuration | Products and subscription base plans created/activated; purchase execution and entitlement verification remain pending on a licensed test device |
+
+The detailed audit confirms that the current implementation is a local purchase-event handler, not trusted receipt verification or a server-authoritative subscription entitlement system.

@@ -26,6 +26,17 @@ class CreditProducts {
 
   static bool isSubscription(String productId) => subscriptionIds.contains(productId);
   static int? creditsFor(String productId) => amounts[productId];
+
+  static bool shouldGrantCredits({
+    required PurchaseStatus status,
+    required String productId,
+    required String? purchaseId,
+  }) =>
+      status == PurchaseStatus.purchased &&
+      !isSubscription(productId) &&
+      purchaseId != null &&
+      purchaseId.trim().isNotEmpty &&
+      creditsFor(productId) != null;
 }
 
 class CreditsLedger {
@@ -155,6 +166,14 @@ class BillingService extends ChangeNotifier {
         // Pro feature or periodic credit grant is applied.
         if (CreditProducts.isSubscription(purchase.productID)) {
           error = null;
+        } else if (!CreditProducts.shouldGrantCredits(
+            status: purchase.status,
+            productId: purchase.productID,
+            purchaseId: purchaseId)) {
+          // Consumed products must never be granted from a restored event.
+          error = purchase.status == PurchaseStatus.restored
+              ? 'Consumed credit purchases cannot be restored locally.'
+              : 'Purchase could not be verified.';
         } else {
           final amount = CreditProducts.creditsFor(purchase.productID);
           if (purchaseId == null || amount == null) {

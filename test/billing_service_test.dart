@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:productchat_studio/services/billing_service.dart';
 import 'package:productchat_studio/services/storage_service.dart';
 
@@ -48,5 +49,32 @@ void main() {
     expect(CreditProducts.amounts.keys, containsAll(CreditProducts.consumableIds));
     expect(CreditProducts.amounts.keys, isNot(contains(CreditProducts.monthly)));
     expect(CreditProducts.amounts.keys, isNot(contains(CreditProducts.yearly)));
+  });
+
+  test('only purchased consumable events can grant credits', () {
+    expect(
+      CreditProducts.shouldGrantCredits(
+        status: PurchaseStatus.purchased,
+        productId: CreditProducts.starter,
+        purchaseId: 'txn-3',
+      ),
+      isTrue,
+    );
+    expect(
+      CreditProducts.shouldGrantCredits(
+        status: PurchaseStatus.restored,
+        productId: CreditProducts.starter,
+        purchaseId: 'txn-4',
+      ),
+      isFalse,
+    );
+    expect(
+      CreditProducts.shouldGrantCredits(
+        status: PurchaseStatus.purchased,
+        productId: CreditProducts.monthly,
+        purchaseId: 'txn-5',
+      ),
+      isFalse,
+    );
   });
 }
