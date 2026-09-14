@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'storage_service.dart';
 
 class BrandIdentity {
@@ -32,17 +30,15 @@ class BrandIdentityService {
   final StorageService _storage;
 
   BrandIdentity load() {
+    final versioned = _storage.getVersionedJson(key);
+    if (versioned != null) return BrandIdentity.fromJson(versioned);
     final raw = _storage.getString(key);
     if (raw == null || raw.isEmpty) return const BrandIdentity();
-    try {
-      return BrandIdentity.fromJson(jsonDecode(raw));
-    } catch (_) {
-      return const BrandIdentity();
-    }
+    try { return BrandIdentity.fromJson(jsonDecode(raw)); } catch (_) { return const BrandIdentity(); }
   }
 
   Future<void> save(BrandIdentity identity) =>
-      _storage.set(key, jsonEncode(identity.toJson()));
+      _storage.setVersionedJson(key, identity.toJson());
 }
 
 final brandIdentityService = BrandIdentityService();

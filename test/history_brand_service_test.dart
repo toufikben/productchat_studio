@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:productchat_studio/services/brand_identity_service.dart';
 import 'package:productchat_studio/services/history_service.dart';
@@ -37,5 +39,18 @@ void main() {
     expect(loaded.name, identity.name);
     expect(loaded.primaryColor, identity.primaryColor);
     expect(loaded.watermark, identity.watermark);
+  });
+
+  test('History delete removes the entry and its local output', () async {
+    final storage = StorageService();
+    final service = HistoryService(storage: storage);
+    final file = File('${Directory.systemTemp.path}/batch_history-delete-test.png')
+      ..writeAsStringSync('output');
+    await service.record(path: file.path, operation: 'removeBg');
+    final entry = service.all().single;
+
+    expect(await service.delete(entry), isTrue);
+    expect(service.all(), isEmpty);
+    expect(await file.exists(), isFalse);
   });
 }

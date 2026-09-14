@@ -45,8 +45,29 @@ class BatchScreen extends ConsumerWidget {
                                       .whereType<String>()
                                       .toList() ??
                                   [];
-                              if (paths.isNotEmpty) {
-                                await service.processAll(paths);
+                              if (paths.isNotEmpty && context.mounted) {
+                                final addShadow = await showDialog<bool>(
+                                  context: context,
+                                  builder: (dialogContext) => AlertDialog(
+                                    title: const Text('Choose batch operation'),
+                                    content: const Text(
+                                      'Select the same local operation for all chosen images.',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(dialogContext, false),
+                                        child: const Text('Remove background'),
+                                      ),
+                                      FilledButton(
+                                        onPressed: () => Navigator.pop(dialogContext, true),
+                                        child: const Text('Add shadow'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (addShadow != null) {
+                                  await service.processAll(paths, addShadow: addShadow);
+                                }
                               }
                             },
                       icon: const Icon(Icons.add_photo_alternate),

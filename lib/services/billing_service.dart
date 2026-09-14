@@ -173,12 +173,15 @@ class BillingService extends ChangeNotifier {
 
   Future<void> restorePurchases() async {
     if (!available || loading) return;
+    loading = true;
     error = null;
     notifyListeners();
     try {
       await _store.restorePurchases();
     } catch (value) {
       error = value.toString();
+    } finally {
+      loading = false;
       notifyListeners();
     }
   }

@@ -71,7 +71,7 @@
 | MI-GAN | محظور قانونيًا وتقنيًا | لا تُضاف الأوزان قبل تصريح إعادة توزيع تجاري |
 | Editor/Chat | جزئي | contracts وimage picker موجودان؛ mask وE2E/runtime متبقيان |
 | Batch | Pro/Lifetime gate وpipeline محلي عبر AiService | Android runtime/performance واختبار الجهاز متبقية |
-| Storage/History | متضارب توثيقيًا ويحتاج توحيدًا | handoff يذكر SharedPreferences، بينما matrix قديمة تذكر Map؛ يلزم تحقق من commit الحالي |
+| Storage/History | SharedPreferences versioned metadata وbounded local History | Android restart/device retention verification متبقية |
 | Credits/Billing | كتالوج v2 محلي منفذ جزئيًا | IDs الستة وLifetime وشراء non-consumable مضافة في المصدر؛ backend وPlay Console ما زالا متبقيين |
 | Free/Pro/Lifetime gates | ProService محلي منفذ جزئيًا | Lifetime/expiry/persistence لها خدمة واختبارات؛ لا تُعد entitlement إنتاجية قبل الخادم |
 | Internal Testing | غير مغلق | رفع AAB وقبول Upload Key وتثبيت/اختبار الجهاز متبقية |
@@ -208,11 +208,12 @@
 
 **الحالة:** جزئية ومتضاربة في الوثائق.
 
-- [ ] تثبيت قرار storage الفعلي في الكود والوثائق؛ المواصفات المرفقة تستخدم Hive، بينما handoff الحالي يذكر SharedPreferences.
-- [ ] حفظ credits/history/settings/locale/theme بطريقة versioned.
+- [x] تثبيت SharedPreferences كـmetadata store فعلي؛ الصور والنماذج تبقى ملفات محلية، ولا يُستخدم Hive في هذا المسار.
+- [x] حفظ Brand Identity وHistory بطريقة versioned مع schema version.
+- [ ] ترحيل Credits/Free quota/Pro status إلى versioned envelope موحد.
 - [ ] منع الرصيد السالب.
-- [ ] إدارة cache/output retention وdelete semantics.
-- [ ] إكمال Privacy Policy وTerms وCompliance داخل المسار المعلن.
+- [x] إدارة History retention بحد 100، وحذف عنصر/مسح السجل مع حذف المخرجات المتاحة.
+- [x] تحديث Privacy/Terms لمسار التخزين المحلي وعمليات الحذف.
 - [ ] توثيق عدم رفع الصور دون موافقة صريحة.
 - [ ] اختبار إغلاق/إعادة فتح التطبيق وOffline بعد تنزيل النموذج.
 
@@ -224,7 +225,7 @@
 - [ ] اختبارات ProService: البداية، 30 يومًا، 365 يومًا، Lifetime، auto-expiry، restore.
 - [ ] اختبارات Billing: المنتجات الستة، purchase statuses، completePurchase، duplicate grant، restored consumables.
 - [ ] اختبارات Credits: 100/500/1200، stacking، refund، وعدم النزول تحت الصفر.
-- [ ] اختبارات widget لـPaywall وSettings وBatch وHistory والراوتر.
+- [x] اختبارات service لـBatch/History/Brand/Storage؛ widget tests لـPaywall وSettings وBatch وHistory والراوتر ما زالت مطلوبة.
 - [ ] Fixtures للصور والأقنعة دون تخزين النموذج داخل Git.
 - [ ] benchmark cold/warm، cancellation، timeout، memory، CPU/NNAPI، 30–100 inference.
 - [ ] CI للتحليل والاختبار والبناء وفحص الأسرار.
@@ -267,6 +268,9 @@
 | التاريخ | التغيير |
 |---|---|
 | 2026-09-14 | **دفعة تصحيحات كبيرة مخططة قبل التنفيذ:** versioned storage، retention/delete semantics، Batch options الفعلية، Restore/شراء أوضح، UX gates، اختبارات الخدمات والواجهات، وتوحيد وثائق الحالة. Play Console وAndroid device evidence تبقى إجراءات تحقق خارجية. |
+| 2026-09-14 | **نتيجة الدفعة الكبيرة:** Batch/History/Storage/Restore/UX hardening منفذة؛ Batch يدعم remove background أو add shadow عبر AiService، وHistory versioned bounded مع delete، وCI/Play/device/widget verification ما زالت متبقية. |
+| 2026-09-14 | إزالة شاشات FAQ/Models/Support الوهمية واستبدالها بمحتوى UX فعلي وربطها من Settings؛ تحديث Legal لمسار التخزين المحلي والحذف الآمن. |
+| 2026-09-14 | إزالة Onboarding/Recipes/Compliance placeholders، إضافة محتوى صريح وروابط routes، وتحديث مصفوفة التحقق دون ادعاء اعتماد قانوني. |
 | 2026-09-14 | قراءة خارطة الطريق الحالية ووثائق التحقق والدفع والأداء والمرفقات الأربعة كاملًا على مستوى المحتوى المتاح. |
 | 2026-09-14 | اعتماد Billing v2 كمواصفة هدف: ستة Product IDs، Lifetime، Free/Pro/Lifetime، الأسعار الجديدة، واقتصاد Credits. |
 | 2026-09-14 | فصل المواصفة المطلوبة عن حالة المصدر وPlay Console، وتسجيل الإجراءات البشرية التي لا ينفذها GitHub أو الكود تلقائيًا. |

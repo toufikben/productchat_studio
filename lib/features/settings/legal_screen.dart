@@ -19,7 +19,7 @@ class LegalScreen extends StatelessWidget {
             SizedBox(height: 24),
             Text('Data retention', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             SizedBox(height: 8),
-            Text('Temporary outputs are stored in the application cache and may be removed by the app or operating system. Durable settings are stored locally. A cleanup policy for cached outputs remains part of the release hardening work.'),
+            Text('Selected images and local AI outputs remain on the device unless you explicitly share or export them. Durable settings and a bounded local History are stored on-device using versioned metadata. Deleting a History item deletes its recorded output when the file is still available; clearing History removes recorded outputs. The operating system may also remove cache files.'),
           ],
         ),
       );

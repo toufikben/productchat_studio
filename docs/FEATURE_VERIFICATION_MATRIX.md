@@ -27,19 +27,22 @@
 | `editor.state` | نعم | نعم | جزئي | جزئي | لا | لا | history/undo/state؛ output runtime pending |
 | `batch` | نعم | نعم | نعم | Pending | لا | لا | Pro/Lifetime gate و100-image limit وAiService processing وHistory؛ native runtime/performance pending |
 | `brand.identity` | نعم | نعم | نعم | Pending | لا | لا | Pro/Lifetime gate وlocal persistence وUI مضافة؛ لا device/widget evidence |
-| `storage` | نعم | جزئي | جزئي | جزئي | لا | لا | handoff يذكر SharedPreferences، والمواصفة المرفقة تقترح Hive؛ القرار الفعلي pending |
+| `storage` | نعم | نعم | جزئي | Pending | لا | لا | SharedPreferences versioned metadata؛ Credits/quota/Pro migration وrestart verification pending |
 | `billing.local` | نعم | نعم | جزئي | Pending | لا | لا | Credits IDs وstream وlocal ledger وrestore عند init؛ الاختبارات لم تُشغل لغياب Flutter |
 | `billing.v2.catalog` | نعم | نعم | جزئي | Pending | لا | لا | IDs الستة وLifetime non-consumable وPaywall sections مضافة؛ Play Console/backend pending؛ الاختبار لم يُشغل لغياب Flutter |
 | `pro.entitlement` | نعم | جزئي | جزئي | Pending | لا | لا | `ProService` المحلي يدعم expiry/Lifetime/persistence؛ ليس server-authoritative بعد؛ الاختبار لم يُشغل |
 | `free.tier` | نعم | نعم | جزئي | Pending | لا | لا | PatchMatch gate وwatermark وquota-after-success في Editor/Chat؛ alpha/device tests متبقية |
 | `lifetime` | مواصفة فقط | لا | لا | لا | لا | لا | منتج one-time غير منشأ وفق الأدلة المتاحة |
 | `chat` | نعم | نعم | جزئي | لا | لا | لا | يحتاج E2E image/mask/dispatch/result |
-| `history` | نعم | نعم | نعم | Pending | لا | لا | durable local entries؛ Free latest 5 وPro/Lifetime full history؛ اختبار مضاف ولم يُشغل لغياب Flutter |
+| `history` | نعم | نعم | نعم | Pending | لا | لا | versioned bounded entries، latest 5/full history، delete/clear يحذف المخرجات المتاحة؛ اختبار مضاف ولم يُشغل لغياب Flutter |
 | `settings` | نعم | نعم | جزئي | Pending | لا | لا | Pro/Lifetime status وexpiry وRestore وروابط المسارات؛ device/Flutter test pending |
-| `onboarding` | نعم | لا | لا | لا | لا | لا | scaffold أو غير موصول وفق الأدلة السابقة |
+| `onboarding` | نعم | نعم | جزئي | لا | لا | لا | Getting started content and route added; no persistence/widget evidence |
+| `recipes` | نعم | نعم | جزئي | لا | لا | لا | Local editing recipes and route added; action automation remains future work |
+| `compliance` | نعم | نعم | جزئي | لا | لا | لا | Review checklist added; legal certification is explicitly not claimed |
 | `compliance` | جزئي | جزئي | جزئي | لا | لا | لا | قائمة ثابتة وUI غير مكتمل |
 | `localization` | نعم | جزئي | جزئي | لا | لا | لا | العربية/الإنجليزية؛ الهدف 16 غير محسوم |
-| `privacy.terms` | جزئي | جزئي | جزئي | لا | لا | لا | route/مواد موجودة جزئيًا؛ policy/flow يحتاج مراجعة |
+| `privacy.terms` | نعم | نعم | جزئي | لا | لا | لا | local-only processing، versioned metadata، وdelete semantics موثقة؛ legal review خارجي متبقٍ |
+| `faq.support.models` | نعم | نعم | جزئي | لا | لا | لا | FAQ, support guidance, and model capability screens added and linked from Settings |
 | `receipt.verification` | نعم | نعم | جزئي | Pending | لا | لا | المسار المحلي يحفظ SHA-256 fingerprint لمرجع Billing ولا يحفظ Token الخام؛ Backend وGoogle Developer API مستبعدان حاليًا |
 | `p8.performance` | بروتوكول فقط | لا | لا | لا | لا | لا | runtime measurements pending device/emulator |
 

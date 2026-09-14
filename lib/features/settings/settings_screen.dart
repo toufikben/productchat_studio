@@ -89,6 +89,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: Text(isPro ? 'Up to 100 images' : 'Pro or Lifetime required'),
             onTap: () => context.push('/batch'),
           ),
+          ListTile(
+            leading: const Icon(Icons.auto_awesome_outlined),
+            title: const Text('Models and capabilities'),
+            onTap: () => context.push('/models'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.help_outline),
+            title: const Text('FAQ'),
+            onTap: () => context.push('/faq'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.support_agent_outlined),
+            title: const Text('Support'),
+            onTap: () => context.push('/support'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.policy_outlined),
+            title: const Text('Privacy and Terms'),
+            onTap: () => context.push('/legal'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.menu_book_outlined),
+            title: const Text('Recipes'),
+            onTap: () => context.push('/recipes'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.fact_check_outlined),
+            title: const Text('Review checklist'),
+            onTap: () => context.push('/compliance'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.play_circle_outline),
+            title: const Text('Getting started'),
+            onTap: () => context.push('/onboarding'),
+          ),
           if (_message != null)
             Padding(
               padding: const EdgeInsets.only(top: 12),

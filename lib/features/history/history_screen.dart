@@ -19,7 +19,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final isPro = billingService.proService.isPro;
     final entries = historyService.visible(isPro: isPro);
     return Scaffold(
-      appBar: AppBar(title: const Text('History')),
+      appBar: AppBar(
+        title: const Text('History'),
+        actions: [
+          if (entries.isNotEmpty)
+            IconButton(
+              tooltip: 'Clear history',
+              icon: const Icon(Icons.delete_sweep_outlined),
+              onPressed: () async {
+                await historyService.clear();
+                if (mounted) setState(() {});
+              },
+            ),
+        ],
+      ),
       body: entries.isEmpty
           ? const Center(child: Text('No successful edits yet.'))
           : ListView.builder(
@@ -34,6 +47,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         : const Icon(Icons.broken_image_outlined),
                     title: Text(entry.operation),
                     subtitle: Text(entry.createdAt.toLocal().toString()),
+                    trailing: IconButton(
+                      tooltip: 'Delete history item',
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () async {
+                        await historyService.delete(entry);
+                        if (mounted) setState(() {});
+                      },
+                    ),
                     onTap: () => context.push(
                       '/editor?imagePath=${Uri.encodeComponent(entry.path)}',
                     ),

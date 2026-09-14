@@ -33,8 +33,8 @@
 | Real-ESRGAN | `.pth` موجود، backend غير منفذ | ONNX/NCNN/TFLite بترخيص أو Basic fallback صريح |
 | MI-GAN | غير مضاف بسبب الترخيص | لا artifact قبل تصريح تجاري مكتوب |
 | Editor/Chat | contracts وimage picker موجودان؛ E2E جزئي | mask، dispatch، output، history |
-| Batch | progress/UI موجود؛ pipeline الحقيقي متبقٍ | ربط jobs بعمليات التحرير/export |
-| Storage | الوثائق متضاربة بين SharedPreferences وHive | تثبيت storage الفعلي ثم تحديث docs/tests |
+| Batch | gate وpipeline AiService موجودان؛ runtime متبقٍ | device/performance وعمليات export الإضافية |
+| Storage | SharedPreferences versioned metadata مثبت | ترحيل Credits/quota/Pro إلى envelope موحد واختبار restart |
 | Billing | local handler وLocal Google Play entitlement؛ لا backend خارجي | Play Console وdevice testing، وreceipt backend مستبعد حاليًا |
 | Internal Testing | غير مغلق | lifetime، license tester، AAB، device purchase |
 
@@ -85,7 +85,7 @@
 - [ ] ربط Monthly بـ30 يومًا وYearly بـ365 يومًا بعد تحقق موثوق، لا callback محلي فقط.
 - [ ] Paywall بثلاثة أقسام Lifetime/Subscriptions/Credits.
 - [x] Free quota وwatermark وPatchMatch وEditor/Chat gates منفذة محليًا؛ fixtures أضيفت.
-- [ ] Pro gates لـBatch/Brand/النماذج المعتمدة؛ History آخر 5 للمجاني والكامل لـPro إذا ثبتت السياسة.
+- [x] Pro gates لـBatch/Brand؛ History آخر 5 للمجاني والكامل لـPro مطبق محليًا.
 - [ ] لا grant للـCredits عند pending/error/restored؛ ولا خصم قبل نجاح العملية.
 - [x] Settings/Batch/History/Brand تعرض الحالة الحقيقية فقط وتطبق Pro/Lifetime gates محليًا.
 
@@ -100,16 +100,16 @@
 
 ### 7. Storage/privacy
 
-- [ ] حسم Hive أو SharedPreferences في الكود أولًا ثم تحديث الوثائق.
-- [ ] credits/history/settings/locale/theme versioned.
+- [x] حسم SharedPreferences في الكود وتحديث الوثائق.
+- [x] History وBrand versioned؛ Credits/quota/Pro/locale/theme ما زالت تحتاج envelope موحدًا.
 - [ ] clamp للرصيد ومنع double grant/negative balance.
-- [ ] Privacy/Terms/Compliance وoffline tests.
+- [x] تحديث Privacy/Terms لمسار local-only وretention/delete semantics؛ legal review وoffline tests متبقية.
 - [ ] عدم رفع الصور دون موافقة.
 
 ### 8. Test/performance/CI
 
 - [ ] `integration_test/` فعلي وfixtures صور/أقنعة صغيرة.
-- [ ] Pro/Billing/Credits unit tests وPaywall/Settings/Batch/History widget tests.
+- [x] Batch/History/Brand/Storage service tests أضيفت؛ Pro/Billing/Credits وwidget tests ما زالت مطلوبة.
 - [ ] MethodChannel contract وAndroid integration tests.
 - [ ] GitHub Actions analyze/test/build/secrets.
 
