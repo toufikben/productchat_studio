@@ -60,7 +60,16 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('ProductChat Studio')),
+        appBar: AppBar(
+          title: const Text('ProductChat Studio'),
+          actions: [
+            IconButton(
+              onPressed: () => context.push('/settings'),
+              tooltip: 'Settings',
+              icon: const Icon(Icons.settings_outlined),
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(

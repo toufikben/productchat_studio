@@ -14,7 +14,7 @@
 
 | Feature ID | Source | Wired | Executable | Automated | Android verified | Release ready | Evidence / gap |
 |---|---:|---:|---:|---:|---:|---:|---|
-| `build.android` | نعم | نعم | نعم | نعم وفق السجلات السابقة | لا | لا | Flutter 3.47.4/SDK 36/AAB evidence؛ إعادة التحقق من آخر commit مطلوبة |
+| `build.android` | نعم | نعم | نعم | نعم وفق السجلات السابقة | لا | لا | Flutter 3.47.4/SDK 36؛ Release CI يبني AAB وAPK؛ إعادة التحقق من آخر commit مطلوبة |
 | `models.lama` | نعم | جزئي | جزئي | جزئي | لا | لا | Model Manager/checksum وSeika source؛ لا device inference |
 | `models.realesrgan` | نعم | لا | لا | لا | لا | لا | `.pth` فقط؛ Basic fallback، لا Real-ESRGAN runtime |
 | `models.migan` | جزئي | لا | لا | لا | لا | لا | لا weights بسبب الترخيص |
@@ -25,7 +25,7 @@
 | `edit.shadow` | نعم | نعم | جزئي | لا | لا | لا | compositing baseline بلا device test |
 | `edit.export` | نعم | جزئي | جزئي | لا | لا | لا | contract موجود؛ E2E pending |
 | `editor.state` | نعم | نعم | جزئي | جزئي | لا | لا | history/undo/state؛ output runtime pending |
-| `batch` | نعم | نعم | جزئي | Pending | لا | لا | Pro/Lifetime gate و100-image limit وprogress؛ pipeline ما زال ينسخ الملفات بدل تطبيق التحرير |
+| `batch` | نعم | نعم | نعم | Pending | لا | لا | Pro/Lifetime gate و100-image limit وAiService processing وHistory؛ native runtime/performance pending |
 | `brand.identity` | نعم | نعم | نعم | Pending | لا | لا | Pro/Lifetime gate وlocal persistence وUI مضافة؛ لا device/widget evidence |
 | `storage` | نعم | جزئي | جزئي | جزئي | لا | لا | handoff يذكر SharedPreferences، والمواصفة المرفقة تقترح Hive؛ القرار الفعلي pending |
 | `billing.local` | نعم | نعم | جزئي | Pending | لا | لا | Credits IDs وstream وlocal ledger وrestore عند init؛ الاختبارات لم تُشغل لغياب Flutter |

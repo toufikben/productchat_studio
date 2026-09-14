@@ -70,7 +70,7 @@
 | Real-ESRGAN | fallback فقط | `RealESRGAN_x4plus.pth` موجود، وONNX/NCNN غير موصول |
 | MI-GAN | محظور قانونيًا وتقنيًا | لا تُضاف الأوزان قبل تصريح إعادة توزيع تجاري |
 | Editor/Chat | جزئي | contracts وimage picker موجودان؛ mask وE2E/runtime متبقيان |
-| Batch | واجهة وprogress أساسيان | التنفيذ الحالي لا يزال يحتاج pipeline تحرير حقيقيًا |
+| Batch | Pro/Lifetime gate وpipeline محلي عبر AiService | Android runtime/performance واختبار الجهاز متبقية |
 | Storage/History | متضارب توثيقيًا ويحتاج توحيدًا | handoff يذكر SharedPreferences، بينما matrix قديمة تذكر Map؛ يلزم تحقق من commit الحالي |
 | Credits/Billing | كتالوج v2 محلي منفذ جزئيًا | IDs الستة وLifetime وشراء non-consumable مضافة في المصدر؛ backend وPlay Console ما زالا متبقيين |
 | Free/Pro/Lifetime gates | ProService محلي منفذ جزئيًا | Lifetime/expiry/persistence لها خدمة واختبارات؛ لا تُعد entitlement إنتاجية قبل الخادم |
@@ -100,6 +100,7 @@
 - [x] Flutter/Dart وAndroid SDK وJDK موثقة.
 - [x] ملفات Android الأساسية وAAB workflow موجودة.
 - [x] Release signing عبر `android/key.properties` دون أسرار في Git.
+- [x] Release CI يبني ويرفع APK بالإضافة إلى AAB.
 - [ ] إعادة تشغيل `flutter pub get` و`flutter gen-l10n` و`flutter analyze` و`flutter test` من آخر commit.
 - [ ] بناء Debug APK وRelease AAB من نفس commit وتسجيل الأرقام.
 - [ ] توحيد نتائج CI مع مصفوفة التحقق.
@@ -111,8 +112,8 @@
 - [x] `SeikaService` وMethodChannel ومسارات العمليات الأساسية موجودة.
 - [x] `AiService` لا يعيد input كنجاح وهمي وفق أحدث handoff.
 - [ ] إكمال image picker + mask creation + Chat dispatch + Editor result end-to-end.
-- [ ] جعل Batch يطبق pipeline التحرير الحقيقي بدل نسخ الملفات فقط.
-- [ ] حفظ History بعد نجاح العملية فقط وربطه بمخرجات قابلة لإعادة الفتح.
+- [x] جعل Batch يطبق pipeline التحرير الحقيقي عبر `AiService` بدل نسخ الملفات فقط.
+- [x] حفظ History بعد نجاح العملية فقط وربطه بمخرجات قابلة لإعادة الفتح.
 - [ ] إبقاء الفشل صريحًا وعدم تسجيل نتيجة أو خصم Credits عند الفشل.
 
 ### المرحلة 3 — LaMa Android runtime

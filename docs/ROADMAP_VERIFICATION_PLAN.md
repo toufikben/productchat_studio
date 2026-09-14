@@ -52,14 +52,14 @@
 - [x] توثيق Flutter 3.47.4 وDart 3.13.3 وSDK 36 وJDK 17.
 - [x] signing workflow وAAB evidence سابقان.
 - [ ] إعادة `flutter pub get`, `flutter gen-l10n`, `flutter analyze`, `flutter test` على آخر commit.
-- [ ] بناء APK/AAB وتسجيل artifact وSHA وversionCode.
+- [ ] بناء APK/AAB وتسجيل artifact وSHA وversionCode؛ CI أصبح يبني الاثنين.
 
 ### 2. Core product path
 
 - [x] Seika MethodChannel وoperation contracts.
 - [x] إزالة editor success الوهمي وفق آخر handoff.
 - [ ] image picker + mask creation + Chat dispatch + Editor output.
-- [ ] Batch editing pipeline بدل file copy.
+- [x] Batch editing pipeline عبر `AiService` بدل file copy، مع استمرار الحاجة إلى native runtime evidence.
 - [x] History بعد output ناجح فقط، مع Free latest 5 وPro/Lifetime full history.
 
 ### 3. Android LaMa validation

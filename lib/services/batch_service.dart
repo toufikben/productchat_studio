@@ -1,10 +1,15 @@
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../core/constants.dart';
+import '../models/edit_request.dart';
+import '../models/edit_result.dart';
+import 'ai_service.dart';
 import 'billing_service.dart';
+import 'history_service.dart';
+
+typedef BatchProcessor = Future<EditResult> Function(String imagePath, EditOp operation);
 
 class BatchJob {
   final String input;
@@ -28,7 +33,15 @@ class BatchProgress {
 }
 
 class BatchService extends StateNotifier<BatchProgress> {
-  BatchService() : super(const BatchProgress());
+  BatchService({BatchProcessor? processor, bool? isPro})
+      : _processor = processor ?? AiService().apply,
+        _isProOverride = isPro,
+        super(const BatchProgress());
+
+  final BatchProcessor _processor;
+  final bool? _isProOverride;
+
+  bool get _isPro => _isProOverride ?? billingService.proService.isPro;
 
   Future<void> processAll(
     List<String> inputs, {
@@ -37,7 +50,7 @@ class BatchService extends StateNotifier<BatchProgress> {
     int size = 2000,
   }) async {
     if (state.running) return;
-    if (!billingService.proService.isPro) {
+    if (!_isPro) {
       state = const BatchProgress(error: 'Batch processing requires Pro or Lifetime.');
       return;
     }
@@ -54,17 +67,20 @@ class BatchService extends StateNotifier<BatchProgress> {
 
     final jobs = inputs.map((p) => BatchJob(input: p)).toList();
     state = BatchProgress(jobs: jobs, running: true);
-    final dir = await getTemporaryDirectory();
+    final operation = addShadow ? EditOp.shadow : EditOp.removeBg;
     for (var i = 0; i < jobs.length; i++) {
       try {
         final source = File(jobs[i].input);
         if (!await source.exists()) throw StateError('Input not found');
-        final ext = format == 'png' ? 'png' : 'jpg';
-        final out = File(
-          '${dir.path}/batch_${DateTime.now().microsecondsSinceEpoch}_$i.$ext',
+        final result = await _processor(jobs[i].input, operation);
+        if (!result.ok || result.outputPath == null) {
+          throw StateError(result.error ?? 'Image operation failed');
+        }
+        jobs[i] = BatchJob(input: jobs[i].input, output: result.outputPath);
+        await historyService.record(
+          path: result.outputPath!,
+          operation: operation.name,
         );
-        await source.copy(out.path);
-        jobs[i] = BatchJob(input: jobs[i].input, output: out.path);
       } catch (e) {
         jobs[i] = BatchJob(input: jobs[i].input, error: '$e');
       }
