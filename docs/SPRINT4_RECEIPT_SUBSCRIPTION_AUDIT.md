@@ -12,6 +12,24 @@ The project has a **local purchase-event handler**, not production Receipt Verif
 
 **Sprint 4 status:** code-level separation is complete; production billing verification is not complete.
 
+## UI and product-wiring audit
+
+The application contains a working **catalog and purchase entry point**, but not a complete Pro feature entitlement flow:
+
+| Area | Current implementation | Result |
+|---|---|---|
+| Credits product catalog | `CreditProducts.amounts` maps `credits_100`, `credits_500`, and `credits_1200` to 100/500/1200 | Product IDs are wired |
+| Subscription catalog | `subscriptionIds` contains `pro_monthly` and `pro_yearly` | Product IDs are wired |
+| Product query | `PaywallScreen` calls `BillingService.init()`, which queries all five IDs | Products can appear in the Paywall when Play returns them |
+| Purchase button | Paywall calls `buy()`; subscriptions use `buyNonConsumable`, packs use `buyConsumable` | Purchase entry point exists |
+| Credits grant | Only purchased consumable events call the local ledger | Local Credits flow exists with known limitations |
+| Pro unlock | No `proEntitled`, subscription state, expiry, or feature gate exists | **Not implemented** |
+| Subscription periodic Credits | Subscription IDs have no amount mapping | **Intentionally not implemented** |
+| Restore UI | `restorePurchases()` is exposed from Paywall | Callback is not a trusted entitlement verifier |
+| Editor access | Editor checks local Credits only through `canSpend()`/`spend()` | No Pro bypass or Pro-only feature gate |
+
+The current Paywall subtitle explicitly says that subscription entitlement is verified separately. This is accurate: the UI offers the subscription purchase, but a successful local callback does not unlock Pro features.
+
 ## Findings
 
 | ID | Severity | Finding | Evidence | Impact |
@@ -24,6 +42,7 @@ The project has a **local purchase-event handler**, not production Receipt Verif
 | SUB-02 | Medium | Subscription events are acknowledged/closed but not verified. | Subscription products use `buyNonConsumable`; purchased/restored subscription events set `error = null` and then may call `completePurchase`. | Completion is not entitlement verification. Expired, cancelled, refunded, or replaced subscriptions are not modeled. |
 | SUB-03 | Medium | No account/device binding is configured. | No `obfuscatedAccountId` or backend user identity is passed to the purchase flow. | Cross-device ownership and server-side reconciliation are not available. This may be acceptable for an internal test, not for production Credits/Pro accounting. |
 | TEST-01 | High | No integration tests exercise real PurchaseDetails stream outcomes. | `test/billing_service_test.dart` currently covers the pure catalog and ledger only; it does not use a store fake to test pending/error/purchased/restored/completePurchase flows. | Regressions in callbacks, completion, subscription separation, and unknown products can pass CI unnoticed. |
+| UI-01 | High | Subscription products are visible and purchasable, but no Pro feature is connected to them. | `PaywallScreen` labels subscriptions as Pro; `BillingService` has no entitlement state; `EditorController` checks Credits only. | Users can pay for a subscription without receiving a defined or enforced Pro benefit. Do not market Pro access until the entitlement policy and implementation exist. |
 
 ## What is correct in the current code
 

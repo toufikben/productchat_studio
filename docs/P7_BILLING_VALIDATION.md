@@ -7,6 +7,8 @@
 
 **Receipt/subscription audit:** [`SPRINT4_RECEIPT_SUBSCRIPTION_AUDIT.md`](SPRINT4_RECEIPT_SUBSCRIPTION_AUDIT.md)
 
+The UI wiring audit confirms that the Paywall queries and displays all five configured products and routes subscription purchases through `buyNonConsumable`, but no `ProEntitlement` or Pro feature gate is implemented yet.
+
 **Play Console status (2026-09-14):** The one-time products `credits_100`, `credits_500`, and `credits_1200` were created and activated successfully. Each product is Active and available in 173 countries/regions. Google Play applied regional pricing; the visible Algeria prices were approximately 100 DZD, 550 DZD, and 1,100 DZD respectively after price rounding.
 
 The subscriptions `pro_monthly` and `pro_yearly` were also created. Their auto-renewing base plans `monthly` and `yearly` are Active, with regional pricing applied from approximately 675 DZD/month and 6,800 DZD/year in Algeria. The product IDs match the Flutter code contracts.

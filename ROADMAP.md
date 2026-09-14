@@ -124,11 +124,19 @@
 - [x] إنشاء وتفعيل `credits_100` و`credits_500` و`credits_1200` في Google Play Console؛ الحالة Active ومتاحة في 173 دولة/منطقة.
 - [x] تعريف subscription products في الكود قبل إنشائها في Play Console.
 - [x] إنشاء وتفعيل `pro_monthly` و`pro_yearly` في Google Play Console؛ الخطتان `monthly` و`yearly` من نوع auto-renewing ومفعّلتان.
+- [x] تأكيد مرئي من Play Console بتاريخ 2026-09-14 لظهور حزم Credits الثلاث والاشتراكين مع Active purchase/base plan؛ الدليل يثبت إعداد Play Console فقط، وليس الشراء داخل التطبيق.
+- [x] تدقيق ربط الواجهة: Paywall يعرض المنتجات الخمسة ويرسل الاشتراكات عبر `buyNonConsumable` وحزم Credits عبر `buyConsumable`.
+- [ ] تنفيذ `ProEntitlement` وربط الاشتراك بميزات Pro فعلية؛ لا يوجد حاليًا فتح Pro أو منح Credits دورية للاشتراك.
+- [ ] إضافة اختبارات PurchaseDetails/stream وواجهة Pro بعد تحديد مزايا الاشتراك وسياسة الانتهاء/الإلغاء.
 - [ ] اختبار الشراء والاستعادة في Internal testing على جهاز وحساب اختبار مرخّص.
 - [ ] إضافة receipt verification/backend ledger للـ consumables واستعادتها عبر الأجهزة.
 - [ ] إضافة طبقة iOS StoreKit لاحقًا.
 
 **Sprint 4 — Billing correctness hardening (2026-09-14, commit `1c21e3d`):** اكتمل تصحيح الخلل الذي كان يربط `pro_monthly` و`pro_yearly` بمبالغ Credits محلية؛ أصبحت هذه المنتجات entitlement events فقط، بينما تمنح Credits حزم consumable المعروفة وحدها. تم تحديث اختبارات catalog وواجهة Paywall. المتبقي: اختبارات purchase stream الفعلية على Internal testing، تحديد Pro entitlement/renewal/expiry، ثم receipt verification وbackend ledger قبل الإنتاج.
+
+**Play Console evidence (2026-09-14):** لقطات الشاشة المرسلة تؤكد أن `credits_100` و`credits_500` و`credits_1200` موجودة ضمن **One-time products**، وأن `pro_monthly` و`pro_yearly` موجودتان ضمن **Subscriptions** ولكل منهما Base Plan مفعّل. لا تُرفع حالة Android verified أو purchase verified قبل تثبيت التطبيق من Internal Testing وتشغيل شراء فعلي.
+
+**UI wiring audit (2026-09-14):** تم العثور على ربط Paywall و`BillingService` بالمنتجات والشراء، لكن لم يُعثر على `proEntitled` أو gate لميزات Pro داخل التطبيق؛ لذلك الاشتراكات حاليًا قابلة للشراء فقط، وليست ميزة Pro مكتملة.
 
 **قرار الإعلانات:** لا تُضاف AdMob في الإصدار الحالي. لا يوجد بند إعلانات في خارطة المنتج، والاعتماد على Credits/اشتراك يحافظ على تجربة تحرير الصور والخصوصية المحلية. يُعاد تقييم AdMob فقط إذا ظهرت حاجة تجارية مثبتة.
 
