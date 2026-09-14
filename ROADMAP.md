@@ -276,3 +276,17 @@
 | 2026-09-14 | فصل المواصفة المطلوبة عن حالة المصدر وPlay Console، وتسجيل الإجراءات البشرية التي لا ينفذها GitHub أو الكود تلقائيًا. |
 
 لا تُعتبر المواصفات الجديدة منفذة لمجرد إدراجها هنا؛ كل بند سيُرفع فقط مع commit واختبار ودليل مناسب.
+
+## Repair Change Control and Rollback Log
+
+All repair work must follow these rules:
+
+1. **Before each phase:** record the phase name, scope, files/components involved, known risks, rollback point, and acceptance checks. No code changes begin before this entry exists.
+2. **After each phase:** record the actual changes, validation results, unresolved issues, and whether the phase is accepted, blocked, or needs rollback.
+3. **Rollback safety:** do not overwrite previous log entries. Every phase must have a separately identifiable checkpoint/commit so the phase can be reverted without removing unrelated work.
+4. **No silent scope changes:** if validation reveals a new issue or the planned scope changes, document it here before continuing.
+
+### Change Log
+
+- **2026-09-14 — Pre-repair audit checkpoint:** Full roadmap and release-readiness review completed. Confirmed issues are documented in the audit report. **No application code changes or repair phase has started.**
+
