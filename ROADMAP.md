@@ -334,15 +334,17 @@ All repair work must follow these rules:
 
 | البند الذي ظهر في سجل العمل | النتيجة في المستودع | الحالة |
 |---|---|---|
-| فحص حالة الريبو والفرع الرئيسي | `main` متزامن مع `origin/main` عند `ffaa690`، ولا توجد تغييرات محلية وقت التدقيق | **متحقق** |
+| فحص حالة الريبو والفرع الرئيسي | `main` متزامن مع `origin/main` عند `fe3b6d0`، ولا توجد تغييرات محلية وقت التدقيق | **متحقق** |
 | إصلاح رسالة Free tier لمسار Chat/Editor | الرسالة أصبحت تذكر PatchMatch واشتراط mask وPro في `ChatController` و`EditorController` | **منفذ في المصدر** |
 | إصلاح أخطاء `flutter analyze` | آخر CI نجح فيه `flutter pub get` و`flutter gen-l10n` و`flutter analyze` | **متحقق في CI** |
-| اختبارات Flutter | آخر تشغيل CI رقم [34883672309](https://github.com/toufikben/productchat_studio/actions/runs/34883672309) فشل: نجح 39 اختبارًا وفشل اختبار واحد هو `chat conversational edit requires a real mask` | **غير مكتمل** |
+| اختبارات Flutter | التشغيل [34910985258](https://github.com/toufikben/productchat_studio/actions/runs/34910985258) على `fe3b6d0` نجح بالكامل بعد إضافة اختبارات Billing، كما نجح إصلاح مسار القناع في التشغيل السابق [34908591711](https://github.com/toufikben/productchat_studio/actions/runs/34908591711) | **متحقق في CI** |
 | Real-ESRGAN | يوجد fallback موثق فقط؛ لا يوجد ONNX/PTH موصول للتنفيذ، ولم يُثبت inference على Android | **غير مكتمل/مؤجل** |
-| Billing وPlay Console | كتالوج Product IDs موجود جزئيًا في المصدر، لكن التحقق على Play Console، الشراء، Restore، وبيئة Internal Testing لم تُغلق | **غير مكتمل** |
+| Billing وPlay Console | أضيفت تغطية Billing للـcatalog والتصنيفات والحالات والإنفاق ومنع الرصيد السالب؛ التحقق الفعلي على Play Console والشراء وRestore وInternal Testing ما زال متبقيًا | **اختبارات المصدر متحققة؛ التكامل غير مكتمل** |
 | Android runtime وLaMa | لا يوجد في هذا التدقيق دليل جهاز أو Emulator لإثبات cold/warm inference والأداء والذاكرة | **غير متحقق** |
 
 **الخلاصة:** تم إنجاز إصلاحات المصدر والتوثيق الظاهرة في سجل الصورة جزئيًا، لكن لا يصح اعتبار المهمة مكتملة أو جاهزة للإصدار؛ الأولوية التالية هي إصلاح اختبار الـmask وإعادة تشغيل CI، ثم تنفيذ تحقق Android وPlay Console الفعلي. بيئة التدقيق الحالية لا تحتوي Flutter أو Dart، لذلك لم يُدّعَ نجاح محلي غير مثبت.
+
+**تحديث 2026-09-15:** تم إصلاح اختبار القناع وحقن `BillingService` في commit `a6eaee7`، ثم أضيفت اختبارات Billing الموسعة في commit `fe3b6d0`. نجح Flutter CI بالكامل. فشل تشغيل البناء الموقّع [34910989011](https://github.com/toufikben/productchat_studio/actions/runs/34910989011) في `flutter build appbundle --release` قبل إنشاء APK/AAB بسبب عدم توافق Gradle 9.3.1/AGP 9.1.0 مع Flutter 3.27.0 (`unable to resolve class groovy.xml.QName`). تم تعديل Gradle إلى 8.10.2 وAGP إلى 8.7.3 وKotlin إلى 2.0.21، ويلزم تشغيل البناء مجددًا بعد رفع هذا الإصلاح.
 
 - **Phase 1 — Diagnostic log capture — STARTED 2026-09-14:** Approved temporary workflow-only change. Scope: capture and upload the exact flutter analyze output while preserving a failing job when analysis fails. No application code or test logic changes. Rollback: revert the workflow commit. Acceptance: the next run publishes flutter-analyze.log and still reports the analyzer failure.
 
