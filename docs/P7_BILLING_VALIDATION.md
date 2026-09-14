@@ -2,9 +2,11 @@
 
 **Date:** 2026-09-14
 
-**Code release:** `1.0.1+2` is prepared after the first accepted Play release.
+**Code release:** `1.0.2+3` is prepared after configuring the subscription products.
 
 **Play Console status (2026-09-14):** The one-time products `credits_100`, `credits_500`, and `credits_1200` were created and activated successfully. Each product is Active and available in 173 countries/regions. Google Play applied regional pricing; the visible Algeria prices were approximately 100 DZD, 550 DZD, and 1,100 DZD respectively after price rounding.
+
+The subscriptions `pro_monthly` and `pro_yearly` were also created. Their auto-renewing base plans `monthly` and `yearly` are Active, with regional pricing applied from approximately 675 DZD/month and 6,800 DZD/year in Algeria. The product IDs match the Flutter code contracts.
 
 ## Implemented
 
@@ -46,7 +48,7 @@ The approved commercial proposal is 0.99 USD for 100 credits, 3.99 USD for 500 c
 | `flutter test` | Passed — 10 tests |
 | Credits duplicate-grant tests | Passed |
 | Negative-balance protection test | Passed |
-| Google Play product configuration | Passed for the three Credits products; all are Active in 173 countries/regions |
+| Google Play product configuration | Passed for three Active Credits products plus Active `pro_monthly` and `pro_yearly` base plans |
 | Google Play Sandbox purchase | Pending test device/test account |
 | Receipt/server verification | Pending; not claimed as implemented |
-| Production product configuration | Credits products passed; `pro_monthly` and `pro_yearly` remain to be created |
+| Production product configuration | Products and subscription base plans created/activated; purchase execution remains pending on a licensed test device |

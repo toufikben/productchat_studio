@@ -2,7 +2,7 @@
 
 > **مصدر الحقيقة للتحقق:** [`docs/MODEL_INVENTORY.md`](docs/MODEL_INVENTORY.md) و[`docs/FEATURE_VERIFICATION_MATRIX.md`](docs/FEATURE_VERIFICATION_MATRIX.md). وجود بند هنا لا يعني أنه runtime-verified؛ الحالة لا تُرفع إلا بدليل قابل لإعادة الإنتاج.
 
-> **آخر تحديث:** 2026-09-14 05:48 UTC
+> **آخر تحديث:** 2026-09-14 05:55 UTC
 > **الحالة:** Android-first؛ iOS وWeb مؤجلان عمدًا إلى ما بعد إصدار Android.
 
 ## طريقة استخدام هذه الخارطة
@@ -24,7 +24,7 @@
 | P5 التخزين والخصوصية | جزئي | SharedPreferences وLegal screen مضافان؛ cache retention وHistory/Settings الدائمين متبقيان |
 | P6 النماذج المتقدمة | قرار مكتمل، runtime متبقٍ | Real-ESRGAN fallback موثق؛ لا يوجد ONNX/NCNN backend، وMI-GAN معطل قانونيًا |
 | P10 اللغات والوصول | جزئي | العربية/الإنجليزية وRTL wiring وSemantics أساسية؛ 16 لغة واختبارات شاملة متبقية |
-| P7 Credits والدفع | منتجات Credits الفعلية مفعلة، Sandbox متبقية | `credits_100` و`credits_500` و`credits_1200` أصبحت Active في Play Console ومتاحة في 173 دولة/منطقة؛ الكود محدث إلى `1.0.1+2`؛ الاشتراكات واختبار Sandbox والتحقق الخلفي متبقية |
+| P7 Credits والدفع | المنتجات والاشتراكات مفعلة، Sandbox متبقية | `credits_100` و`credits_500` و`credits_1200` و`pro_monthly` و`pro_yearly` مفعلة في Play Console؛ الكود محدث إلى `1.0.2+3`؛ اختبار Sandbox والتحقق الخلفي متبقيان |
 | الإعلانات | غير مخطط لها حاليًا | لا توجد AdMob SDK أو وحدات إعلانية؛ النموذج التجاري الحالي Credits مع اشتراك اختياري، والإعلانات ستضر بتجربة محرر صور محلي ولم تُطلب في الخارطة |
 | iOS | مؤجل | لن يدخل في نطاق الإصدار الحالي |
 | Web | مؤجل | لن يدخل في نطاق الإصدار الحالي |
@@ -122,7 +122,8 @@
 - [x] تحديد أسعار Credits ومزايا وفترات الاشتراك قبل إنشاء المنتجات المالية.
 - [x] إنشاء وتفعيل `credits_100` و`credits_500` و`credits_1200` في Google Play Console؛ الحالة Active ومتاحة في 173 دولة/منطقة.
 - [x] تعريف subscription products في الكود قبل إنشائها في Play Console.
-- [ ] إنشاء وتفعيل `pro_monthly` و`pro_yearly` في Google Play Console ثم اختبار Sandbox على جهاز/حساب اختبار.
+- [x] إنشاء وتفعيل `pro_monthly` و`pro_yearly` في Google Play Console؛ الخطتان `monthly` و`yearly` من نوع auto-renewing ومفعّلتان.
+- [ ] اختبار الشراء والاستعادة في Internal testing على جهاز وحساب اختبار مرخّص.
 - [ ] إضافة receipt verification/backend ledger للـ consumables واستعادتها عبر الأجهزة.
 - [ ] إضافة طبقة iOS StoreKit لاحقًا.
 
@@ -167,7 +168,8 @@
 - [ ] ربط History وSettings وBrand Identity بتخزين دائم.
 - [ ] إكمال Privacy Policy وTerms وCompliance flow.
 - [ ] تحديد استراتيجية Real-ESRGAN: ONNX/NCNN أو إعلان fallback بوضوح.
-- [ ] تنفيذ Credits وGoogle Play Billing واختبار Sandbox.
+- [x] تنفيذ Credits وGoogle Play Billing وربط product IDs والاشتراكات الفعلية.
+- [ ] تنفيذ اختبار Sandbox/بيئة Internal testing وتوثيق purchase callbacks.
 
 ### 12. iOS — مؤجل
 

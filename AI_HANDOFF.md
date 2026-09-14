@@ -4,12 +4,12 @@ ProductChat Studio is an Android-first Flutter foundation for conversational pro
 
 ## Current verified state
 
-- The code repository is at commit `fb20f125134d381bbc655883008a4f214aebde74`.
+- The code repository is at the latest GitHub `main` commit after the billing update.
 - The public Hugging Face model repository exists at [`Toufikben/productchat-models`](https://huggingface.co/Toufikben/productchat-models).
 - LaMa ONNX and Real-ESRGAN `.pth` artifacts are present with recorded hashes and license notices.
 - Android source contains a LaMa ONNX path; Flutter analysis/tests and debug APK build are verified, but Android runtime/inference is still not verified because no device/emulator is available.
 - Real-ESRGAN inference is not implemented: the available artifact is `.pth` and the Kotlin method falls back to Bitmap scaling.
-- Editor AI stub is removed and operation contracts, cancellation, native timeout, sampled decode, and resource cleanup are implemented; storage, billing production verification, several screens, runtime integration tests, and release readiness remain incomplete as recorded in [`FEATURE_VERIFICATION_MATRIX.md`](docs/FEATURE_VERIFICATION_MATRIX.md) and [`ROADMAP.md`](ROADMAP.md).
+- Editor AI stub is removed and operation contracts, cancellation, native timeout, sampled decode, and resource cleanup are implemented. Billing product IDs are wired to active Play Console products and subscriptions; Sandbox purchase execution, receipt verification, several screens, runtime integration tests, and release readiness remain incomplete as recorded in [`FEATURE_VERIFICATION_MATRIX.md`](docs/FEATURE_VERIFICATION_MATRIX.md) and [`ROADMAP.md`](ROADMAP.md).
 - The current environment has Flutter 3.47.4 and can produce a debug APK, but it has no Android device/emulator for runtime validation.
 
 ## P0–P2 completed for source/build validation
@@ -24,7 +24,7 @@ ProductChat Studio is an Android-first Flutter foundation for conversational pro
 - P5 added durable SharedPreferences storage and in-app privacy/terms route (`045669d`).
 - P6 documented the Real-ESRGAN fallback and MI-GAN licensing decision (`4133d45`).
 - P10 wired persisted Arabic/English locale, theme persistence, localization delegates, and basic semantics.
-- Sprint 1 release hardening added local `android/key.properties` signing with no Debug signing fallback, Release INTERNET permission, Flutter CI version alignment, and [`docs/RELEASE_SIGNING.md`](docs/RELEASE_SIGNING.md); AAB build and Internal Testing remain pending because signing secrets are intentionally supplied by the owner.
+- Sprint 1 release hardening added local `android/key.properties` signing with no Debug signing fallback, Release INTERNET permission, Flutter CI version alignment, and [`docs/RELEASE_SIGNING.md`](docs/RELEASE_SIGNING.md). Billing release `1.0.2+3` now matches active `credits_*`, `pro_monthly`, and `pro_yearly` Play products; AAB upload/internal testing and purchase execution remain the next gate.
 
 ## Next execution order
 
@@ -32,6 +32,6 @@ ProductChat Studio is an Android-first Flutter foundation for conversational pro
 2. Measure LaMa cold/warm latency, peak Java/native memory, cancellation, timeout recovery, and repeated-session stability.
 3. Complete image picker/mask creation and real batch/edit/history/storage flows.
 4. Decide whether Real-ESRGAN will use ONNX/NCNN or be labeled as a basic fallback.
-5. Implement durable storage, privacy/terms, compliance, and Google Play Billing before treating the app as production-ready.
+5. Run Internal testing purchases for Credits and subscriptions, then implement trusted receipt verification before treating Billing as production-ready.
 
 Do not add MI-GAN weights or claim production readiness without explicit license and runtime evidence. Do not commit model binaries, credentials, or signing keys.
