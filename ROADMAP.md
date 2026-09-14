@@ -149,7 +149,7 @@
 
 **Sprint 1 — بوابة الرفع الداخلي:** تم تحديث إعداد Release وCI وManifest، وتوثيق إعداد الأسرار في [`docs/RELEASE_SIGNING.md`](docs/RELEASE_SIGNING.md). المتبقي: إعداد Upload Key محليًا، تشغيل التحقق، بناء AAB، ثم رفعه إلى Internal Testing وتسجيل أخطاء Play Console.
 
-**تصحيح خطأ الرفع القديم:** رسالة Play Console كانت تخص `app-release.aab` سابقًا يستهدف API 34 ويضم Play Core 1.10.3. تم رفع `targetSdk` في المصدر إلى 36؛ يجب بناء AAB جديد وعدم إعادة رفع الملف القديم.
+**تصحيح خطأ الرفع القديم:** رسالة Play Console كانت تخص `app-release.aab` سابقًا يستهدف API 34 ويضم Play Core 1.10.3. تم رفع `targetSdk` في المصدر إلى 36؛ يجب بناء AAB جديد وعدم إعادة رفع الملف القديم. أكد المالك أن الرفع السابق فشل ولم يُسجّل أي إصدار، لذلك يبقى `versionCode=1` (`1.0.0+1`) صالحًا للنسخة التالية.
 
 ### 11.1 بوابة قبول Android — متبقٍ قبل Release
 
@@ -220,6 +220,7 @@
 | 2026-09-14 | Monetization decision | اعتماد Credits مع اشتراك اختياري، وعدم إضافة AdMob حاليًا؛ أضيفت subscription IDs وميزات Pro المقترحة إلى Flutter، وإنشاء المنتجات ينتظر Play Console |
 | 2026-09-14 | Sprint 1 release hardening | إزالة Debug signing من Release، اعتماد `android/key.properties` المحلي مع فشل واضح عند غيابه، إضافة INTERNET إلى main Manifest، توحيد Flutter CI إلى 3.47.4، وإضافة وثيقة إعداد الأسرار؛ التحقق وبناء AAB والرفع الداخلي متبقية |
 | 2026-09-14 | إصلاح رفض AAB القديم | توثيق رسالة Play Console الخاصة بـ targetSdk 34 وPlay Core 1.10.3، ورفع `targetSdk` إلى API 36؛ يلزم بناء AAB جديد والتحقق من dependency tree قبل الرفع |
+| 2026-09-14 | بناء AAB عبر GitHub Actions | إضافة workflow يدوي `build-release-aab.yml` يبني AAB موقعًا باستخدام أسرار يضيفها المالك، ويرفع artifact للتنزيل؛ لم تُحفظ أي أسرار في الريبو |
 
 ## قاعدة التحديث المستقبلية
 

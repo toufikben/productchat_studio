@@ -26,6 +26,8 @@ keyPassword=REPLACE_LOCALLY
 
 يجب أن ينشئ workflow ملف `android/key.properties` وملف keystore داخل runner، ثم يحذف الملفين في خطوة `always`. لا تضع القيم نفسها في YAML أو في مستودع GitHub.
 
+الريبو يحتوي الآن على workflow يدوي باسم `Build signed Android App Bundle`. بعد إضافة الأسرار، افتح تبويب **Actions** في GitHub، اختر workflow، اضغط **Run workflow**، وانتظر نجاح `Analyze and test` و`Build signed release AAB`. نزّل artifact باسم `productchat-studio-release-aab` ثم ارفع ملف `app-release.aab` إلى Google Play Console.
+
 ## بوابة التحقق
 
 بعد إعداد المفتاح محليًا:
