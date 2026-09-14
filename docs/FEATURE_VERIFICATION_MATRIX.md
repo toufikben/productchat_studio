@@ -34,7 +34,7 @@
 | `history` | `history_screen.dart` | نعم | لا | لا | لا | لا | لا | نص فقط وتخزين غير موجود |
 | `compliance` | `compliance_service.dart`, screen | نعم | جزئي | جزئي | لا | لا | لا | قائمة منصات ثابتة؛ UI scaffold |
 | `localization` | `app_en.arb`, `app_ar.arb` | نعم | جزئي | جزئي | لا | لا | لا | لغتان ظاهرتان؛ RTL/overflow غير مختبر |
-| `android.build` | Android files | نعم | نعم | جزئي | نعم | لا | لا | `targetSdk=36`؛ Release signing يعتمد على `android/key.properties` المحلي؛ INTERNET في main Manifest؛ AAB السابق كان targetSdk 34 مع Play Core 1.10.3؛ يلزم بناء AAB جديد واختبار Internal Testing |
+| `android.build` | Android files | نعم | نعم | نعم | نعم | لا | لا | `targetSdk=36`؛ Workflow `34796595278` بنى AAB Release موقعًا بحجم 79.1 MB بعد نجاح analyze/test وR8؛ INTERNET في main Manifest؛ يلزم اختبار جهاز ورفع Internal Testing |
 | `privacy.terms` | feature files | جزئي | لا | لا | لا | لا | لا | لا توجد سياسة مكتملة داخل المسار المنتج |
 
 ## Rules for updates
