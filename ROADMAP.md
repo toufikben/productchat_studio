@@ -19,7 +19,7 @@
 | تحليل Dart | مكتمل حاليًا | `flutter analyze` بلا أخطاء بعد استعادة البيئة |
 | اختبارات Dart | ناجح حاليًا | `flutter test`: 7 اختبارات ناجحة، تشمل AI operation contracts |
 | Android Seika | مصدر/عقد/بناء مكتمل، runtime متبقٍ | LaMa graph والعقد والتحقق والـ cancellation والـ resource cleanup مضافة؛ يلزم جهاز/محاكي |
-| Android APK/AAB | Sprint 1 منفذ جزئيًا، التحقق متبقٍ | Release يستخدم `android/key.properties` محليًا ويفشل بوضوح عند غيابه بدل Debug signing؛ أضيفت INTERNET إلى main Manifest؛ لا يوجد جهاز أو محاكي في البيئة |
+| Android APK/AAB | Sprint 1 منفذ جزئيًا، التحقق متبقٍ | AAB القديم رُفض لأنه استهدف API 34 مع Play Core 1.10.3؛ المصدر الآن يستهدف API 36، وRelease يستخدم `android/key.properties` محليًا بدل Debug signing؛ لا يوجد جهاز أو محاكي في البيئة |
 | P4 وظائف المنتج الأساسية | جزئي | image picker وفتح المحرر فعليان؛ mask/chat/batch/history ما زالت متبقية |
 | P5 التخزين والخصوصية | جزئي | SharedPreferences وLegal screen مضافان؛ cache retention وHistory/Settings الدائمين متبقيان |
 | P6 النماذج المتقدمة | قرار مكتمل، runtime متبقٍ | Real-ESRGAN fallback موثق؛ لا يوجد ONNX/NCNN backend، وMI-GAN معطل قانونيًا |
@@ -149,6 +149,8 @@
 
 **Sprint 1 — بوابة الرفع الداخلي:** تم تحديث إعداد Release وCI وManifest، وتوثيق إعداد الأسرار في [`docs/RELEASE_SIGNING.md`](docs/RELEASE_SIGNING.md). المتبقي: إعداد Upload Key محليًا، تشغيل التحقق، بناء AAB، ثم رفعه إلى Internal Testing وتسجيل أخطاء Play Console.
 
+**تصحيح خطأ الرفع القديم:** رسالة Play Console كانت تخص `app-release.aab` سابقًا يستهدف API 34 ويضم Play Core 1.10.3. تم رفع `targetSdk` في المصدر إلى 36؛ يجب بناء AAB جديد وعدم إعادة رفع الملف القديم.
+
 ### 11.1 بوابة قبول Android — متبقٍ قبل Release
 
 - [ ] تشغيل LaMa cold/warm على emulator أو جهاز حقيقي.
@@ -217,6 +219,7 @@
 | 2026-09-14 | Play Console وpackage identity | إنشاء مسودة `AI Photo Studio Chat`، وتثبيت `com.productchat.aiphotostudio` في الكود وPlay Console؛ `com.productchat.studio` بقيت مسودة قديمة ولم تُحذف تلقائيًا |
 | 2026-09-14 | Monetization decision | اعتماد Credits مع اشتراك اختياري، وعدم إضافة AdMob حاليًا؛ أضيفت subscription IDs وميزات Pro المقترحة إلى Flutter، وإنشاء المنتجات ينتظر Play Console |
 | 2026-09-14 | Sprint 1 release hardening | إزالة Debug signing من Release، اعتماد `android/key.properties` المحلي مع فشل واضح عند غيابه، إضافة INTERNET إلى main Manifest، توحيد Flutter CI إلى 3.47.4، وإضافة وثيقة إعداد الأسرار؛ التحقق وبناء AAB والرفع الداخلي متبقية |
+| 2026-09-14 | إصلاح رفض AAB القديم | توثيق رسالة Play Console الخاصة بـ targetSdk 34 وPlay Core 1.10.3، ورفع `targetSdk` إلى API 36؛ يلزم بناء AAB جديد والتحقق من dependency tree قبل الرفع |
 
 ## قاعدة التحديث المستقبلية
 
