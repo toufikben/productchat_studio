@@ -2,7 +2,7 @@
 
 > **مصدر الحقيقة للتحقق:** [`docs/MODEL_INVENTORY.md`](docs/MODEL_INVENTORY.md) و[`docs/FEATURE_VERIFICATION_MATRIX.md`](docs/FEATURE_VERIFICATION_MATRIX.md). وجود بند هنا لا يعني أنه runtime-verified؛ الحالة لا تُرفع إلا بدليل قابل لإعادة الإنتاج.
 
-> **آخر تحديث:** 2026-09-14 02:54 UTC
+> **آخر تحديث:** 2026-09-14 04:47 UTC
 > **الحالة:** Android-first؛ iOS وWeb مؤجلان عمدًا إلى ما بعد إصدار Android.
 
 ## طريقة استخدام هذه الخارطة
@@ -19,7 +19,7 @@
 | تحليل Dart | مكتمل حاليًا | `flutter analyze` بلا أخطاء بعد استعادة البيئة |
 | اختبارات Dart | ناجح حاليًا | `flutter test`: 7 اختبارات ناجحة، تشمل AI operation contracts |
 | Android Seika | مصدر/عقد/بناء مكتمل، runtime متبقٍ | LaMa graph والعقد والتحقق والـ cancellation والـ resource cleanup مضافة؛ يلزم جهاز/محاكي |
-| Android APK/AAB | AAB Release مبني، Internal Testing متبقٍ | Workflow `34796595278` نجح على commit `229bc72`: analyze/test وR8 وsigning وAAB كلها ناجحة؛ Artifact حجمه 79.1 MB؛ لا يوجد اختبار جهاز أو رفع Play Console بعد |
+| Android APK/AAB | AAB مبني، Upload Key يحتاج مطابقة Play Console | Workflow `34796595278` نجح؛ Play Console رفض الرفع لأن المتوقع SHA1 `20:EE:07:1E:9D:51:09:C1:29:D7:9B:6A:74:C1:AD:DC:81:96:88:5C` بينما AAB الحالي موقّع بـ `1A:D8:32:67:8E:A5:BE:19:AF:F4:B0:30:95:A3:5D:7D:89:02:10:00`; يلزم استخدام المفتاح الأصلي أو Reset Upload Key |
 | P4 وظائف المنتج الأساسية | جزئي | image picker وفتح المحرر فعليان؛ mask/chat/batch/history ما زالت متبقية |
 | P5 التخزين والخصوصية | جزئي | SharedPreferences وLegal screen مضافان؛ cache retention وHistory/Settings الدائمين متبقيان |
 | P6 النماذج المتقدمة | قرار مكتمل، runtime متبقٍ | Real-ESRGAN fallback موثق؛ لا يوجد ONNX/NCNN backend، وMI-GAN معطل قانونيًا |
@@ -224,6 +224,7 @@
 | 2026-09-14 | إصلاح فشل Build الأول | فشل التشغيل `34795627452` بسبب مسار Java ثابت غير صالح في `android/gradle.properties`؛ أزيل المسار ليستخدم Gradle `JAVA_HOME` الذي يضبطه GitHub Actions؛ التحليل والاختبارات والأسرار كانت ناجحة |
 | 2026-09-14 | إصلاح فشل R8 في Build الثالث | التشغيل `34795926358` تجاوز مشكلة Java ووصل إلى R8، ثم فشل بسبب مراجع Flutter الاختيارية لـ Deferred Components/Play Core غير المستخدمة؛ أضيفت `-dontwarn` محددة دون إضافة Play Core القديم؛ يلزم إعادة بناء AAB |
 | 2026-09-14 | نجاح Sprint 1 Build | التشغيل `34796595278` نجح على commit `229bc72`: الأسرار، التحليل، الاختبارات، R8، التوقيع، وبناء AAB ورفع Artifact؛ الملف `app-release.aab` بحجم 79.1 MB؛ الخطوة التالية Internal Testing |
+| 2026-09-14 | Play Console Upload Key mismatch | Play Console رفض AAB الموقع بالمفتاح الجديد؛ expected SHA1 `20:EE:07:1E:9D:51:09:C1:29:D7:9B:6A:74:C1:AD:DC:81:96:88:5C`، uploaded SHA1 `1A:D8:32:67:8E:A5:BE:19:AF:F4:B0:30:95:A3:5D:7D:89:02:10:00`; يلزم استعادة المفتاح الأصلي أو طلب Reset Upload Key قبل إعادة البناء |
 
 ## قاعدة التحديث المستقبلية
 
