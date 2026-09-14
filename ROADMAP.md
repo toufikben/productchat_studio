@@ -222,6 +222,7 @@
 | 2026-09-14 | إصلاح رفض AAB القديم | توثيق رسالة Play Console الخاصة بـ targetSdk 34 وPlay Core 1.10.3، ورفع `targetSdk` إلى API 36؛ يلزم بناء AAB جديد والتحقق من dependency tree قبل الرفع |
 | 2026-09-14 | بناء AAB عبر GitHub Actions | إضافة workflow يدوي `build-release-aab.yml` يبني AAB موقعًا باستخدام أسرار يضيفها المالك، ويرفع artifact للتنزيل؛ لم تُحفظ أي أسرار في الريبو |
 | 2026-09-14 | إصلاح فشل Build الأول | فشل التشغيل `34795627452` بسبب مسار Java ثابت غير صالح في `android/gradle.properties`؛ أزيل المسار ليستخدم Gradle `JAVA_HOME` الذي يضبطه GitHub Actions؛ التحليل والاختبارات والأسرار كانت ناجحة |
+| 2026-09-14 | إصلاح فشل R8 في Build الثالث | التشغيل `34795926358` تجاوز مشكلة Java ووصل إلى R8، ثم فشل بسبب مراجع Flutter الاختيارية لـ Deferred Components/Play Core غير المستخدمة؛ أضيفت `-dontwarn` محددة دون إضافة Play Core القديم؛ يلزم إعادة بناء AAB |
 
 ## قاعدة التحديث المستقبلية
 
