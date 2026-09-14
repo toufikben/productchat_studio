@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'storage_service.dart';
 
 class BrandIdentity {

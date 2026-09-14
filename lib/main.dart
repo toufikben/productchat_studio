@@ -10,8 +10,8 @@ import 'services/platform/theme_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await storageService.init();
-  await localeProvider.init();
-  await themeModeProvider.init();
+  await localeController.init();
+  await themeModeController.init();
 
   final billing = BillingService();
   await billing.init();

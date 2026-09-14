@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../storage_service.dart';
 
@@ -20,4 +21,5 @@ class ThemeModeController {
   }
 }
 
-final themeModeProvider = ThemeModeController();
+final themeModeController = ThemeModeController();
+final themeModeProvider = Provider<ThemeModeController>((ref) => themeModeController);

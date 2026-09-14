@@ -21,7 +21,7 @@ class FreeQuotaService extends ChangeNotifier {
   String get month => _month;
   int get used => _used;
   int get remaining =>
-      (AppConstants.freeMonthlyQuota - _used).clamp(0, AppConstants.freeMonthlyQuota) as int;
+      (AppConstants.freeMonthlyQuota - _used).clamp(0, AppConstants.freeMonthlyQuota);
   bool get exhausted => remaining == 0;
 
   bool canUse({int images = 1}) => images > 0 && remaining >= images;
@@ -36,7 +36,7 @@ class FreeQuotaService extends ChangeNotifier {
 
   Future<void> resetForTesting({String? month, int used = 0}) async {
     _month = month ?? _currentMonth();
-    _used = used.clamp(0, AppConstants.freeMonthlyQuota) as int;
+    _used = used.clamp(0, AppConstants.freeMonthlyQuota);
     await _persist();
     notifyListeners();
   }
@@ -47,7 +47,7 @@ class FreeQuotaService extends ChangeNotifier {
     if (storedMonth == current) {
       _month = current;
       _used = (_storage.get(usedKey) as int? ?? 0)
-          .clamp(0, AppConstants.freeMonthlyQuota) as int;
+          .clamp(0, AppConstants.freeMonthlyQuota);
     } else {
       _month = current;
       _used = 0;

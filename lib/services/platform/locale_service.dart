@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../storage_service.dart';
 
@@ -40,4 +41,5 @@ class LocaleController {
   bool get isRtl => locale.languageCode == 'ar';
 }
 
-final localeProvider = LocaleController();
+final localeController = LocaleController();
+final localeProvider = Provider<LocaleController>((ref) => localeController);
