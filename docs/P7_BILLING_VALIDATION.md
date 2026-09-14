@@ -36,6 +36,8 @@
 
 يستخدم مسار `removeBackground` في Android الآن `PatchMatchRemover` محليًا بدل `floodRemove` وحده. يبدأ المسار ببذور زوايا الصورة، يبني قناعًا متصلًا محافظًا للخلفية، ثم يحسن مراجع الرقع عبر propagation وrandom search لرقع 3×3، ويصدر PNG بخلفية شفافة. لا يحتاج هذا المسار شبكة أو نموذجًا خارجيًا. يسمح Free بهذا المسار فقط؛ وبعد نجاحه يطبق `FreeWatermarkService` علامة `PRODUCTCHAT STUDIO  •  FREE` قبل استهلاك الحصة. توجد fixtures واختبارات أبعاد/PNG، بينما alpha quality وAndroid runtime ما زالت متبقية.
 
+تطبق الواجهة الآن Batch gate للمجاني، وBrand Identity gate، وسياسة History محلية: يسجل التطبيق النتائج الناجحة فقط، ويعرض آخر خمس نتائج للمستخدم المجاني، بينما يعرض Pro/Lifetime كامل السجل المحلي. Settings يعرض حالة Pro/Lifetime وexpiry وRestore وروابط هذه المسارات. لا يعني ذلك أن entitlement أصبح server-authoritative؛ ما زال Local-first وفق القرار المعتمد.
+
 ## Billing v2 المطلوب
 
 - إضافة المنتج السادس `lifetime` بعد Play Console.

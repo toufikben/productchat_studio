@@ -5,6 +5,9 @@ import '../features/splash/splash_screen.dart';
 import '../features/editor/editor_screen.dart';
 import '../features/batch/batch_screen.dart';
 import '../features/settings/legal_screen.dart';
+import '../features/settings/settings_screen.dart';
+import '../features/settings/brand_screen.dart';
+import '../features/history/history_screen.dart';
 import '../features/billing/paywall_screen.dart';
 
 final routerProvider = GoRouter(
@@ -17,6 +20,9 @@ final routerProvider = GoRouter(
           builder: (_, state) =>
               EditorScreen(imagePath: state.uri.queryParameters['imagePath'])),
       GoRoute(path: '/batch', builder: (_, __) => const BatchScreen()),
+      GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+      GoRoute(path: '/brand', builder: (_, __) => const BrandScreen()),
+      GoRoute(path: '/history', builder: (_, __) => const HistoryScreen()),
       GoRoute(path: '/legal', builder: (_, __) => const LegalScreen()),
       GoRoute(path: '/credits', builder: (_, __) => const PaywallScreen())
     ],

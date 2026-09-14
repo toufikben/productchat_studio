@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../services/batch_service.dart';
+import '../../services/billing_service.dart';
 
 class BatchScreen extends ConsumerWidget {
   const BatchScreen({super.key});
@@ -16,8 +17,23 @@ class BatchScreen extends ConsumerWidget {
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Card(
+                    child: ListTile(
+                      leading: Icon(
+                        billingService.proService.isPro
+                            ? Icons.verified_outlined
+                            : Icons.lock_outline,
+                      ),
+                      title: Text(
+                        billingService.proService.isPro
+                            ? 'Batch enabled'
+                            : 'Batch requires Pro or Lifetime',
+                      ),
+                      subtitle: const Text('Up to 100 images per operation.'),
+                    ),
+                  ),
                   FilledButton.icon(
-                      onPressed: p.running
+                      onPressed: p.running || !billingService.proService.isPro
                           ? null
                           : () async {
                               final picked = await FilePicker.platform
@@ -39,6 +55,11 @@ class BatchScreen extends ConsumerWidget {
                   LinearProgressIndicator(
                       value: p.jobs.isEmpty ? 0 : p.fraction),
                   const SizedBox(height: 8),
+                  if (p.error != null)
+                    Text(
+                      p.error!,
+                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    ),
                   Text('${p.completed} / ${p.jobs.length} completed'),
                   const SizedBox(height: 16),
                   Expanded(

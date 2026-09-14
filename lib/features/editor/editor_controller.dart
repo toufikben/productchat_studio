@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/ai_service.dart';
 import '../../services/billing_service.dart';
 import '../../services/free_watermark_service.dart';
+import '../../services/history_service.dart';
 import '../../models/edit_request.dart';
 
 class EditorText {
@@ -124,7 +125,7 @@ class EditorController extends StateNotifier<EditorState> {
             ? await billingService.freeQuota.consume()
             : await billingService.spend(result.creditsUsed);
         if (spent || result.creditsUsed == 0) {
-          _push(outputPath);
+          await _push(outputPath, op.name);
         } else {
           state = state.copyWith(error: 'Credits changed before the operation completed.');
         }
@@ -151,10 +152,11 @@ class EditorController extends StateNotifier<EditorState> {
     }
   }
 
-  void _push(String path) {
+  Future<void> _push(String path, String operation) async {
     final items = [...state.history.take(state.historyIndex + 1), path];
     state = state.copyWith(
         imagePath: path, history: items, historyIndex: items.length - 1);
+    await historyService.record(path: path, operation: operation);
   }
 
   Future<void> removeBg() => _apply(EditOp.removeBg);

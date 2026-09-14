@@ -25,7 +25,8 @@
 | `edit.shadow` | نعم | نعم | جزئي | لا | لا | لا | compositing baseline بلا device test |
 | `edit.export` | نعم | جزئي | جزئي | لا | لا | لا | contract موجود؛ E2E pending |
 | `editor.state` | نعم | نعم | جزئي | جزئي | لا | لا | history/undo/state؛ output runtime pending |
-| `batch` | نعم | نعم | جزئي | لا | لا | لا | UI/progress؛ pipeline يحتاج ربطًا بعمليات التحرير |
+| `batch` | نعم | نعم | جزئي | Pending | لا | لا | Pro/Lifetime gate و100-image limit وprogress؛ pipeline ما زال ينسخ الملفات بدل تطبيق التحرير |
+| `brand.identity` | نعم | نعم | نعم | Pending | لا | لا | Pro/Lifetime gate وlocal persistence وUI مضافة؛ لا device/widget evidence |
 | `storage` | نعم | جزئي | جزئي | جزئي | لا | لا | handoff يذكر SharedPreferences، والمواصفة المرفقة تقترح Hive؛ القرار الفعلي pending |
 | `billing.local` | نعم | نعم | جزئي | Pending | لا | لا | Credits IDs وstream وlocal ledger وrestore عند init؛ الاختبارات لم تُشغل لغياب Flutter |
 | `billing.v2.catalog` | نعم | نعم | جزئي | Pending | لا | لا | IDs الستة وLifetime non-consumable وPaywall sections مضافة؛ Play Console/backend pending؛ الاختبار لم يُشغل لغياب Flutter |
@@ -33,8 +34,8 @@
 | `free.tier` | نعم | نعم | جزئي | Pending | لا | لا | PatchMatch gate وwatermark وquota-after-success في Editor/Chat؛ alpha/device tests متبقية |
 | `lifetime` | مواصفة فقط | لا | لا | لا | لا | لا | منتج one-time غير منشأ وفق الأدلة المتاحة |
 | `chat` | نعم | نعم | جزئي | لا | لا | لا | يحتاج E2E image/mask/dispatch/result |
-| `history` | جزئي | جزئي | جزئي | لا | لا | لا | نص/تنفيذ مقترح؛ policy Free آخر 5 تحتاج إثباتًا |
-| `settings` | جزئي | جزئي | جزئي | لا | لا | لا | locale/theme وبعض wiring؛ Pro status/restore UI الكامل pending |
+| `history` | نعم | نعم | نعم | Pending | لا | لا | durable local entries؛ Free latest 5 وPro/Lifetime full history؛ اختبار مضاف ولم يُشغل لغياب Flutter |
+| `settings` | نعم | نعم | جزئي | Pending | لا | لا | Pro/Lifetime status وexpiry وRestore وروابط المسارات؛ device/Flutter test pending |
 | `onboarding` | نعم | لا | لا | لا | لا | لا | scaffold أو غير موصول وفق الأدلة السابقة |
 | `compliance` | جزئي | جزئي | جزئي | لا | لا | لا | قائمة ثابتة وUI غير مكتمل |
 | `localization` | نعم | جزئي | جزئي | لا | لا | لا | العربية/الإنجليزية؛ الهدف 16 غير محسوم |

@@ -173,12 +173,15 @@
 - [ ] اختبار جودة alpha على fixtures وأجهزة Android وضبط thresholds/الأداء.
 - [x] Editor يوضح أدوات Pro المقفلة للمجاني ويعرض أخطاء gate بدل إسقاطها بصمت.
 - [x] Chat يعرض حالة Free/Pro والحصة ويطبق gate وwatermark في مسار Free.
-- [ ] Pro/Lifetime: إزالة watermark، Batch بحد 100 صورة، Brand Identity، والميزات المعتمدة قانونيًا.
+- [x] Batch Pro/Lifetime gate بحد 100 صورة مع رسالة واضحة للمجاني.
+- [x] Brand Identity Pro/Lifetime gate مع حفظ محلي للهوية.
+- [ ] Batch يطبق pipeline التحرير الحقيقي بدل نسخ الملفات فقط.
+- [ ] الميزات المعتمدة قانونيًا والنماذج المتاحة فعليًا.
 - [ ] تقييد العمليات المذكورة في المواصفة كـPro-only فقط بعد تحديد مسار تنفيذها الفعلي.
 - [ ] Paywall بثلاثة أقسام: Lifetime، Subscriptions، Credits.
-- [ ] Settings يعرض حالة Pro/ Lifetime وRestore.
-- [ ] Batch يعرض Pro Gate لغير المشتركين.
-- [ ] History يعرض آخر 5 للمستخدم المجاني، والتاريخ الكامل لـPro/Lifetime، بعد التأكد من سياسة المنتج وتخزينه الفعلي.
+- [x] Settings يعرض حالة Pro/Lifetime، expiry، Restore، وروابط Paywall/Brand/History/Batch.
+- [x] Batch يعرض Pro Gate لغير المشتركين ويمنع الاختيار قبل الترقية.
+- [x] History يسجل النتائج الناجحة فقط؛ يعرض آخر 5 للمجاني والتاريخ الكامل لـPro/Lifetime.
 - [ ] عدم عرض ميزة على أنها متاحة إذا كانت غير منفذة أو محظورة قانونيًا.
 
 #### 5.4 Credits delivery

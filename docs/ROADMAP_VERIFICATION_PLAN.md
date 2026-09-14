@@ -60,7 +60,7 @@
 - [x] إزالة editor success الوهمي وفق آخر handoff.
 - [ ] image picker + mask creation + Chat dispatch + Editor output.
 - [ ] Batch editing pipeline بدل file copy.
-- [ ] History بعد output ناجح فقط، وtemp/output retention.
+- [x] History بعد output ناجح فقط، مع Free latest 5 وPro/Lifetime full history.
 
 ### 3. Android LaMa validation
 
@@ -87,7 +87,7 @@
 - [x] Free quota وwatermark وPatchMatch وEditor/Chat gates منفذة محليًا؛ fixtures أضيفت.
 - [ ] Pro gates لـBatch/Brand/النماذج المعتمدة؛ History آخر 5 للمجاني والكامل لـPro إذا ثبتت السياسة.
 - [ ] لا grant للـCredits عند pending/error/restored؛ ولا خصم قبل نجاح العملية.
-- [ ] Settings/Batch/History تعرض الحالة الحقيقية فقط.
+- [x] Settings/Batch/History/Brand تعرض الحالة الحقيقية فقط وتطبق Pro/Lifetime gates محليًا.
 
 ### 6. Receipt Verification backend
 

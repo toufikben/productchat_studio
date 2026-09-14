@@ -164,14 +164,3 @@ class _SectionTitle extends StatelessWidget {
         ),
       );
 }
-
-// Legacy route placeholder retained until the dedicated History screen is
-// connected to durable history storage.
-class HistoryScreen extends StatelessWidget {
-  const HistoryScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) => const Scaffold(
-        body: Center(child: Text('History')),
-      );
-}
