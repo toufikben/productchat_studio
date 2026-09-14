@@ -9,14 +9,22 @@ class CreditProducts {
   static const starter = 'credits_100';
   static const standard = 'credits_500';
   static const pro = 'credits_1200';
+  static const monthly = 'pro_monthly';
+  static const yearly = 'pro_yearly';
 
   static const amounts = <String, int>{
     starter: 100,
     standard: 500,
     pro: 1200,
+    monthly: 600,
+    yearly: 9000,
   };
 
-  static const ids = <String>{starter, standard, pro};
+  static const consumableIds = <String>{starter, standard, pro};
+  static const subscriptionIds = <String>{monthly, yearly};
+  static const ids = <String>{...consumableIds, ...subscriptionIds};
+
+  static bool isSubscription(String productId) => subscriptionIds.contains(productId);
 }
 
 class CreditsLedger {
@@ -99,10 +107,13 @@ class BillingService extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
-      final sent = await _store.buyConsumable(
-        purchaseParam: PurchaseParam(productDetails: product),
-        autoConsume: true,
-      );
+      final purchaseParam = PurchaseParam(productDetails: product);
+      final sent = CreditProducts.isSubscription(product.id)
+          ? await _store.buyNonConsumable(purchaseParam: purchaseParam)
+          : await _store.buyConsumable(
+              purchaseParam: purchaseParam,
+              autoConsume: true,
+            );
       if (!sent) error = 'Google Play did not start the purchase.';
     } catch (value) {
       error = value.toString();

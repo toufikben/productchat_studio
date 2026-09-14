@@ -49,7 +49,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
               if (billingService.loading) const LinearProgressIndicator(),
               ...billingService.products.map(_productTile),
               if (billingService.available && billingService.products.isEmpty)
-                const Text('No credit products are configured in Google Play yet.'),
+                const Text('No credit or subscription products are configured in Google Play yet.'),
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: billingService.available ? billingService.restorePurchases : null,
@@ -65,8 +65,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Widget _productTile(ProductDetails product) => Card(
         child: ListTile(
-          title: Text(product.title),
-          subtitle: Text('${CreditProducts.amounts[product.id] ?? 0} credits'),
+          title: Text(CreditProducts.isSubscription(product.id)
+              ? '${product.title} — Pro subscription'
+              : product.title),
+          subtitle: Text(
+              '${CreditProducts.amounts[product.id] ?? 0} credits ${CreditProducts.isSubscription(product.id) ? 'per period' : ''}'),
           trailing: FilledButton(
             onPressed: billingService.loading ? null : () => billingService.buy(product),
             child: Text(product.price),

@@ -26,4 +26,12 @@ void main() {
     expect(CreditProducts.amounts['unknown_product'], isNull);
     expect(CreditProducts.amounts[CreditProducts.standard], 500);
   });
+
+  test('subscription products are separated from consumable products', () {
+    expect(CreditProducts.isSubscription(CreditProducts.monthly), isTrue);
+    expect(CreditProducts.isSubscription(CreditProducts.yearly), isTrue);
+    expect(CreditProducts.isSubscription(CreditProducts.standard), isFalse);
+    expect(CreditProducts.amounts[CreditProducts.monthly], 600);
+    expect(CreditProducts.amounts[CreditProducts.yearly], 9000);
+  });
 }

@@ -24,7 +24,7 @@
 | P5 التخزين والخصوصية | جزئي | SharedPreferences وLegal screen مضافان؛ cache retention وHistory/Settings الدائمين متبقيان |
 | P6 النماذج المتقدمة | قرار مكتمل، runtime متبقٍ | Real-ESRGAN fallback موثق؛ لا يوجد ONNX/NCNN backend، وMI-GAN معطل قانونيًا |
 | P10 اللغات والوصول | جزئي | العربية/الإنجليزية وRTL wiring وSemantics أساسية؛ 16 لغة واختبارات شاملة متبقية |
-| P7 Credits والدفع | مسودة Play Console منشأة، المنتجات وSandbox متبقية | BillingService وPaywall وledger idempotent مضافة؛ مسودة `AI Photo Studio Chat` منشأة بالمعرف `com.productchat.aiphotostudio`، وتبقى أسعار المنتجات/الاشتراكات واختبار Sandbox والتحقق الخلفي |
+| P7 Credits والدفع | الكود والأسعار معتمدة، Play Console وSandbox متبقية | BillingService وPaywall وledger idempotent تدعم packs وsubscriptions؛ مسودة `AI Photo Studio Chat` منشأة بالمعرف `com.productchat.aiphotostudio`، وتبقى إنشاء المنتجات واختبار Sandbox والتحقق الخلفي |
 | الإعلانات | غير مخطط لها حاليًا | لا توجد AdMob SDK أو وحدات إعلانية؛ النموذج التجاري الحالي Credits مع اشتراك اختياري، والإعلانات ستضر بتجربة محرر صور محلي ولم تُطلب في الخارطة |
 | iOS | مؤجل | لن يدخل في نطاق الإصدار الحالي |
 | Web | مؤجل | لن يدخل في نطاق الإصدار الحالي |
@@ -113,6 +113,8 @@
 
 - [x] ربط `in_app_purchase` وpurchase stream.
 - [x] تعريف product IDs في كود التطبيق.
+- [x] تعريف `pro_monthly` و`pro_yearly` واستخدام purchase API المناسب للاشتراكات.
+- [x] اعتماد الأسعار: 0.99/3.99/7.99 USD للـ Credits و4.99 شهريًا/39.99 سنويًا لـ Pro.
 - [x] خصم الرصيد بعد نجاح العملية فقط.
 - [x] منع منح الرصيد مرتين لنفس purchase ID.
 - [x] إضافة Paywall وواجهة restore.
@@ -210,7 +212,7 @@
 | 2026-09-13 | Integration Map v4 | استبدال Editor وBatch stubs، إضافة Controller وPanels وExportDialog وBatchService وتوثيق ONNX edge cases وإضافة مسارات Router؛ `flutter analyze` بلا أخطاء و3 اختبارات ناجحة |
 | 2026-09-13 | قرار النطاق | تأجيل iOS وWeb؛ المتبقي الحالي يقتصر على إكمال Android والتحقق منه وإعداده للإصدار |
 | 2026-09-14 | Play Console وpackage identity | إنشاء مسودة `AI Photo Studio Chat`، وتثبيت `com.productchat.aiphotostudio` في الكود وPlay Console؛ `com.productchat.studio` بقيت مسودة قديمة ولم تُحذف تلقائيًا |
-| 2026-09-14 | Monetization decision | اعتماد Credits مع اشتراك اختياري، وعدم إضافة AdMob حاليًا؛ إنشاء المنتجات ينتظر الأسعار ومزايا الاشتراك |
+| 2026-09-14 | Monetization decision | اعتماد Credits مع اشتراك اختياري، وعدم إضافة AdMob حاليًا؛ أضيفت subscription IDs وميزات Pro المقترحة إلى Flutter، وإنشاء المنتجات ينتظر Play Console |
 
 ## قاعدة التحديث المستقبلية
 
