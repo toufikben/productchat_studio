@@ -29,7 +29,7 @@ class ChatController {
     if (!billingService.proService.isPro) {
       if (req.op != EditOp.removeBg) {
         return const EditResult.failure(
-          'Free tier supports PatchMatch background removal only.',
+          'Free tier supports PatchMatch background removal only; conversational edits require a mask and Pro.',
         );
       }
       if (!billingService.freeQuota.canUse()) {

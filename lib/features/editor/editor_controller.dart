@@ -94,7 +94,7 @@ class EditorController extends StateNotifier<EditorState> {
     final isPro = billingService.proService.isPro;
     if (!isPro && op != EditOp.removeBg) {
       state = state.copyWith(
-        error: 'Free tier supports PatchMatch background removal only.',
+        error: 'Free tier supports PatchMatch background removal only; conversational edits require a mask and Pro.',
       );
       return;
     }
