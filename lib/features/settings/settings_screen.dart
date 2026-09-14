@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../services/billing_service.dart';
+import '../../services/platform/locale_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -70,6 +71,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: const Icon(Icons.workspace_premium_outlined),
             label: const Text('View Pro and Lifetime plans'),
           ),
+          ListTile(
+            leading: const Icon(Icons.language),
+            title: const Text('Language'),
+            subtitle: Text(_languageName(localeProvider.locale.languageCode)),
+            onTap: _chooseLanguage,
+          ),
           const Divider(height: 28),
           ListTile(
             leading: const Icon(Icons.branding_watermark_outlined),
@@ -132,5 +139,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  String _languageName(String code) => switch (code) {
+        'ar' => 'العربية',
+        'fr' => 'Français',
+        _ => 'English',
+      };
+
+  Future<void> _chooseLanguage() async {
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Language'),
+        children: [
+          for (final option in const [
+            ('en', 'English'),
+            ('ar', 'العربية'),
+            ('fr', 'Français'),
+          ])
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, option.$1),
+              child: Text(option.$2),
+            ),
+        ],
+      ),
+    );
+    if (!mounted || selected == null) return;
+    await localeProvider.setLocale(Locale(selected));
+    if (mounted) setState(() {});
   }
 }

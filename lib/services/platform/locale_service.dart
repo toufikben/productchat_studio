@@ -7,11 +7,11 @@ class LocaleController {
 
   Future<void> init() async {
     final saved = storageService.getString('locale');
-    if (saved == 'ar' || saved == 'en') locale = Locale(saved!);
+    if (saved == 'ar' || saved == 'en' || saved == 'fr') locale = Locale(saved!);
   }
 
   Future<void> setLocale(Locale value) async {
-    if (value.languageCode != 'ar' && value.languageCode != 'en') return;
+    if (value.languageCode != 'ar' && value.languageCode != 'en' && value.languageCode != 'fr') return;
     locale = value;
     await storageService.set('locale', value.languageCode);
   }
