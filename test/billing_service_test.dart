@@ -4,6 +4,34 @@ import 'package:productchat_studio/services/billing_service.dart';
 import 'package:productchat_studio/services/storage_service.dart';
 
 void main() {
+  test('BillingService can be constructed with injected storage without opening Play Billing', () {
+    final billing = BillingService(storage: StorageService());
+
+    expect(billing.available, isFalse);
+    expect(billing.loading, isFalse);
+    expect(billing.credits, 0);
+    expect(billing.proService.isPro, isFalse);
+    billing.dispose();
+  });
+
+  test('BillingService reports spendability without allowing invalid amounts', () async {
+    final billing = BillingService(storage: StorageService());
+
+    expect(billing.canSpend(0), isTrue);
+    expect(billing.canSpend(-1), isTrue);
+    expect(billing.canSpend(1), isFalse);
+    expect(await billing.spend(1), isFalse);
+
+    await billing.ledger.addOnce(purchaseId: 'txn-spend', amount: 100);
+    expect(billing.canSpend(100), isTrue);
+    expect(billing.canSpend(101), isFalse);
+    expect(await billing.spend(40), isTrue);
+    expect(billing.credits, 60);
+    expect(await billing.spend(61), isFalse);
+    expect(billing.credits, 60);
+    billing.dispose();
+  });
+
   test('credits are granted once per stable purchase id', () async {
     final ledger = CreditsLedger(StorageService());
 
@@ -79,5 +107,49 @@ void main() {
       ),
       isFalse,
     );
+  });
+
+  test('pending, error, restored, and entitlement events never grant consumable credits', () {
+    for (final status in <PurchaseStatus>[
+      PurchaseStatus.pending,
+      PurchaseStatus.error,
+      PurchaseStatus.restored,
+    ]) {
+      expect(
+        CreditProducts.shouldGrantCredits(
+          status: status,
+          productId: CreditProducts.starter,
+          purchaseId: 'txn-${status.name}',
+        ),
+        isFalse,
+        reason: '${status.name} must not grant credits',
+      );
+    }
+
+    expect(
+      CreditProducts.shouldGrantCredits(
+        status: PurchaseStatus.purchased,
+        productId: CreditProducts.monthly,
+        purchaseId: 'subscription-txn',
+      ),
+      isFalse,
+    );
+    expect(
+      CreditProducts.shouldGrantCredits(
+        status: PurchaseStatus.purchased,
+        productId: CreditProducts.starter,
+        purchaseId: '   ',
+      ),
+      isFalse,
+    );
+  });
+
+  test('product catalog classifications are mutually exclusive', () {
+    for (final id in CreditProducts.ids) {
+      final isConsumable = CreditProducts.consumableIds.contains(id);
+      final isEntitlement = CreditProducts.isEntitlement(id);
+      expect(isConsumable && isEntitlement, isFalse, reason: id);
+      expect(isConsumable || isEntitlement, isTrue, reason: id);
+    }
   });
 }

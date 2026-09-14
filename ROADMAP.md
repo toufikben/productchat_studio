@@ -244,12 +244,12 @@
 
 - [ ] تشغيل `integration_test/` الفعلي، إذ إن الخطة موجودة والمجلد غير مثبت حاليًا.
 - [ ] اختبارات ProService: البداية، 30 يومًا، 365 يومًا، Lifetime، auto-expiry، restore.
-- [ ] اختبارات Billing: المنتجات الستة، purchase statuses، completePurchase، duplicate grant، restored consumables.
+- [x] اختبارات Billing الأساسية والموسعة: المنتجات الستة، تصنيف consumable/entitlement، purchase statuses، رفض المعاملات الفارغة، duplicate grant، restored consumables، `canSpend`، ومنع الرصيد السالب.
 - [ ] اختبارات Credits: 100/500/1200، stacking، refund، وعدم النزول تحت الصفر.
 - [x] اختبارات service لـBatch/History/Brand/Storage؛ widget tests لـPaywall وSettings وBatch وHistory والراوتر ما زالت مطلوبة.
 - [ ] Fixtures للصور والأقنعة دون تخزين النموذج داخل Git.
 - [ ] benchmark cold/warm، cancellation، timeout، memory، CPU/NNAPI، 30–100 inference.
-- [ ] CI للتحليل والاختبار والبناء وفحص الأسرار.
+- [ ] CI للتحليل والاختبار والبناء وفحص الأسرار؛ فحوص Flutter نجحت على commit `a6eaee7`، وتحقق Release APK/AAB ما زال بانتظار تشغيل Workflow البناء الموقّع.
 
 ### المرحلة 9 — Internal Testing والإصدار
 
