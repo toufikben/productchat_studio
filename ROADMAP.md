@@ -503,3 +503,13 @@ All repair work must follow these rules:
 - [x] تحديث Android Gradle/ProGuard لحفظ ONNX وإبقاء native bindings.
 - [x] إنشاء مجلدات Android المطلوبة والتحقق من XML و`git diff --check`.
 - [ ] `flutter clean && flutter pub get && flutter analyze`: تعذر التنفيذ لأن Flutter SDK غير موجود في `PATH`.
+
+## سجل التحديثات — 2026-09-15 — Config Complete FIX #84–#91
+
+- [x] إنشاء `analysis_options.yaml` بقواعد lint الصارمة والاستثناءات الخاصة بالمشروع.
+- [x] إنشاء إعداد Vercel وملفات Web PWA: `index.html`, `manifest.json`, و`flutter_bootstrap.js`.
+- [x] إنشاء `web/favicon.png` يدوياً من أيقونة المتجر المتاحة، مع توفير أيقونات التطبيق وSplash المطلوبة للأصول.
+- [x] تحديث `pubspec.yaml` في أقسام Flutter وLauncher/Splash وdev dependencies.
+- [x] استبدال `.gitignore` بقواعد Flutter/Android/iOS/Web والأسرار والنماذج.
+- [x] اجتياز تحقق JSON و`git diff --check` والتحقق من PNG.
+- [ ] `flutter clean && flutter pub get && flutter analyze`: تعذر التنفيذ لأن Flutter SDK غير موجود في `PATH`.

@@ -48,6 +48,7 @@ dev_dependencies:
   in_app_purchase_platform_interface: ^1.4.0
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.2
+  flutter_native_splash: ^2.4.3
 flutter:
   uses-material-design: true
   generate: true
@@ -55,9 +56,25 @@ flutter:
     - assets/recipes/
     - assets/icons/
     - assets/lottie/
+    - assets/images/
+    - assets/fonts/
 flutter_launcher_icons:
   android: true
   ios: true
   image_path: assets/icons/app_icon.png
   adaptive_icon_background: '#6C5CE7'
   adaptive_icon_foreground: assets/icons/app_icon_fg.png
+  web:
+    generate: true
+    image_path: assets/icons/app_icon.png
+    background_color: '#0A0D14'
+    theme_color: '#6C5CE7'
+
+flutter_native_splash:
+  color: '#0A0D14'
+  image: assets/icons/splash.png
+  android_12:
+    color: '#0A0D14'
+    image: assets/icons/splash.png
+  ios: true
+  web: true

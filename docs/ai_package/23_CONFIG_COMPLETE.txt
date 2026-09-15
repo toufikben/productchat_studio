@@ -1,0 +1,756 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 23: CONFIG COMPLETION                                          ║
+║  إكمال ملفات الإعداد — 4 عناصر (1 جزئي + 3 مفقود)                     ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #84: 🟢 CREATE
+📁 الملف الجديد: analysis_options.yaml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف في جذر المشروع بهذا المحتوى:
+
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Error prevention
+    avoid_print: true
+    avoid_empty_else: true
+    avoid_relative_lib_imports: true
+    avoid_returning_null_for_void: true
+    avoid_slow_async_io: true
+    avoid_type_to_string: true
+    avoid_types_as_parameter_names: true
+    cancel_subscriptions: true
+    close_sinks: true
+    comment_references: true
+    control_flow_in_finally: true
+    empty_statements: true
+    hash_and_equals: true
+    invariant_booleans: true
+    literal_only_boolean_expressions: true
+    no_adjacent_strings_in_list: true
+    no_duplicate_case_values: true
+    no_logic_in_create_state: true
+    prefer_void_to_null: true
+    test_types_in_equals: true
+    throw_in_finally: true
+    unnecessary_statements: true
+    unrelated_type_equality_checks: true
+    use_build_context_synchronously: true
+    valid_regexps: true
+
+    # Style
+    always_declare_return_types: true
+    always_put_required_named_parameters_first: false
+    always_require_non_null_named_parameters: false
+    annotate_overrides: true
+    avoid_bool_literals_in_conditional_expressions: true
+    avoid_catches_without_on_clauses: false
+    avoid_catching_errors: true
+    avoid_double_and_int_checks: true
+    avoid_field_initializers_in_const_classes: true
+    avoid_function_literals_in_foreach_calls: false
+    avoid_init_to_null: true
+    avoid_null_checks_in_equality_operators: true
+    avoid_positional_boolean_parameters: false
+    avoid_private_typedef_functions: true
+    avoid_redundant_argument_values: false
+    avoid_renaming_method_parameters: true
+    avoid_return_types_on_setters: true
+    avoid_returning_this: true
+    avoid_setters_without_getters: true
+    avoid_shadowing_type_parameters: true
+    avoid_single_cascade_in_expression_statements: true
+    avoid_unnecessary_containers: true
+    avoid_unused_constructor_parameters: true
+    avoid_void_async: true
+    await_only_futures: true
+    camel_case_extensions: true
+    camel_case_types: true
+    cascade_invocations: true
+    constant_identifier_names: false
+    curly_braces_in_flow_control_structures: true
+    directives_ordering: true
+    empty_catches: true
+    empty_constructor_bodies: true
+    file_names: true
+    implementation_imports: true
+    leading_newlines_in_multiline_strings: true
+    library_names: true
+    library_prefixes: true
+    library_private_types_in_public_api: true
+    no_leading_underscores_for_local_identifiers: true
+    non_constant_identifier_names: true
+    null_closures: true
+    omit_local_variable_types: false
+    only_throw_errors: true
+    overridden_fields: false
+    package_api_docs: false
+    package_prefixed_library_names: true
+    prefer_adjacent_string_concatenation: true
+    prefer_collection_literals: true
+    prefer_conditional_assignment: true
+    prefer_const_constructors: true
+    prefer_const_constructors_in_immutables: true
+    prefer_const_declarations: true
+    prefer_const_literals_to_create_immutables: true
+    prefer_contains: true
+    prefer_final_fields: true
+    prefer_final_in_for_each: true
+    prefer_final_locals: false
+    prefer_for_elements_to_map_fromIterable: true
+    prefer_function_declarations_over_variables: true
+    prefer_generic_function_type_aliases: true
+    prefer_if_elements_to_conditional_expressions: false
+    prefer_if_null_operators: true
+    prefer_initializing_formals: true
+    prefer_inlined_adds: true
+    prefer_interpolation_to_compose_strings: true
+    prefer_is_empty: true
+    prefer_is_not_empty: true
+    prefer_is_not_operator: true
+    prefer_iterable_whereType: true
+    prefer_null_aware_operators: true
+    prefer_single_quotes: true
+    prefer_spread_collections: true
+    prefer_typing_uninitialized_variables: true
+    provide_deprecation_message: false
+    recursive_getters: true
+    slash_for_doc_comments: true
+    sort_child_properties_last: true
+    sort_constructors_first: false
+    sort_unnamed_constructors_first: true
+    type_annotate_public_apis: false
+    type_init_formals: true
+    unawaited_futures: true
+    unnecessary_await_in_return: true
+    unnecessary_brace_in_string_interps: true
+    unnecessary_const: true
+    unnecessary_getters_setters: true
+    unnecessary_lambdas: true
+    unnecessary_new: true
+    unnecessary_null_aware_assignments: true
+    unnecessary_null_in_if_null_operators: true
+    unnecessary_overrides: true
+    unnecessary_parenthesis: true
+    unnecessary_raw_strings: true
+    unnecessary_string_escapes: true
+    unnecessary_string_interpolations: true
+    unnecessary_this: true
+    use_full_hex_values_for_flutter_colors: true
+    use_function_type_syntax_for_parameters: true
+    use_if_null_to_convert_nulls_to_bools: true
+    use_is_even_rather_than_modulo: true
+    use_key_in_widget_constructors: false
+    use_late_for_private_fields_and_variables: true
+    use_named_constants: true
+    use_raw_strings: true
+    use_rethrow_when_possible: true
+    use_setters_to_change_properties: true
+    use_string_buffers: true
+    use_to_and_as_if_applicable: true
+    valid_regexps: true
+    void_checks: true
+
+analyzer:
+  errors:
+    # Downgrade some to info
+    avoid_print: info
+    avoid_function_literals_in_foreach_calls: info
+    use_build_context_synchronously: warning
+    deprecated_member_use: info
+    deprecated_member_use_from_same_package: info
+
+  exclude:
+    - '**/*.g.dart'
+    - '**/*.freezed.dart'
+    - 'build/**'
+    - '.dart_tool/**'
+    - 'ios/**'
+    - 'android/**'
+    - 'web/**'
+    - 'test/**'
+
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #85: 🟢 CREATE
+📁 الملف الجديد: vercel.json
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف في جذر المشروع بهذا المحتوى:
+
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "flutter build web --release --web-renderer canvaskit",
+  "outputDirectory": "build/web",
+  "framework": null,
+  "public": false,
+  "github": {
+    "silent": true
+  },
+  "rewrites": [
+    {
+      "source": "/((?!_flutter|assets|icons|favicon|manifest|flutter|canvaskit|main\\.dart\\.js|flutter_service_worker).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(self), geolocation=()" }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/canvaskit/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/icons/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/flutter_service_worker.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/main.dart.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=604800" }
+      ]
+    },
+    {
+      "source": "/version.json",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "regions": ["cdg1"]
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #86: 🟢 CREATE
+📁 الملف الجديد: web/index.html
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+استبدل web/index.html بهذا المحتوى:
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="description" content="ProductChat Studio — Conversational AI Studio for Professional Product Photos. Remove background, add shadows, enhance quality with on-device AI.">
+  <meta name="theme-color" content="#0A0D14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ProductChat">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="ProductChat Studio">
+  <meta property="og:description" content="Product photos that sell themselves — AI-powered editing for e-commerce sellers">
+  <meta property="og:image" content="/icons/Icon-512.png">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://productchat.app">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ProductChat Studio">
+  <meta name="twitter:description" content="Turn product photos into professional shots in seconds">
+  <meta name="twitter:image" content="/icons/Icon-512.png">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/Icon-192.png">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <title>ProductChat Studio</title>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      background: #0A0D14;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    #loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0A0D14 0%, #12182B 100%);
+      z-index: 9999;
+      transition: opacity 0.4s ease-out;
+    }
+
+    #loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .logo {
+      width: 100px;
+      height: 100px;
+      border-radius: 30px;
+      background: linear-gradient(135deg, #6C5CE7 0%, #8B7BFF 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 20px 60px rgba(108, 92, 231, 0.4);
+      margin-bottom: 28px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .logo svg {
+      width: 50px;
+      height: 50px;
+      fill: white;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .title {
+      color: #F5F7FA;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #8B95A8;
+      font-size: 14px;
+      margin-bottom: 40px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 3px solid rgba(108, 92, 231, 0.2);
+      border-top-color: #6C5CE7;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error-box {
+      display: none;
+      max-width: 400px;
+      padding: 24px;
+      background: rgba(255, 92, 92, 0.1);
+      border: 1px solid rgba(255, 92, 92, 0.3);
+      border-radius: 16px;
+      color: #FF5C5C;
+      text-align: center;
+    }
+
+    .error-box h3 {
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .error-box p {
+      color: #8B95A8;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .error-box button {
+      background: #6C5CE7;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+      </svg>
+    </div>
+    <div class="title">ProductChat Studio</div>
+    <div class="subtitle">Conversational AI for Product Photos</div>
+    <div class="spinner"></div>
+    <div id="error" class="error-box">
+      <h3>Failed to load</h3>
+      <p>Please check your internet connection and try again.</p>
+      <button onclick="location.reload()">Retry</button>
+    </div>
+  </div>
+
+  <script>
+    // Suppress Flutter's noisy logs in production
+    if (window.location.hostname !== 'localhost') {
+      const noop = function() {};
+      console.log = noop;
+      console.debug = noop;
+      console.info = noop;
+    }
+
+    window.addEventListener('load', function(ev) {
+      // Hide loading screen on first frame
+      window.addEventListener('flutter-first-frame', function() {
+        document.getElementById('loading').classList.add('hidden');
+        setTimeout(function() {
+          const el = document.getElementById('loading');
+          if (el && el.parentNode) el.parentNode.removeChild(el);
+        }, 400);
+      });
+
+      // Fallback: hide after 8 seconds
+      setTimeout(function() {
+        const loading = document.getElementById('loading');
+        if (loading && !loading.classList.contains('hidden')) {
+          loading.classList.add('hidden');
+        }
+      }, 8000);
+    });
+
+    // Handle load errors
+    window.addEventListener('error', function(e) {
+      if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+        document.getElementById('error').style.display = 'block';
+      }
+    });
+  </script>
+
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #87: 🟢 CREATE
+📁 الملف الجديد: web/manifest.json
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف في web/ بهذا المحتوى:
+
+{
+  "name": "ProductChat Studio",
+  "short_name": "ProductChat",
+  "description": "Conversational AI for Product Photos",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#0A0D14",
+  "theme_color": "#6C5CE7",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["photo", "productivity", "business"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icons/Icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/Icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/Icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/Icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Photo",
+      "short_name": "New",
+      "description": "Start a new photo edit",
+      "url": "/chat",
+      "icons": [{ "src": "icons/Icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Batch Process",
+      "short_name": "Batch",
+      "description": "Process multiple images",
+      "url": "/batch",
+      "icons": [{ "src": "icons/Icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "AI Models",
+      "short_name": "Models",
+      "description": "Manage AI models",
+      "url": "/models",
+      "icons": [{ "src": "icons/Icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/home.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Home Dashboard"
+    },
+    {
+      "src": "screenshots/chat.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Chat Studio"
+    }
+  ]
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #88: 🟢 CREATE
+📁 الملف الجديد: web/flutter_bootstrap.js
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف في web/ بهذا المحتوى:
+
+{{flutter_js}}
+{{flutter_build_config}}
+
+const config = {
+  canvasKitBaseUrl: "https://www.gstatic.com/flutter-canvaskit/stable/",
+  renderer: "canvaskit",
+  useColorEmoji: true,
+};
+
+_flutter.loader.load({
+  config: config,
+  onEntrypointLoaded: async function(engineInitializer) {
+    try {
+      const appRunner = await engineInitializer.initializeEngine(config);
+      await appRunner.runApp();
+    } catch (e) {
+      console.error('Failed to initialize Flutter:', e);
+      document.getElementById('error').style.display = 'block';
+    }
+  }
+});
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #89: 🟢 CREATE
+📁 الملف الجديد: web/favicon.png
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ملاحظة: هذا ملف PNG. يجب نسخ favicon.png الموجود في assets/icons/app_icon.png
+أو استخدام أي أيقونة 32×32 PNG.
+
+الأمر:
+  cp assets/icons/app_icon.png web/favicon.png
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #90: 🟡 MODIFY
+📁 الملف: pubspec.yaml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة 1: أضف في قسم flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - assets/recipes/
+    - assets/icons/
+    - assets/lottie/
+    - assets/images/
+    - assets/fonts/
+
+الخطوة 2: أضف في نهاية الملف:
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  adaptive_icon_background: "#6C5CE7"
+  adaptive_icon_foreground: "assets/icons/app_icon_fg.png"
+  web:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+    background_color: "#0A0D14"
+    theme_color: "#6C5CE7"
+
+flutter_native_splash:
+  color: "#0A0D14"
+  image: assets/icons/splash.png
+  android_12:
+    color: "#0A0D14"
+    image: assets/icons/splash.png
+  ios: true
+  web: true
+
+الخطوة 3: أضف في dev_dependencies:
+  flutter_launcher_icons: ^0.14.2
+  flutter_native_splash: ^2.4.3
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #91: 🟢 CREATE
+📁 الملف الجديد: .gitignore
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ/استبدل .gitignore في جذر المشروع بهذا المحتوى:
+
+# Flutter
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+.vscode/
+*.log
+
+# Android
+android/.gradle/
+android/captures/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+android/key.properties
+android/**/gradle-wrapper.jar
+android/app/upload-keystore.jks
+android/app/*.jks
+android/app/*.keystore
+*.jks
+*.keystore
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Runner.xcworkspace/xcuserdata/
+ios/Runner.xcodeproj/xcuserdata/
+ios/Runner/GoogleService-Info.plist
+ios/Runner/Info.plist.bak
+*.ipa
+*.dSYM.zip
+*.dSYM
+ios/Runner/Assets.xcassets/AppIcon.appiconset/*.png.backup
+
+# Web
+web/flutter_service_worker.js.backup
+build/web/
+
+# Secrets
+*.env
+.env
+.env.local
+secrets.json
+credentials.json
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+
+# Models (too large for git)
+assets/models/
+*.onnx
+*.tflite
+*.pth
+*.pb
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Tests
+coverage/
+test/.test_coverage.dart
+*.lcov
+
+# Temp
+*.tmp
+*.part
+*.swp
+*~
+
+# Keystore
+key.properties
+*.jks
+*.keystore
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/*
+!.vscode/settings.json
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الملف 23_CONFIG_COMPLETE.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

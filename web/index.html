@@ -1,1 +1,217 @@
-<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>ProductChat Studio</title></head><body><script src="flutter_bootstrap.js" async></script></body></html>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="description" content="ProductChat Studio — Conversational AI Studio for Professional Product Photos. Remove background, add shadows, enhance quality with on-device AI.">
+  <meta name="theme-color" content="#0A0D14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ProductChat">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="ProductChat Studio">
+  <meta property="og:description" content="Product photos that sell themselves — AI-powered editing for e-commerce sellers">
+  <meta property="og:image" content="/icons/Icon-512.png">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://productchat.app">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ProductChat Studio">
+  <meta name="twitter:description" content="Turn product photos into professional shots in seconds">
+  <meta name="twitter:image" content="/icons/Icon-512.png">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/Icon-192.png">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <title>ProductChat Studio</title>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      background: #0A0D14;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    #loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0A0D14 0%, #12182B 100%);
+      z-index: 9999;
+      transition: opacity 0.4s ease-out;
+    }
+
+    #loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .logo {
+      width: 100px;
+      height: 100px;
+      border-radius: 30px;
+      background: linear-gradient(135deg, #6C5CE7 0%, #8B7BFF 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 20px 60px rgba(108, 92, 231, 0.4);
+      margin-bottom: 28px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .logo svg {
+      width: 50px;
+      height: 50px;
+      fill: white;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .title {
+      color: #F5F7FA;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #8B95A8;
+      font-size: 14px;
+      margin-bottom: 40px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 3px solid rgba(108, 92, 231, 0.2);
+      border-top-color: #6C5CE7;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error-box {
+      display: none;
+      max-width: 400px;
+      padding: 24px;
+      background: rgba(255, 92, 92, 0.1);
+      border: 1px solid rgba(255, 92, 92, 0.3);
+      border-radius: 16px;
+      color: #FF5C5C;
+      text-align: center;
+    }
+
+    .error-box h3 {
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .error-box p {
+      color: #8B95A8;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .error-box button {
+      background: #6C5CE7;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+      </svg>
+    </div>
+    <div class="title">ProductChat Studio</div>
+    <div class="subtitle">Conversational AI for Product Photos</div>
+    <div class="spinner"></div>
+    <div id="error" class="error-box">
+      <h3>Failed to load</h3>
+      <p>Please check your internet connection and try again.</p>
+      <button onclick="location.reload()">Retry</button>
+    </div>
+  </div>
+
+  <script>
+    // Suppress Flutter's noisy logs in production
+    if (window.location.hostname !== 'localhost') {
+      const noop = function() {};
+      console.log = noop;
+      console.debug = noop;
+      console.info = noop;
+    }
+
+    window.addEventListener('load', function(ev) {
+      // Hide loading screen on first frame
+      window.addEventListener('flutter-first-frame', function() {
+        document.getElementById('loading').classList.add('hidden');
+        setTimeout(function() {
+          const el = document.getElementById('loading');
+          if (el && el.parentNode) el.parentNode.removeChild(el);
+        }, 400);
+      });
+
+      // Fallback: hide after 8 seconds
+      setTimeout(function() {
+        const loading = document.getElementById('loading');
+        if (loading && !loading.classList.contains('hidden')) {
+          loading.classList.add('hidden');
+        }
+      }, 8000);
+    });
+
+    // Handle load errors
+    window.addEventListener('error', function(e) {
+      if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+        document.getElementById('error').style.display = 'block';
+      }
+    });
+  </script>
+
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

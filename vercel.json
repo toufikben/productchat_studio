@@ -1,1 +1,68 @@
-{"rewrites":[{"source":"/(.*)","destination":"/index.html"}]}
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "flutter build web --release --web-renderer canvaskit",
+  "outputDirectory": "build/web",
+  "framework": null,
+  "public": false,
+  "github": {
+    "silent": true
+  },
+  "rewrites": [
+    {
+      "source": "/((?!_flutter|assets|icons|favicon|manifest|flutter|canvaskit|main\\.dart\\.js|flutter_service_worker).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(self), geolocation=()" }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/canvaskit/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/icons/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/flutter_service_worker.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/main.dart.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=604800" }
+      ]
+    },
+    {
+      "source": "/version.json",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "regions": ["cdg1"]
+}
