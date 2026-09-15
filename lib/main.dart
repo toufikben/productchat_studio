@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'app.dart';
 import 'services/billing_service.dart';
@@ -165,9 +167,29 @@ void _runFallbackApp() {
 Future<void> _openHiveBoxSafely(String name) async {
   try {
     if (!Hive.isBoxOpen(name)) await Hive.openBox<dynamic>(name);
+    return;
   } catch (error, stack) {
-    // Never delete user data automatically. The affected service must use
-    // its own defaults/in-memory fallback for this launch instead.
     debugPrint('[main] Hive box "$name" unavailable: $error\n$stack');
+  }
+
+  // Preserve the original files instead of deleting them. A fresh empty box
+  // keeps callers of Hive.box(name) safe while the old data remains available
+  // for manual recovery as a timestamped backup.
+  try {
+    final directory = await getApplicationDocumentsDirectory();
+    final stamp = DateTime.now().millisecondsSinceEpoch;
+    for (final suffix in <String>['.hive', '.hive.lock']) {
+      final source = File('${directory.path}/$name$suffix');
+      if (await source.exists()) {
+        final backup = File('${directory.path}/$name.corrupt.$stamp$suffix');
+        await source.rename(backup.path);
+      }
+    }
+    if (!Hive.isBoxOpen(name)) await Hive.openBox<dynamic>(name);
+    debugPrint('[main] Hive box "$name" recovered with preserved backup');
+  } catch (error, stack) {
+    // Still do not delete or overwrite user data. Callers must use their
+    // normal defaults if the platform prevents recovery during this launch.
+    debugPrint('[main] Hive box "$name" recovery failed: $error\n$stack');
   }
 }
