@@ -62,6 +62,7 @@ void main() {
     expect(find.text('Free tier'), findsOneWidget);
     expect(find.text('Restore purchases'), findsOneWidget);
     expect(find.text('View Pro and Lifetime plans'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Batch processing'), 400);
     expect(find.text('Batch processing'), findsOneWidget);
     expect(find.text('History'), findsOneWidget);
 
