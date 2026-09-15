@@ -65,7 +65,9 @@ class BrandService {
     final data = box.get(_key);
     if (data == null) return const BrandProfile();
     try {
-      return BrandProfile.fromMap(Map<String, dynamic>.from(jsonDecode(data as String)));
+      final decoded = jsonDecode(data as String);
+      if (decoded is! Map) return const BrandProfile();
+      return BrandProfile.fromMap(Map<String, dynamic>.from(decoded));
     } catch (_) {
       return const BrandProfile();
     }

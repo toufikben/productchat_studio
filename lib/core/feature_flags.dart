@@ -100,6 +100,10 @@ class FeatureFlags {
       key: 'watermark',
       tier: FeatureTier.stable,
     ),
+    'floatingNavBar': FeatureFlag(
+      key: 'floatingNavBar',
+      tier: FeatureTier.stable,
+    ),
 
     // ─── ⚡ Beta ───
     'miGan': FeatureFlag(
@@ -191,6 +195,8 @@ class FeatureFlags {
   static bool isEnabled(String key) => flag(key).isEnabled;
   static bool isBeta(String key) => flag(key).isBeta;
   static bool isComingSoon(String key) => flag(key).isComingSoon;
+  static bool get batchProcessing => isEnabled('batchProcessing');
+  static bool get floatingNavBar => isEnabled('floatingNavBar');
 
   static List<FeatureFlag> get allFeatures =>
       _registry.values.toList(growable: false);

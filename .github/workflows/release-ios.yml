@@ -11,6 +11,8 @@ jobs:
     name: Build iOS IPA
     runs-on: macos-14
     timeout-minutes: 45
+    env:
+      HAS_IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +35,7 @@ jobs:
           pod install --repo-update
 
       - name: Setup signing (if configured)
-        if: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' }}
+        if: ${{ env.HAS_IOS_CERTIFICATE == 'true' }}
         env:
           CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
           P12_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
@@ -56,19 +58,19 @@ jobs:
           echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
 
       - name: Build iOS (unsigned, fallback)
-        if: ${{ secrets.IOS_CERTIFICATE_BASE64 == '' }}
+        if: ${{ env.HAS_IOS_CERTIFICATE != 'true' }}
         run: |
           flutter build ios --release --no-codesign
 
       - name: Build iOS IPA (signed)
-        if: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' }}
+        if: ${{ env.HAS_IOS_CERTIFICATE == 'true' }}
         run: |
           flutter build ipa --release \
             --obfuscate \
             --split-debug-info=build/symbols/ios
 
       - name: Upload IPA
-        if: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' }}
+        if: ${{ env.HAS_IOS_CERTIFICATE == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
@@ -76,7 +78,7 @@ jobs:
           retention-days: 30
 
       - name: Upload iOS build
-        if: ${{ secrets.IOS_CERTIFICATE_BASE64 == '' }}
+        if: ${{ env.HAS_IOS_CERTIFICATE != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: ios-unsigned-build
