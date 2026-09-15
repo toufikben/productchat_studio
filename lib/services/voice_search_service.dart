@@ -1,3 +1,4 @@
+import '../models/edit_request.dart';
 /// VoiceSearchService — يبحث في السجل عن طريق الأوامر الصوتية.
 class VoiceSearchService {
   /// يحوّل نص البحث الصوتي إلى مرشحات.

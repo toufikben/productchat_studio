@@ -1,67 +1,42 @@
-import 'package:flutter/foundation.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../core/constants.dart';
 import 'storage_service.dart';
 
-/// Durable local counter for the Free monthly image quota.
-/// The counter is intentionally separate from Credits: a Free user cannot
-/// bypass the monthly product quota by buying a Credits pack.
-class FreeQuotaService extends ChangeNotifier {
-  FreeQuotaService({StorageService? storage}) : _storage = storage ?? storageService {
-    _load();
-  }
-
-  static const monthKey = 'free.quota.month';
-  static const usedKey = 'free.quota.used';
-
-  final StorageService _storage;
-  String _month = _currentMonth();
-  int _used = 0;
-
-  String get month => _month;
-  int get used => _used;
-  int get remaining =>
-      (AppConstants.freeMonthlyQuota - _used).clamp(0, AppConstants.freeMonthlyQuota);
-  bool get exhausted => remaining == 0;
-
-  bool canUse({int images = 1}) => images > 0 && remaining >= images;
-
-  Future<bool> consume({int images = 1}) async {
-    if (!canUse(images: images)) return false;
-    _used += images;
-    await _persist();
-    notifyListeners();
-    return true;
-  }
-
-  Future<void> resetForTesting({String? month, int used = 0}) async {
-    _month = month ?? _currentMonth();
-    _used = used.clamp(0, AppConstants.freeMonthlyQuota);
-    await _persist();
-    notifyListeners();
-  }
-
+class FreeQuotaService extends StateNotifier<QuotaState> {
+  FreeQuotaService({StorageService? storage}) : _storage = storage, super(const QuotaState()) { _load(); }
+  static const _box = 'settings';
+  static const _kUsed = 'free_quota_used';
+  static const _kLastReset = 'free_quota_last_reset';
+  static const monthKey = _kLastReset;
+  static const usedKey = _kUsed;
+  final StorageService? _storage;
+  dynamic _get(String key, [dynamic fallback]) => _storage != null ? (_storage!.get(key) ?? fallback) : Hive.box(_box).get(key, defaultValue: fallback);
+  Future<void> _put(String key, dynamic value) => _storage != null ? _storage!.set(key, value) : Hive.box(_box).put(key, value);
   void _load() {
-    final current = _currentMonth();
-    final storedMonth = _storage.getString(monthKey);
-    if (storedMonth == current) {
-      _month = current;
-      _used = (_storage.get(usedKey) as int? ?? 0)
-          .clamp(0, AppConstants.freeMonthlyQuota);
-    } else {
-      _month = current;
-      _used = 0;
-      _persist();
-    }
+    final raw = _get(_kLastReset) as String?;
+    final now = DateTime.now();
+    if (raw == null || _shouldReset(raw, now)) { _reset(now); return; }
+    final used = (_get(_kUsed, 0) as int).clamp(0, AppConstants.freeMonthlyQuota);
+    state = QuotaState(used: used, lastReset: DateTime.parse(raw));
   }
-
-  Future<void> _persist() async {
-    await _storage.set(monthKey, _month);
-    await _storage.set(usedKey, _used);
-  }
-
-  static String _currentMonth() {
-    final now = DateTime.now().toUtc();
-    return '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}';
-  }
+  bool _shouldReset(String value, DateTime now) { try { final last = DateTime.parse(value); return last.month != now.month || last.year != now.year; } catch (_) { return true; } }
+  void _reset(DateTime now) { _put(_kUsed, 0); _put(_kLastReset, now.toIso8601String()); state = QuotaState(used: 0, lastReset: now); }
+  void checkReset() { final raw = _get(_kLastReset) as String?; if (raw == null || _shouldReset(raw, DateTime.now())) _reset(DateTime.now()); }
+  bool canUse({bool isPro = false}) { if (isPro) return true; checkReset(); return remaining > 0; }
+  Future<bool> consume({int images = 1}) async { if (images <= 0 || !canUse() || images > remaining) return false; final next = used + images; await _put(_kUsed, next); state = state.copyWith(used: next); return true; }
+  Future<void> forceReset() async { final now = DateTime.now(); await _put(_kUsed, 0); await _put(_kLastReset, now.toIso8601String()); state = QuotaState(used: 0, lastReset: now); }
+  int get used => state.used;
+  int get remaining => (AppConstants.freeMonthlyQuota - used).clamp(0, 999);
+  String get month => '${state.lastReset.year.toString().padLeft(4, '0')}-${state.lastReset.month.toString().padLeft(2, '0')}';
+  DateTime get nextReset { final now = DateTime.now(); return DateTime(now.year, now.month + 1, 1); }
 }
+
+class QuotaState {
+  final int used;
+  final DateTime lastReset;
+  const QuotaState({this.used = 0, DateTime? lastReset}) : lastReset = lastReset ?? const _EpochDate();
+  QuotaState copyWith({int? used, DateTime? lastReset}) => QuotaState(used: used ?? this.used, lastReset: lastReset ?? this.lastReset);
+}
+class _EpochDate implements DateTime { const _EpochDate(); @override dynamic noSuchMethod(Invocation i) => DateTime(1970); }
+final freeQuotaProvider = StateNotifierProvider<FreeQuotaService, QuotaState>((_) => FreeQuotaService());

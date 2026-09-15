@@ -32,6 +32,9 @@ import '../features/settings/voice_settings_screen.dart';
 import '../features/settings/voice_presets_screen.dart';
 import '../features/chat/voice_search_screen.dart';
 import '../features/billing/paywall_screen.dart';
+import '../features/billing/subscription_status_screen.dart';
+import '../features/billing/promo_code_screen.dart';
+import '../features/billing/refund_policy_screen.dart';
 import '../features/history/history_screen.dart';
 import '../features/batch/batch_screen.dart';
 import '../features/advanced/ai_description_screen.dart';
@@ -78,6 +81,9 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // ─── Billing ───
       GoRoute(path: '/paywall', builder: (_, __) => const PaywallScreen()),
+      GoRoute(path: '/subscription-status', builder: (_, __) => const SubscriptionStatusScreen()),
+      GoRoute(path: '/promo-code', builder: (_, __) => const PromoCodeScreen()),
+      GoRoute(path: '/refund-policy', builder: (_, __) => const RefundPolicyScreen()),
 
       // ─── Settings ───
       GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),

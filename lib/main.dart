@@ -21,6 +21,8 @@ Future<void> main() async {
     'presets',
     'favorites',
     'feedback',
+    'payments',
+    'promos',
   ]) {
     if (!Hive.isBoxOpen(name)) await Hive.openBox(name);
   }

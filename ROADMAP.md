@@ -89,6 +89,19 @@
 - [x] اجتياز الفحوصات الساكنة و`git diff --check`.
 - [ ] أوامر Flutter المطلوبة تعذرت لأن Flutter SDK غير موجود في `PATH`.
 
+## سجل التحديثات — 2026-09-15 — Billing Complete FIX #55–#67
+
+- [x] إضافة Free Quota مع توافق API الاختبارات القديمة (`storage`, `monthKey`, `usedKey`, و`consume(images:)`).
+- [x] إضافة Promo Codes وTrial وRefund وPayment History services.
+- [x] إضافة شاشات Subscription Status وPromo Code وRefund Policy.
+- [x] ربط مسارات Billing الجديدة وإضافة روابطها إلى Settings وPaywall.
+- [x] إضافة تسجيل المدفوعات والاستردادات إلى `BillingService` وفتح Hive boxes المطلوبة.
+- [x] الحفاظ على معرفات المنتجات الحالية: `pro_monthly`, `pro_yearly`, `credits_100`, `credits_500`, `credits_1200`, `lifetime`.
+- [x] الحفاظ على أسعار المشروع/خارطة الطريق الحالية: `$4.99`, `$19.99`, `$39.99`, `$79.99` و`$29.99` سنوياً؛ وتبقى `ProductDetails.price` من Google Play هو السعر المعروض النهائي.
+- [x] عدم إعادة القيم القديمة `$0.99/$3.99/$7.99` لأنها موثقة كقديمة في خارطة الطريق.
+- [x] اجتياز الفحوصات الساكنة و`git diff --check`.
+- [ ] `flutter clean && flutter pub get && flutter analyze`: تعذر التنفيذ لأن Flutter SDK غير موجود في `PATH`.
+
 ## سجل التحديثات — 2026-09-15 — Package Extensions 04–07
 
 - [x] قراءة ملفات الحزمة الثمانية بالترتيب وحفظ نسخها في `docs/ai_package/`.

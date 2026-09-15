@@ -82,6 +82,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               label: const Text('View Pro and Lifetime plans'),
             ),
             ListTile(
+              leading: const Icon(Icons.receipt_long),
+              title: const Text('Subscription Status'),
+              subtitle: const Text('Manage your plan'),
+              onTap: () => context.push('/subscription-status'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.card_giftcard),
+              title: const Text('Promo Code'),
+              subtitle: const Text('Redeem a code'),
+              onTap: () => context.push('/promo-code'),
+            ),
+            ListTile(
               leading: const Icon(Icons.language),
               title: const Text('Language'),
               subtitle:

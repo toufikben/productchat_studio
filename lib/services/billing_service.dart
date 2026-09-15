@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import '../core/constants.dart';
 
 import 'free_quota_service.dart';
 import 'pro_service.dart';
 import 'storage_service.dart';
+import 'payment_history_service.dart';
+import 'refund_service.dart';
 
 /// Google Play product catalog. Prices are configured by Google Play and must
 /// be read from ProductDetails.price; the roadmap values are reference prices.
@@ -226,7 +229,13 @@ class BillingService extends ChangeNotifier {
       lastPurchaseProductId = purchase.productID;
       loading = purchase.status == PurchaseStatus.pending;
 
-      if (purchase.status == PurchaseStatus.error) {
+      if (purchase.status == PurchaseStatus.canceled) {
+        await RefundService().logRefund(
+          productId: purchase.productID,
+          reason: 'cancelled',
+          creditsRefunded: 0,
+        );
+      } else if (purchase.status == PurchaseStatus.error) {
         error = purchase.error?.message ?? 'Purchase failed.';
       } else if (purchase.status == PurchaseStatus.purchased ||
           purchase.status == PurchaseStatus.restored) {
@@ -277,6 +286,17 @@ class BillingService extends ChangeNotifier {
           }
         }
       }
+      if (purchase.status == PurchaseStatus.purchased && error == null) {
+        await PaymentHistoryService().add(PaymentRecord(
+          id: purchase.purchaseID ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          productId: purchase.productID,
+          productName: _productName(purchase.productID),
+          amount: _productAmount(purchase.productID),
+          currency: 'USD',
+          status: 'completed',
+          date: DateTime.now(),
+        ));
+      }
       if (purchase.pendingCompletePurchase &&
           purchase.status != PurchaseStatus.pending) {
         try {
@@ -287,6 +307,20 @@ class BillingService extends ChangeNotifier {
       }
       notifyListeners();
     }
+  }
+
+  String _productName(String id) => AppConstants.displayNames[id] ?? id;
+
+  double _productAmount(String id) {
+    const known = <String, double>{
+      AppConstants.iapProMonthly: 4.99,
+      AppConstants.iapProYearly: 29.99,
+      AppConstants.iapCredits100: 4.99,
+      AppConstants.iapCredits500: 19.99,
+      AppConstants.iapCredits1200: 39.99,
+      AppConstants.iapLifetime: 79.99,
+    };
+    return known[id] ?? 0.0;
   }
 
   @override

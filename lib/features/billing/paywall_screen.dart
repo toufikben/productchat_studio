@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
 import '../../services/billing_service.dart';
+import '../../services/trial_service.dart';
 
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({
@@ -20,16 +22,19 @@ class PaywallScreen extends StatefulWidget {
 
 class _PaywallScreenState extends State<PaywallScreen> {
   BillingService get _billing => widget.billing ?? billingService;
+  late final TrialService _trial;
 
   @override
   void initState() {
     super.initState();
+    _trial = TrialService();
     if (widget.initializeBilling) _billing.init();
     _billing.addListener(_refresh);
   }
 
   @override
   void dispose() {
+    _trial.dispose();
     _billing.removeListener(_refresh);
     super.dispose();
   }
@@ -84,6 +89,39 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     ),
                   ),
                 ],
+                if (!_billing.proService.isPro && !_trial.state.hasUsedTrial)
+                  Container(
+                    margin: const EdgeInsets.only(top: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.warning, Color(0xFFFF9500)],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.timer, color: Colors.white, size: 32),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Text('Try Pro Free for 7 Days\nNo credit card required',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                        ),
+                        FilledButton(
+                          onPressed: () async {
+                            await _trial.startTrial();
+                            if (mounted) setState(() {});
+                          },
+                          child: const Text('Start'),
+                        ),
+                      ],
+                    ),
+                  ),
+                TextButton.icon(
+                  onPressed: () => context.push('/promo-code'),
+                  icon: const Icon(Icons.card_giftcard, size: 18),
+                  label: const Text('Have a promo code?'),
+                ),
                 const SizedBox(height: 20),
                 const _SectionTitle('Lifetime'),
                 _productSection(CreditProducts.lifetime),
