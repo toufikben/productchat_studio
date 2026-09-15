@@ -30,7 +30,9 @@ class SeikaChannel(private val context: Context) : MethodChannel.MethodCallHandl
 
     private var lamaSession: OrtSession? = null
     private var esrganSession: OrtSession? = null
-    private val env: OrtEnvironment = OrtEnvironment.getEnvironment()
+    private val env: OrtEnvironment by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        OrtEnvironment.getEnvironment()
+    }
     private val lock = Any()
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {

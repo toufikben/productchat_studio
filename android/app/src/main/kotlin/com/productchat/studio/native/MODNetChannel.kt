@@ -31,7 +31,9 @@ class MODNetChannel(private val context: Context)
     }
 
     private var session: OrtSession? = null
-    private val env: OrtEnvironment = OrtEnvironment.getEnvironment()
+    private val env: OrtEnvironment by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        OrtEnvironment.getEnvironment()
+    }
     private val lock = Any()
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {

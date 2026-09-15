@@ -30,7 +30,9 @@ class MobileSAMChannel(private val context: Context)
 
     private var encoder: OrtSession? = null
     private var decoder: OrtSession? = null
-    private val env = OrtEnvironment.getEnvironment()
+    private val env by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        OrtEnvironment.getEnvironment()
+    }
     private val lock = Any()
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {

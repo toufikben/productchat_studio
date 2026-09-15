@@ -35,7 +35,9 @@ class MIGanChannel(private val context: Context) : MethodChannel.MethodCallHandl
     private var session: OrtSession? = null
     private var inputName: String = "image"
     private var inputShape: LongArray = longArrayOf(1, 3, 512, 512)
-    private val env: OrtEnvironment = OrtEnvironment.getEnvironment()
+    private val env: OrtEnvironment by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        OrtEnvironment.getEnvironment()
+    }
     private val lock = Any()
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
