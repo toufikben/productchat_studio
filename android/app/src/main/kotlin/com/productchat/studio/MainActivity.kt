@@ -1,6 +1,7 @@
 package com.productchat.studio
 
 import android.content.Intent
+import android.util.Log
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -13,25 +14,44 @@ import com.productchat.studio.native.QwenEditChannel
 import com.productchat.studio.native.QuickActionsChannel
 
 class MainActivity : FlutterActivity() {
-    companion object { private const val SHORTCUT_CHANNEL = "com.productchat/shortcut_intent" }
+    companion object {
+        private const val SHORTCUT_CHANNEL = "com.productchat/shortcut_intent"
+        private const val TAG = "ProductChatMain"
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        val seika = SeikaChannel(this)
-        seika.attach(MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "productchat/studio/seika"))
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, MIGanChannel.CHANNEL)
-            .setMethodCallHandler(MIGanChannel(this))
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, MODNetChannel.CHANNEL)
-            .setMethodCallHandler(MODNetChannel(this))
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ModelComparisonChannel.CHANNEL)
-            .setMethodCallHandler(ModelComparisonChannel(this))
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, MobileSAMChannel.CHANNEL)
-            .setMethodCallHandler(MobileSAMChannel(this))
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, QwenEditChannel.CHANNEL)
-            .setMethodCallHandler(QwenEditChannel(this))
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, QuickActionsChannel.CHANNEL)
-            .setMethodCallHandler(QuickActionsChannel(applicationContext))
-        handleShortcutIntent(intent, flutterEngine)
+        // Native AI bridges are optional. A constructor/linker/runtime error
+        // in one bridge must not prevent Flutter from reaching its first UI.
+        registerSafely("seika") {
+            SeikaChannel(this).attach(
+                MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SeikaChannel.CHANNEL)
+            )
+        }
+        registerSafely("migan") { register(flutterEngine, MIGanChannel.CHANNEL, MIGanChannel(this)) }
+        registerSafely("modnet") { register(flutterEngine, MODNetChannel.CHANNEL, MODNetChannel(this)) }
+        registerSafely("comparison") { register(flutterEngine, ModelComparisonChannel.CHANNEL, ModelComparisonChannel(this)) }
+        registerSafely("mobilesam") { register(flutterEngine, MobileSAMChannel.CHANNEL, MobileSAMChannel(this)) }
+        registerSafely("qwen") { register(flutterEngine, QwenEditChannel.CHANNEL, QwenEditChannel(this)) }
+        registerSafely("quick-actions") { register(flutterEngine, QuickActionsChannel.CHANNEL, QuickActionsChannel(applicationContext)) }
+        registerSafely("shortcut-intent") { handleShortcutIntent(intent, flutterEngine) }
+    }
+
+    private fun register(
+        engine: FlutterEngine,
+        channel: String,
+        handler: MethodChannel.MethodCallHandler,
+    ) {
+        MethodChannel(engine.dartExecutor.binaryMessenger, channel)
+            .setMethodCallHandler(handler)
+    }
+
+    private inline fun registerSafely(name: String, action: () -> Unit) {
+        try {
+            action()
+        } catch (t: Throwable) {
+            Log.e(TAG, "Optional native bridge failed: $name", t)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -42,7 +62,11 @@ class MainActivity : FlutterActivity() {
 
     private fun handleShortcutIntent(intent: Intent?, engine: FlutterEngine) {
         val type = intent?.getStringExtra("shortcut_type") ?: return
-        MethodChannel(engine.dartExecutor.binaryMessenger, SHORTCUT_CHANNEL)
-            .invokeMethod("onShortcut", type)
+        try {
+            MethodChannel(engine.dartExecutor.binaryMessenger, SHORTCUT_CHANNEL)
+                .invokeMethod("onShortcut", type)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Shortcut intent delivery failed", t)
+        }
     }
 }
