@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/feature_flags.dart';
 import '../../services/billing_service.dart';
+import '../../widgets/beta_badge.dart';
 import '../../services/platform/locale_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -87,8 +89,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               subtitle: const Text('Manage your plan'),
               onTap: () => context.push('/subscription-status'),
             ),
-            ListTile(
-              leading: const Icon(Icons.card_giftcard),
+            if (FeatureFlags.isEnabled('promoCode'))
+              ListTile(
+                leading: const Icon(Icons.card_giftcard),
               title: const Text('Promo Code'),
               subtitle: const Text('Redeem a code'),
               onTap: () => context.push('/promo-code'),
@@ -101,21 +104,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: _chooseLanguage,
             ),
             const Divider(height: 28),
-            ListTile(
-              leading: const Icon(Icons.branding_watermark_outlined),
+            if (FeatureFlags.isEnabled('brandIdentity'))
+              ListTile(
+                leading: const Icon(Icons.branding_watermark_outlined),
               title: const Text('Brand Identity'),
               subtitle: Text(
                   isPro ? 'Configure locally' : 'Pro or Lifetime required'),
-              onTap: () => context.push('/brand'),
-            ),
+                trailing: FeatureFlags.isBeta('brandIdentity')
+                    ? BetaBadge(message: FeatureFlags.flag('brandIdentity').betaMessage)
+                    : null,
+                onTap: () => context.push('/brand'),
+              ),
             ListTile(
               leading: const Icon(Icons.analytics_outlined),
               title: const Text('Analytics'),
               subtitle: const Text('Local usage statistics'),
               onTap: () => context.push('/analytics'),
             ),
-            ListTile(
-              leading: const Icon(Icons.card_giftcard_outlined),
+            if (FeatureFlags.isEnabled('referral'))
+              ListTile(
+                leading: const Icon(Icons.card_giftcard_outlined),
               title: const Text('Invite friends'),
               subtitle: const Text('Earn credits with referrals'),
               onTap: () => context.push('/referral'),
@@ -134,18 +142,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : 'Latest 5 successful edits'),
               onTap: () => context.push('/history'),
             ),
-            ListTile(
-              leading: const Icon(Icons.collections_outlined),
+            if (FeatureFlags.isEnabled('batchProcessing'))
+              ListTile(
+                leading: const Icon(Icons.collections_outlined),
               title: const Text('Batch processing'),
               subtitle:
                   Text(isPro ? 'Up to 100 images' : 'Pro or Lifetime required'),
-              onTap: () => context.push('/batch'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.auto_awesome_outlined),
+                trailing: FeatureFlags.isBeta('batchProcessing')
+                    ? BetaBadge(message: FeatureFlags.flag('batchProcessing').betaMessage)
+                    : null,
+                onTap: () => context.push('/batch'),
+              ),
+            if (FeatureFlags.isEnabled('modelCenter'))
+              ListTile(
+                leading: const Icon(Icons.auto_awesome_outlined),
               title: const Text('Models and capabilities'),
-              onTap: () => context.push('/models'),
-            ),
+                trailing: FeatureFlags.isBeta('modelCenter')
+                    ? BetaBadge(message: FeatureFlags.flag('modelCenter').betaMessage)
+                    : null,
+                onTap: () => context.push('/models'),
+              ),
             ListTile(
               leading: const Icon(Icons.help_outline),
               title: const Text('FAQ'),

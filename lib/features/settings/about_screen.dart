@@ -42,6 +42,9 @@ class AboutScreen extends StatelessWidget {
           _tile(context, Icons.code, 'Open Source',
             'github.com/Toufikben/productchat_studio',
             'https://github.com/Toufikben/productchat_studio'),
+          _tile(context, Icons.gavel, 'Model Licenses',
+            'MIT, Apache 2.0, BSD-3',
+            'https://github.com/toufikben/productchat_studio/blob/main/docs/MODEL_LICENSES.md'),
           const SizedBox(height: 24),
           const Center(
             child: Text('Made with ❤️ by ProductChat Team',

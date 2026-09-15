@@ -1,0 +1,87 @@
+Experimental Pull Request CI Results
+Repository: toufikben/productchat_studio
+Pull Request: #21
+URL: https://github.com/toufikben/productchat_studio/pull/21
+Branch: feat/beta-system-validation-20260915
+Tested commit: 6ae6b0901c2620aa24fa98c39b2bcb4d923818df
+
+## Final checks for PR commit
+
+| Check | Result | Notes |
+|---|---|---|
+| Check for Secrets & Bad Files | PASS | Completed successfully |
+| Quality Metrics | PASS | Completed successfully |
+| Flutter analyze | PASS | Analyzer completed after fixing four errors |
+| Flutter tests | FAIL | 68 passed, 8 failed |
+| Android AAB build | PASS | Manual dispatch run 34986764821; fallback-signed AAB produced |
+
+## Original workflow failure and fix
+
+The Android, web, and iOS workflows initially failed before creating jobs because their step conditions used `secrets.*` directly in `if` expressions. GitHub rejected this context during workflow parsing with:
+
+`Unrecognized named-value: 'secrets'`
+
+The workflows were changed to calculate boolean job-level environment values from secrets and use `env.*` in conditions. The actual secret values remain used only where needed by the steps. After this fix, manual dispatch of the Android workflow was accepted and reached the runner.
+
+## Android build
+
+Run: 34986764821
+URL: https://github.com/toufikben/productchat_studio/actions/runs/34986764821
+Result: completed / success
+
+Relevant steps:
+
+* `flutter pub get`: reached and completed.
+* `flutter gen-l10n`: reached and completed.
+* `Build AAB (signed)`: skipped because production keystore secrets were unavailable.
+* `Build AAB (fallback-signed)`: success.
+* `Upload AAB artifact`: success.
+* `Upload symbols`: success.
+
+This validates compilation and AAB generation using the ephemeral CI signing fallback. The resulting artifact must not be treated as a production Play Store release because it is not signed with the production keystore.
+
+## Analyzer and tests
+
+The first PR run exposed four analyzer errors. They were fixed by:
+
+* Adding compatibility accessors for existing `FeatureFlags.batchProcessing` and `FeatureFlags.floatingNavBar` callers.
+* Adding a `floatingNavBar` registry entry.
+* Making JSON decoding in `auto_save_service.dart` and `brand_service.dart` type-safe.
+
+The subsequent analyzer phase passed. The test phase then reported:
+
+`68 tests passed, 8 failed.`
+
+The observed failing test areas were:
+
+* `test/widget_smoke_test.dart`: Paywall rendering without Play Billing initialization.
+* `test/widget_smoke_test.dart`: Settings rendering and navigation.
+* `test/widget_smoke_test.dart`: Router navigation and unknown routes.
+* `test/free_quota_service_test.dart`: Stored usage clamping.
+* `test/billing_service_test.dart`: Consumable purchase completion.
+
+The billing failure included:
+
+`HiveError: Box not found. Did you forget to call Hive.openBox()?`
+
+with the stack passing through `PaymentHistoryService.add` and `BillingService._handlePurchases`. The remaining failures should be investigated as test bootstrap/isolation issues before merging.
+
+## Current conclusion
+
+The PR successfully triggered real GitHub Actions jobs. The repaired workflow can compile and package the Android app into an AAB. The code analyzer is clean for this PR commit, but the test suite is not green because eight tests still fail. The PR should remain unmerged until those test failures are corrected or explicitly triaged.
+
+## Final repaired test run
+
+After the additional fixes, commit `982ed9d158383796ea002f55329a17e1772030a8` produced a completely green PR validation run:
+
+* Check for Secrets & Bad Files: PASS
+* Quality Metrics: PASS
+* Analyze & Test: PASS
+* Flutter analyzer: PASS
+* Flutter tests: PASS; no failed tests reported
+* HiveError in Billing and Widget tests: resolved
+
+The final successful Analyze & Test run is available at:
+https://github.com/toufikben/productchat_studio/actions/runs/34990258870
+
+The fixes included isolated Hive boxes for Billing and Widget tests, safe unopened-box handling in services, correct `YYYY-MM` quota parsing, real GoRouter test navigation, Flutter binding initialization for TTS tests, and plugin-safe VoiceService disposal.

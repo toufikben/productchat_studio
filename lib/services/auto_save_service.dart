@@ -49,14 +49,19 @@ class AutoSaveService {
       return DraftEntry(
         id: m['id'] as String? ?? '',
         imagePath: m['imagePath'] as String? ?? '',
-        state: Map<String, dynamic>.from(
-          jsonDecode(m['state'] as String? ?? '{}'),
-        ),
+        state: _decodeState(m['state'] as String? ?? '{}'),
         savedAt: DateTime.tryParse(m['ts'] as String? ?? '') ?? DateTime.now(),
       );
     }).toList()
       ..sort((a, b) => b.savedAt.compareTo(a.savedAt));
     return drafts;
+  }
+
+  Map<String, dynamic> _decodeState(String value) {
+    final decoded = jsonDecode(value);
+    return decoded is Map
+        ? Map<String, dynamic>.from(decoded)
+        : <String, dynamic>{};
   }
 
   Future<void> deleteDraft(String id) async {

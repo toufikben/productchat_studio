@@ -112,6 +112,7 @@ class VoiceService extends StateNotifier<VoiceState> {
   Stream<String> get onTranscription => _transcriptionController.stream;
 
   void _loadSettings() {
+    if (!Hive.isBoxOpen('settings')) return;
     final box = Hive.box<dynamic>('settings');
     final settings = box.getMap('voice_settings');
     if (settings.isNotEmpty) {
@@ -294,8 +295,8 @@ class VoiceService extends StateNotifier<VoiceState> {
 
   @override
   void dispose() {
-    _stt.stop();
-    _tts.stop();
+    unawaited(_stt.stop().catchError((_) {}));
+    unawaited(_tts.stop().catchError((_) {}));
     _transcriptionController.close();
     super.dispose();
   }

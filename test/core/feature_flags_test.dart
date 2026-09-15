@@ -19,15 +19,15 @@ void main() {
       expect(FeatureFlags.chatStudio, true);
     });
 
-    test('pending features are disabled', () {
-      expect(FeatureFlags.miGan, false);
-      expect(FeatureFlags.realEsrgan, false);
-      expect(FeatureFlags.relight, false);
+    test('beta and coming-soon features expose their configured state', () {
+      expect(FeatureFlags.miGan, true);
+      expect(FeatureFlags.realEsrgan, true);
+      expect(FeatureFlags.relight, true);
       expect(FeatureFlags.conversationalEdit, false);
-      expect(FeatureFlags.recipesAutomation, false);
+      expect(FeatureFlags.recipesAutomation, true);
       expect(FeatureFlags.compliance, false);
-      expect(FeatureFlags.batchProcessing, false);
-      expect(FeatureFlags.brandIdentity, false);
+      expect(FeatureFlags.batchProcessing, true);
+      expect(FeatureFlags.brandIdentity, true);
       expect(FeatureFlags.referral, false);
     });
 
@@ -38,8 +38,8 @@ void main() {
     });
 
     test('isEnabled returns false for disabled features', () {
-      expect(FeatureFlags.isEnabled('miGan'), false);
-      expect(FeatureFlags.isEnabled('realEsrgan'), false);
+      expect(FeatureFlags.isEnabled('miGan'), true);
+      expect(FeatureFlags.isEnabled('realEsrgan'), true);
       expect(FeatureFlags.isEnabled('compliance'), false);
     });
 

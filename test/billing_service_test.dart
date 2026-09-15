@@ -1,13 +1,28 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:in_app_purchase_platform_interface/in_app_purchase_platform_interface.dart';
 import 'package:productchat_studio/services/billing_service.dart';
 import 'package:productchat_studio/services/storage_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    final directory = await Directory.systemTemp.createTemp('productchat-billing-');
+    Hive.init(directory.path);
+    await Hive.openBox<dynamic>('settings');
+    await Hive.openBox<dynamic>('payments');
+    await Hive.openBox<dynamic>('analytics');
+    await Hive.openBox<dynamic>('credits');
+  });
+
+  tearDownAll(() async {
+    await Hive.close();
+  });
 
   test('BillingService can be constructed with injected storage without opening Play Billing', () {
     final billing = BillingService(storage: StorageService());
@@ -201,12 +216,12 @@ void main() {
     )..pendingCompletePurchase = true;
 
     fake.emit([purchase]);
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
     expect(billing.credits, 100);
     expect(fake.completed, 1);
 
     fake.emit([purchase]);
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
     expect(billing.credits, 100);
     expect(fake.completed, 2);
 

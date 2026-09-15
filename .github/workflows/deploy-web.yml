@@ -10,6 +10,8 @@ jobs:
     name: Build & Deploy Web
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      HAS_VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN != '' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +45,7 @@ jobs:
           du -sh build/web
 
       - name: Deploy to Vercel
-        if: ${{ secrets.VERCEL_TOKEN != '' }}
+        if: ${{ env.HAS_VERCEL_TOKEN == 'true' }}
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -62,7 +64,7 @@ jobs:
       - name: Deployment summary
         run: |
           echo "## 🌐 Web Deployment" >> $GITHUB_STEP_SUMMARY
-          if [ -n "${{ secrets.VERCEL_TOKEN }}" ]; then
+          if [ -n "${{ env.HAS_VERCEL_TOKEN }}" ]; then
             echo "✅ Deployed to Vercel" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ Vercel secrets not configured" >> $GITHUB_STEP_SUMMARY

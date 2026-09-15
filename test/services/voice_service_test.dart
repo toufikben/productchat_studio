@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:productchat_studio/services/voice_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('VoiceState', () {
     test('starts with default values', () {
       const state = VoiceState();

@@ -88,6 +88,16 @@ class SeikaService {
       return EditResult(ok: false, error: e.message);
     }
   }
+
+  /// Compatibility API for older controllers that expose upscale through Seika.
+  bool isUpscaleReady() => false;
+
+  Future<EditResult> upscale(String inputPath, {int factor = 2}) async {
+    return const EditResult(
+      ok: false,
+      error: 'Upscale model is not available through the Seika bridge.',
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
