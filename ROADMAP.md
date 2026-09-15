@@ -346,6 +346,8 @@ All repair work must follow these rules:
 
 **تحديث 2026-09-15:** تم إصلاح اختبار القناع وحقن `BillingService` في commit `a6eaee7`، ثم أضيفت اختبارات Billing الموسعة في commit `fe3b6d0`. نجح Flutter CI بالكامل. فشل تشغيل البناء الموقّع [34910989011](https://github.com/toufikben/productchat_studio/actions/runs/34910989011) في `flutter build appbundle --release` قبل إنشاء APK/AAB بسبب عدم توافق Gradle 9.3.1/AGP 9.1.0 مع Flutter 3.27.0 (`unable to resolve class groovy.xml.QName`). تم تعديل Gradle إلى 8.10.2 وAGP إلى 8.7.3 وKotlin إلى 2.0.21، ويلزم تشغيل البناء مجددًا بعد رفع هذا الإصلاح.
 
+**متابعة البناء:** التشغيل [34911216248](https://github.com/toufikben/productchat_studio/actions/runs/34911216248) تجاوز مشكلة Groovy، لكنه كشف كتلة `kotlin { compilerOptions { ... } }` غير مرتبطة في `android/app/build.gradle.kts`. أزيلت الكتلة لأنها غير لازمة، ويلزم تشغيل Release جديد للتحقق من إنشاء APK وAAB.
+
 - **Phase 1 — Diagnostic log capture — STARTED 2026-09-14:** Approved temporary workflow-only change. Scope: capture and upload the exact flutter analyze output while preserving a failing job when analysis fails. No application code or test logic changes. Rollback: revert the workflow commit. Acceptance: the next run publishes flutter-analyze.log and still reports the analyzer failure.
 
 - **2026-09-14 — دفعة الإصلاحات الأساسية:** تطبيق إصلاحات Android وiOS وCI وطبقة التطبيق وإضافة فحص الأسرار والثيم الفاتح وonboarding وProviderScope والتحقق المحلي من entitlement. لم يُعتمد Real-ESRGAN ONNX: الرابط أعاد 404 وSHA-256 كان placeholder، لذلك أُعيد upscale إلى fallback الموثق وأزيلت الاعتمادية غير المستخدمة وآثارها من lock/registrant.

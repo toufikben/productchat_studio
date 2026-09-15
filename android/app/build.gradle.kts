@@ -68,12 +68,6 @@ android {
     }
 }
 
-kotlin {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
-    }
-}
-
 dependencies {
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.19.0")
 }
