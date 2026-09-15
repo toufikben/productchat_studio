@@ -78,6 +78,17 @@
 - [x] اجتياز `git diff --check` والتحقق من اكتمال الملفات والمسارات.
 - [ ] `flutter clean && flutter pub get && flutter analyze`: تعذر التنفيذ لأن Flutter SDK غير موجود في `PATH`.
 
+## سجل التحديثات — 2026-09-15 — Voice Complete FIX #45–#54
+
+- [x] استبدال `voice_service.dart` بإدارة STT/TTS والإعدادات والحفظ الصوتي.
+- [x] إضافة Voice Search وVoice Presets وخ schermات إعدادات الصوت.
+- [x] ربط المسارات `/voice-settings` و`/voice-presets` و`/voice-search`.
+- [x] إضافة voice feedback إلى ChatController وتهيئة presets الافتراضية.
+- [x] فتح Hive boxes: `voice_presets`, `presets`, `favorites`, و`feedback`.
+- [x] إضافة `StorageService.getHistory()` لدعم البحث الصوتي.
+- [x] اجتياز الفحوصات الساكنة و`git diff --check`.
+- [ ] أوامر Flutter المطلوبة تعذرت لأن Flutter SDK غير موجود في `PATH`.
+
 ## سجل التحديثات — 2026-09-15 — Package Extensions 04–07
 
 - [x] قراءة ملفات الحزمة الثمانية بالترتيب وحفظ نسخها في `docs/ai_package/`.

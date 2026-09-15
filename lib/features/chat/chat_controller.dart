@@ -13,6 +13,8 @@ import '../../services/product_fidelity_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/smart_analysis_service.dart';
 import '../../services/pro_service.dart';
+import '../../services/voice_service.dart';
+import '../../services/voice_presets_service.dart';
 import '../../core/constants.dart';
 
 class ChatMessage {
@@ -84,8 +86,11 @@ class ChatController extends StateNotifier<ChatState> {
   final _smart = SmartAnalysisService();
   final _pro = ProService();
   final _stt = SpeechToText();
+  final _voice = VoiceService();
 
   Future<void> _init() async {
+    await _voice.init();
+    await VoicePresetsService().seedDefaults();
     state = state.copyWith(
       credits: _store.getCredits(),
       messages: [
@@ -195,6 +200,12 @@ class ChatController extends StateNotifier<ChatState> {
             ),
           ],
         );
+        try {
+          await _voice.announceOperation(
+            operation: req.op.name,
+            success: res.ok,
+          );
+        } catch (_) {}
       } else {
         if (!_pro.isPro) {
           await _store.setCredits(balanceBefore);
@@ -310,6 +321,7 @@ class ChatController extends StateNotifier<ChatState> {
   @override
   void dispose() {
     _stt.stop();
+    _voice.dispose();
     super.dispose();
   }
 }

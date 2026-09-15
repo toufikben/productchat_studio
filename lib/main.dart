@@ -12,7 +12,16 @@ import 'services/platform/theme_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
-  for (final name in ['settings', 'history', 'credits', 'analytics']) {
+  for (final name in [
+    'settings',
+    'history',
+    'credits',
+    'analytics',
+    'voice_presets',
+    'presets',
+    'favorites',
+    'feedback',
+  ]) {
     if (!Hive.isBoxOpen(name)) await Hive.openBox(name);
   }
   await storageService.init();

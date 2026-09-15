@@ -28,6 +28,9 @@ import '../features/settings/favorites_screen.dart';
 import '../features/settings/referral_screen.dart';
 import '../features/settings/analytics_screen.dart';
 import '../features/settings/roadmap_screen.dart';
+import '../features/settings/voice_settings_screen.dart';
+import '../features/settings/voice_presets_screen.dart';
+import '../features/chat/voice_search_screen.dart';
 import '../features/billing/paywall_screen.dart';
 import '../features/history/history_screen.dart';
 import '../features/batch/batch_screen.dart';
@@ -89,6 +92,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/referral', builder: (_, __) => const ReferralScreen()),
       GoRoute(path: '/analytics', builder: (_, __) => const AnalyticsScreen()),
       GoRoute(path: '/roadmap', builder: (_, __) => const RoadmapScreen()),
+      GoRoute(path: '/voice-settings', builder: (_, __) => const VoiceSettingsScreen()),
+      GoRoute(path: '/voice-presets', builder: (_, __) => const VoicePresetsScreen()),
+      GoRoute(path: '/voice-search', builder: (_, __) => const VoiceSearchScreen()),
 
       // ─── Support ───
       GoRoute(path: '/faq', builder: (_, __) => const FAQScreen()),

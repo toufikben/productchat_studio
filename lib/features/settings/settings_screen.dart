@@ -206,6 +206,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: const Text('Developer Options'),
               onTap: () => context.push('/developer'),
             ),
+            const Divider(height: 28),
+            const Text('Voice & Audio', style: TextStyle(fontWeight: FontWeight.w600)),
+            ListTile(
+              leading: const Icon(Icons.record_voice_over),
+              title: const Text('Voice Settings'),
+              subtitle: const Text('Language, speed, pitch'),
+              onTap: () => context.push('/voice-settings'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.mic_none),
+              title: const Text('Voice Presets'),
+              subtitle: const Text('Saved voice commands'),
+              onTap: () => context.push('/voice-presets'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.search),
+              title: const Text('Voice Search'),
+              subtitle: const Text('Search history by voice'),
+              onTap: () => context.push('/voice-search'),
+            ),
             if (_message != null)
               Padding(
                 padding: const EdgeInsets.only(top: 12),

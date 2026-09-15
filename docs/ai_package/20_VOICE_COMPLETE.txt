@@ -1,0 +1,1131 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 20: VOICE & AUDIO COMPLETION                                   ║
+║  إكمال كل ميزات الصوت — 5 عناصر (1 جزئي + 4 مفقود)                    ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #45: 🔴 REPLACE
+📁 الملف: lib/services/voice_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+استبدل الملف بالكامل بهذا:
+
+import 'dart:async';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:speech_to_text/speech_to_text.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+
+// ═══════════════════════════════════════════════════════════════
+// Voice State
+// ═══════════════════════════════════════════════════════════════
+class VoiceState {
+  final bool isListening;
+  final bool isSpeaking;
+  final String lastTranscription;
+  final String lastError;
+  final double soundLevel;
+  final String? lastSpoken;
+  final VoiceSettings settings;
+
+  const VoiceState({
+    this.isListening = false,
+    this.isSpeaking = false,
+    this.lastTranscription = '',
+    this.lastError = '',
+    this.soundLevel = 0.0,
+    this.lastSpoken,
+    this.settings = const VoiceSettings(),
+  });
+
+  VoiceState copyWith({
+    bool? isListening,
+    bool? isSpeaking,
+    String? lastTranscription,
+    String? lastError,
+    double? soundLevel,
+    String? lastSpoken,
+    VoiceSettings? settings,
+  }) =>
+      VoiceState(
+        isListening: isListening ?? this.isListening,
+        isSpeaking: isSpeaking ?? this.isSpeaking,
+        lastTranscription: lastTranscription ?? this.lastTranscription,
+        lastError: lastError ?? this.lastError,
+        soundLevel: soundLevel ?? this.soundLevel,
+        lastSpoken: lastSpoken ?? this.lastSpoken,
+        settings: settings ?? this.settings,
+      );
+}
+
+class VoiceSettings {
+  final bool voiceFeedback;
+  final bool autoSpeak;
+  final bool wakeWordEnabled;
+  final String language;
+  final double speechRate;
+  final double pitch;
+
+  const VoiceSettings({
+    this.voiceFeedback = true,
+    this.autoSpeak = false,
+    this.wakeWordEnabled = false,
+    this.language = 'ar-SA',
+    this.speechRate = 0.5,
+    this.pitch = 1.0,
+  });
+
+  VoiceSettings copyWith({
+    bool? voiceFeedback,
+    bool? autoSpeak,
+    bool? wakeWordEnabled,
+    String? language,
+    double? speechRate,
+    double? pitch,
+  }) =>
+      VoiceSettings(
+        voiceFeedback: voiceFeedback ?? this.voiceFeedback,
+        autoSpeak: autoSpeak ?? this.autoSpeak,
+        wakeWordEnabled: wakeWordEnabled ?? this.wakeWordEnabled,
+        language: language ?? this.language,
+        speechRate: speechRate ?? this.speechRate,
+        pitch: pitch ?? this.pitch,
+      );
+
+  Map<String, dynamic> toMap() => {
+    'voiceFeedback': voiceFeedback,
+    'autoSpeak': autoSpeak,
+    'wakeWordEnabled': wakeWordEnabled,
+    'language': language,
+    'speechRate': speechRate,
+    'pitch': pitch,
+  };
+
+  factory VoiceSettings.fromMap(Map m) => VoiceSettings(
+    voiceFeedback: m['voiceFeedback'] ?? true,
+    autoSpeak: m['autoSpeak'] ?? false,
+    wakeWordEnabled: m['wakeWordEnabled'] ?? false,
+    language: m['language'] ?? 'ar-SA',
+    speechRate: (m['speechRate'] ?? 0.5).toDouble(),
+    pitch: (m['pitch'] ?? 1.0).toDouble(),
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Voice Service
+// ═══════════════════════════════════════════════════════════════
+class VoiceService extends StateNotifier<VoiceState> {
+  VoiceService() : super(const VoiceState()) {
+    _loadSettings();
+  }
+
+  final _stt = SpeechToText();
+  final _tts = FlutterTts();
+  bool _sttInitialized = false;
+  final _transcriptionController = StreamController<String>.broadcast();
+
+  Stream<String> get onTranscription => _transcriptionController.stream;
+
+  void _loadSettings() {
+    final box = Hive.box('settings');
+    final data = box.get('voice_settings');
+    if (data != null) {
+      try {
+        state = state.copyWith(
+          settings: VoiceSettings.fromMap(Map<String, dynamic>.from(data)),
+        );
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _persistSettings() async {
+    await Hive.box('settings').put('voice_settings', state.settings.toMap());
+  }
+
+  Future<void> init() async {
+    _sttInitialized = await _stt.initialize(
+      onError: (e) => state = state.copyWith(lastError: e.errorMsg),
+      onStatus: (s) {
+        if (s == 'done' || s == 'notListening') {
+          state = state.copyWith(isListening: false);
+        }
+      },
+    );
+
+    await _tts.setLanguage(state.settings.language);
+    await _tts.setSpeechRate(state.settings.speechRate);
+    await _tts.setPitch(state.settings.pitch);
+    await _tts.setVolume(1.0);
+
+    _tts.setCompletionHandler(() {
+      state = state.copyWith(isSpeaking: false);
+    });
+  }
+
+  // ─── Listening ───
+  Future<void> startListening({String? localeId}) async {
+    if (!_sttInitialized) await init();
+    if (!_sttInitialized) {
+      state = state.copyWith(lastError: 'Speech recognition not available');
+      return;
+    }
+    state = state.copyWith(isListening: true, lastError: '');
+    await _stt.listen(
+      localeId: localeId ?? state.settings.language,
+      onResult: (r) {
+        state = state.copyWith(lastTranscription: r.recognizedWords);
+        _transcriptionController.add(r.recognizedWords);
+      },
+      listenOptions: SpeechListenOptions(
+        listenMode: ListenMode.confirmation,
+        partialResults: true,
+        cancelOnError: true,
+      ),
+    );
+  }
+
+  Future<void> stopListening() async {
+    await _stt.stop();
+    state = state.copyWith(isListening: false);
+  }
+
+  // ─── Speaking ───
+  Future<void> speak(String text, {String? locale, bool feedback = false}) async {
+    if (!state.settings.voiceFeedback && feedback) return;
+
+    await _tts.setLanguage(locale ?? state.settings.language);
+    await _tts.setSpeechRate(state.settings.speechRate);
+    await _tts.setPitch(state.settings.pitch);
+
+    state = state.copyWith(isSpeaking: true, lastSpoken: text);
+    await _tts.speak(text);
+  }
+
+  Future<void> stopSpeaking() async {
+    await _tts.stop();
+    state = state.copyWith(isSpeaking: false);
+  }
+
+  // ─── Voice Feedback after operation ───
+  Future<void> announceOperation({
+    required String operation,
+    required bool success,
+    String? details,
+  }) async {
+    if (!state.settings.voiceFeedback) return;
+
+    final message = success
+        ? _successMessage(operation, details)
+        : _failureMessage(operation);
+
+    await speak(message, feedback: true);
+  }
+
+  String _successMessage(String op, String? details) {
+    final isAr = state.settings.language.startsWith('ar');
+    if (isAr) {
+      switch (op) {
+        case 'removeBg': return 'تمت إزالة الخلفية بنجاح';
+        case 'enhance': return 'تم تحسين الصورة';
+        case 'shadow': return 'تمت إضافة الظل';
+        case 'relight': return 'تم تعديل الإضاءة';
+        case 'colorize': return 'تم تلوين الصورة';
+        case 'export': return 'تم تصدير الصورة';
+        default: return 'تمت العملية بنجاح';
+      }
+    } else {
+      switch (op) {
+        case 'removeBg': return 'Background removed successfully';
+        case 'enhance': return 'Image enhanced';
+        case 'shadow': return 'Shadow added';
+        case 'relight': return 'Lighting adjusted';
+        case 'colorize': return 'Image colorized';
+        case 'export': return 'Image exported';
+        default: return 'Operation completed successfully';
+      }
+    }
+  }
+
+  String _failureMessage(String op) {
+    final isAr = state.settings.language.startsWith('ar');
+    return isAr ? 'عذراً، فشلت العملية' : 'Sorry, operation failed';
+  }
+
+  // ─── Settings ───
+  Future<void> updateSettings(VoiceSettings settings) async {
+    state = state.copyWith(settings: settings);
+    await _persistSettings();
+
+    await _tts.setLanguage(settings.language);
+    await _tts.setSpeechRate(settings.speechRate);
+    await _tts.setPitch(settings.pitch);
+  }
+
+  Future<void> toggleVoiceFeedback(bool enabled) async {
+    await updateSettings(state.settings.copyWith(voiceFeedback: enabled));
+  }
+
+  Future<void> toggleAutoSpeak(bool enabled) async {
+    await updateSettings(state.settings.copyWith(autoSpeak: enabled));
+  }
+
+  Future<void> toggleWakeWord(bool enabled) async {
+    await updateSettings(state.settings.copyWith(wakeWordEnabled: enabled));
+  }
+
+  Future<void> setLanguage(String lang) async {
+    await updateSettings(state.settings.copyWith(language: lang));
+  }
+
+  Future<void> setSpeechRate(double rate) async {
+    await updateSettings(state.settings.copyWith(speechRate: rate));
+  }
+
+  Future<void> setPitch(double pitch) async {
+    await updateSettings(state.settings.copyWith(pitch: pitch));
+  }
+
+  // ─── Available Voices ───
+  Future<List<Map<String, String>>> getAvailableVoices() async {
+    final voices = await _tts.getVoices;
+    if (voices is List) {
+      return voices.map((v) => {
+        'name': v['name']?.toString() ?? '',
+        'locale': v['locale']?.toString() ?? '',
+      }).toList();
+    }
+    return [];
+  }
+
+  Future<List<String>> getAvailableLanguages() async {
+    final langs = await _tts.getLanguages;
+    if (langs is List) {
+      return langs.map((l) => l.toString()).toList();
+    }
+    return [];
+  }
+
+  @override
+  void dispose() {
+    _stt.stop();
+    _tts.stop();
+    _transcriptionController.close();
+    super.dispose();
+  }
+}
+
+final voiceProvider = StateNotifierProvider<VoiceService, VoiceState>(
+  (_) => VoiceService(),
+);
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #46: 🟢 CREATE
+📁 الملف الجديد: lib/services/voice_search_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import '../models/edit_request.dart';
+
+/// VoiceSearchService — يبحث في السجل عن طريق الأوامر الصوتية.
+class VoiceSearchService {
+  /// يحوّل نص البحث الصوتي إلى مرشحات.
+  SearchFilters parseQuery(String query) {
+    final q = query.toLowerCase();
+
+    // ─── Filter by operation ───
+    EditOp? op;
+    if (q.contains('background') || q.contains('خلفية')) op = EditOp.removeBg;
+    else if (q.contains('enhance') || q.contains('تحسين')) op = EditOp.enhance;
+    else if (q.contains('shadow') || q.contains('ظل')) op = EditOp.shadow;
+    else if (q.contains('relight') || q.contains('إضاءة')) op = EditOp.relight;
+    else if (q.contains('colorize') || q.contains('تلوين')) op = EditOp.colorize;
+    else if (q.contains('inpaint') || q.contains('إزالة')) op = EditOp.inpaint;
+    else if (q.contains('export') || q.contains('تصدير')) op = EditOp.export;
+
+    // ─── Filter by time ───
+    DateTimeRange? range;
+    final now = DateTime.now();
+    if (q.contains('today') || q.contains('اليوم')) {
+      final start = DateTime(now.year, now.month, now.day);
+      range = DateTimeRange(start, now);
+    } else if (q.contains('yesterday') || q.contains('أمس')) {
+      final start = DateTime(now.year, now.month, now.day - 1);
+      final end = DateTime(now.year, now.month, now.day);
+      range = DateTimeRange(start, end);
+    } else if (q.contains('week') || q.contains('أسبوع')) {
+      range = DateTimeRange(now.subtract(const Duration(days: 7)), now);
+    } else if (q.contains('month') || q.contains('شهر')) {
+      range = DateTimeRange(now.subtract(const Duration(days: 30)), now);
+    }
+
+    return SearchFilters(operation: op, timeRange: range);
+  }
+
+  /// يبحث في قائمة السجل.
+  List<Map<String, dynamic>> search(
+    List<Map<String, dynamic>> history,
+    String query,
+  ) {
+    final filters = parseQuery(query);
+
+    return history.where((item) {
+      // Filter by op
+      if (filters.operation != null) {
+        final opName = item['op'] as String? ?? '';
+        if (opName != filters.operation!.name) return false;
+      }
+
+      // Filter by time
+      if (filters.timeRange != null) {
+        final ts = DateTime.tryParse(item['ts'] as String? ?? '');
+        if (ts == null) return false;
+        if (ts.isBefore(filters.timeRange!.start)) return false;
+        if (ts.isAfter(filters.timeRange!.end)) return false;
+      }
+
+      return true;
+    }).toList();
+  }
+}
+
+class DateTimeRange {
+  final DateTime start;
+  final DateTime end;
+  const DateTimeRange(this.start, this.end);
+}
+
+class SearchFilters {
+  final EditOp? operation;
+  final DateTimeRange? timeRange;
+  const SearchFilters({this.operation, this.timeRange});
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #47: 🟢 CREATE
+📁 الملف الجديد: lib/services/voice_presets_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:uuid/uuid.dart';
+import '../models/edit_request.dart';
+
+/// VoicePreset — أمر صوتي محفوظ.
+class VoicePreset {
+  final String id;
+  final String phrase;
+  final String operation;
+  final Map<String, dynamic> params;
+  final DateTime createdAt;
+
+  const VoicePreset({
+    required this.id,
+    required this.phrase,
+    required this.operation,
+    this.params = const {},
+    required this.createdAt,
+  });
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'phrase': phrase,
+    'operation': operation,
+    'params': params,
+    'createdAt': createdAt.toIso8601String(),
+  };
+
+  factory VoicePreset.fromMap(Map m) => VoicePreset(
+    id: m['id'],
+    phrase: m['phrase'],
+    operation: m['operation'],
+    params: Map<String, dynamic>.from(m['params'] ?? {}),
+    createdAt: DateTime.parse(m['createdAt']),
+  );
+}
+
+/// VoicePresetsService — يدير الأوامر الصوتية المحفوظة.
+class VoicePresetsService {
+  static const _boxName = 'voice_presets';
+
+  List<VoicePreset> getAll() {
+    final box = Hive.box(_boxName);
+    return box.values.map((e) => VoicePreset.fromMap(Map.from(e))).toList();
+  }
+
+  Future<VoicePreset> add({
+    required String phrase,
+    required EditOp operation,
+    Map<String, dynamic> params = const {},
+  }) async {
+    final preset = VoicePreset(
+      id: const Uuid().v4(),
+      phrase: phrase,
+      operation: operation.name,
+      params: params,
+      createdAt: DateTime.now(),
+    );
+    await Hive.box(_boxName).add(preset.toMap());
+    return preset;
+  }
+
+  Future<void> remove(String id) async {
+    final box = Hive.box(_boxName);
+    final keys = box.keys.where((k) {
+      final m = Map.from(box.get(k));
+      return m['id'] == id;
+    }).toList();
+    for (final k in keys) await box.delete(k);
+  }
+
+  Future<void> clear() => Hive.box(_boxName).clear();
+
+  /// يطابق نص صوتي مع presets مخزنة.
+  VoicePreset? match(String query) {
+    final q = query.toLowerCase().trim();
+    final presets = getAll();
+
+    // Exact phrase match
+    for (final p in presets) {
+      if (p.phrase.toLowerCase() == q) return p;
+    }
+
+    // Partial match
+    for (final p in presets) {
+      if (q.contains(p.phrase.toLowerCase()) ||
+          p.phrase.toLowerCase().contains(q)) {
+        return p;
+      }
+    }
+    return null;
+  }
+
+  /// Presets افتراضية جاهزة.
+  Future<void> seedDefaults() async {
+    if (getAll().isNotEmpty) return;
+    await add(phrase: 'remove background', operation: EditOp.removeBg);
+    await add(phrase: 'enhance image', operation: EditOp.enhance);
+    await add(phrase: 'add shadow', operation: EditOp.shadow);
+    await add(phrase: 'make it warm', operation: EditOp.relight, params: {'style': 'warm'});
+    await add(phrase: 'make it cool', operation: EditOp.relight, params: {'style': 'cool'});
+    await add(phrase: 'colorize', operation: EditOp.colorize);
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #48: 🟢 CREATE
+📁 الملف الجديد: lib/features/settings/voice_settings_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/theme.dart';
+import '../../services/voice_service.dart';
+import '../../widgets/app_widgets.dart';
+
+class VoiceSettingsScreen extends ConsumerStatefulWidget {
+  const VoiceSettingsScreen({super.key});
+  @override
+  ConsumerState<VoiceSettingsScreen> createState() => _VoiceSettingsScreenState();
+}
+
+class _VoiceSettingsScreenState extends ConsumerState<VoiceSettingsScreen> {
+  final _testCtrl = TextEditingController(text: 'Hello, this is a test');
+
+  static const _languages = [
+    {'code': 'ar-SA', 'name': 'العربية'},
+    {'code': 'en-US', 'name': 'English (US)'},
+    {'code': 'en-GB', 'name': 'English (UK)'},
+    {'code': 'fr-FR', 'name': 'Français'},
+    {'code': 'es-ES', 'name': 'Español'},
+    {'code': 'de-DE', 'name': 'Deutsch'},
+    {'code': 'it-IT', 'name': 'Italiano'},
+    {'code': 'pt-BR', 'name': 'Português'},
+    {'code': 'ru-RU', 'name': 'Русский'},
+    {'code': 'tr-TR', 'name': 'Türkçe'},
+    {'code': 'zh-CN', 'name': '中文'},
+    {'code': 'ja-JP', 'name': '日本語'},
+    {'code': 'ko-KR', 'name': '한국어'},
+    {'code': 'hi-IN', 'name': 'हिन्दी'},
+    {'code': 'id-ID', 'name': 'Bahasa Indonesia'},
+    {'code': 'fa-IR', 'name': 'فارسی'},
+    {'code': 'ur-PK', 'name': 'اردو'},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final voice = ref.watch(voiceProvider);
+    final settings = voice.settings;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Voice Settings')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // ─── Toggles ───
+          _section('Features'),
+          SwitchListTile(
+            secondary: const Icon(Icons.volume_up, color: AppColors.primary),
+            title: const Text('Voice Feedback'),
+            subtitle: const Text('Confirm operations with voice'),
+            value: settings.voiceFeedback,
+            onChanged: (v) => ref.read(voiceProvider.notifier).toggleVoiceFeedback(v),
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.record_voice_over, color: AppColors.primary),
+            title: const Text('Auto-speak results'),
+            subtitle: const Text('Read results out loud'),
+            value: settings.autoSpeak,
+            onChanged: (v) => ref.read(voiceProvider.notifier).toggleAutoSpeak(v),
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.hearing, color: AppColors.primary),
+            title: const Text('Wake word'),
+            subtitle: const Text('Coming soon'),
+            value: settings.wakeWordEnabled,
+            onChanged: null, // disabled
+          ),
+
+          // ─── Language ───
+          _section('Language'),
+          ListTile(
+            leading: const Icon(Icons.language, color: AppColors.primary),
+            title: const Text('Voice Language'),
+            subtitle: Text(
+              _languages.firstWhere(
+                (l) => l['code'] == settings.language,
+                orElse: () => {'name': settings.language},
+              )['name']!,
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _pickLanguage(context, ref, settings.language),
+          ),
+
+          // ─── Speech Rate ───
+          _section('Speech'),
+          ListTile(
+            leading: const Icon(Icons.speed, color: AppColors.primary),
+            title: const Text('Speech Rate'),
+            subtitle: Slider(
+              value: settings.speechRate,
+              min: 0.1,
+              max: 1.0,
+              divisions: 9,
+              label: settings.speechRate.toStringAsFixed(1),
+              onChanged: (v) => ref.read(voiceProvider.notifier).setSpeechRate(v),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.tune, color: AppColors.primary),
+            title: const Text('Pitch'),
+            subtitle: Slider(
+              value: settings.pitch,
+              min: 0.5,
+              max: 2.0,
+              divisions: 15,
+              label: settings.pitch.toStringAsFixed(1),
+              onChanged: (v) => ref.read(voiceProvider.notifier).setPitch(v),
+            ),
+          ),
+
+          // ─── Test ───
+          _section('Test'),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _testCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Test text',
+                    hintText: 'Type something to speak',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () => ref.read(voiceProvider.notifier).speak(_testCtrl.text),
+                        icon: const Icon(Icons.play_arrow),
+                        label: const Text('Speak'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => ref.read(voiceProvider.notifier).stopSpeaking(),
+                        icon: const Icon(Icons.stop),
+                        label: const Text('Stop'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // ─── Available voices ───
+          _section('Available Voices'),
+          FutureBuilder<List<String>>(
+            future: ref.read(voiceProvider.notifier).getAvailableLanguages(),
+            builder: (context, snap) {
+              final langs = snap.data ?? [];
+              return Padding(
+                padding: const EdgeInsets.all(16),
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: langs.take(20).map((l) => Chip(
+                    label: Text(l, style: const TextStyle(fontSize: 11)),
+                    backgroundColor: AppColors.surfaceAlt,
+                  )).toList(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _section(String title) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+    child: Text(title.toUpperCase(), style: const TextStyle(
+      color: AppColors.textTertiary, fontSize: 11,
+      letterSpacing: 0.8, fontWeight: FontWeight.w600)),
+  );
+
+  Future<void> _pickLanguage(BuildContext context, WidgetRef ref, String current) async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        builder: (_, sc) => ListView.builder(
+          controller: sc,
+          itemCount: _languages.length,
+          itemBuilder: (_, i) {
+            final l = _languages[i];
+            final isSel = l['code'] == current;
+            return ListTile(
+              title: Text(l['name']!),
+              subtitle: Text(l['code']!),
+              trailing: isSel ? const Icon(Icons.check, color: AppColors.success) : null,
+              onTap: () => Navigator.pop(context, l['code']),
+            );
+          },
+        ),
+      ),
+    );
+    if (selected != null) {
+      await ref.read(voiceProvider.notifier).setLanguage(selected);
+    }
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #49: 🟢 CREATE
+📁 الملف الجديد: lib/features/settings/voice_presets_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/theme.dart';
+import '../../models/edit_request.dart';
+import '../../services/voice_presets_service.dart';
+import '../../widgets/app_widgets.dart';
+
+final voicePresetsProvider = StateNotifierProvider<VoicePresetsNotifier, List<VoicePreset>>(
+  (_) => VoicePresetsNotifier());
+
+class VoicePresetsNotifier extends StateNotifier<List<VoicePreset>> {
+  VoicePresetsNotifier() : super([]) {
+    _load();
+  }
+
+  final _service = VoicePresetsService();
+
+  void _load() {
+    state = _service.getAll();
+  }
+
+  Future<void> add(String phrase, EditOp op, {Map<String, dynamic> params = const {}}) async {
+    await _service.add(phrase: phrase, operation: op, params: params);
+    _load();
+  }
+
+  Future<void> remove(String id) async {
+    await _service.remove(id);
+    _load();
+  }
+
+  Future<void> seedDefaults() async {
+    await _service.seedDefaults();
+    _load();
+  }
+}
+
+class VoicePresetsScreen extends ConsumerWidget {
+  const VoicePresetsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final presets = ref.watch(voicePresetsProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Voice Presets'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => _showAddDialog(context, ref),
+          ),
+        ],
+      ),
+      body: presets.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppIcons.circle(Icons.record_voice_over, size: 88),
+                  const SizedBox(height: 16),
+                  const Text('No presets yet',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  const Text('Save your common voice commands',
+                    style: TextStyle(color: AppColors.textSecondary)),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    onPressed: () => ref.read(voicePresetsProvider.notifier).seedDefaults(),
+                    icon: const Icon(Icons.download),
+                    label: const Text('Load Defaults'),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: presets.length,
+              itemBuilder: (_, i) => Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: AppIcons.outline(Icons.mic, size: 40),
+                  title: Text('"${presets[i].phrase}"'),
+                  subtitle: Text(presets[i].operation),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+                    onPressed: () => ref.read(voicePresetsProvider.notifier).remove(presets[i].id),
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+
+  Future<void> _showAddDialog(BuildContext context, WidgetRef ref) async {
+    final phraseCtrl = TextEditingController();
+    EditOp selectedOp = EditOp.removeBg;
+
+    await showDialog(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (c, setState) => AlertDialog(
+          title: const Text('New Voice Preset'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: phraseCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Voice phrase',
+                  hintText: 'remove background',
+                ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<EditOp>(
+                value: selectedOp,
+                decoration: const InputDecoration(labelText: 'Operation'),
+                items: EditOp.values.map((op) =>
+                  DropdownMenuItem(value: op, child: Text(op.name))).toList(),
+                onChanged: (v) => setState(() => selectedOp = v!),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () {
+                if (phraseCtrl.text.isNotEmpty) {
+                  ref.read(voicePresetsProvider.notifier).add(phraseCtrl.text, selectedOp);
+                  Navigator.pop(c);
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #50: 🟢 CREATE
+📁 الملف الجديد: lib/features/chat/voice_search_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../core/theme.dart';
+import '../../services/storage_service.dart';
+import '../../services/voice_search_service.dart';
+import '../../services/voice_service.dart';
+import '../../widgets/app_widgets.dart';
+
+class VoiceSearchScreen extends ConsumerStatefulWidget {
+  const VoiceSearchScreen({super.key});
+  @override
+  ConsumerState<VoiceSearchScreen> createState() => _VoiceSearchScreenState();
+}
+
+class _VoiceSearchScreenState extends ConsumerState<VoiceSearchScreen> {
+  final _search = VoiceSearchService();
+  final _ctrl = TextEditingController();
+  List<Map<String, dynamic>> _results = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _results = StorageService().getHistory();
+  }
+
+  void _performSearch(String query) {
+    if (query.trim().isEmpty) {
+      setState(() => _results = StorageService().getHistory());
+      return;
+    }
+    final all = StorageService().getHistory();
+    setState(() => _results = _search.search(all, query));
+  }
+
+  Future<void> _startVoiceSearch() async {
+    final voice = ref.read(voiceProvider.notifier);
+    await voice.startListening();
+
+    // Listen to first result
+    voice.onTranscription.listen((text) {
+      if (text.isNotEmpty && mounted) {
+        _ctrl.text = text;
+        _performSearch(text);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final voice = ref.watch(voiceProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Voice Search')),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _ctrl,
+                    decoration: InputDecoration(
+                      hintText: 'Search... e.g. "background today"',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _ctrl.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _ctrl.clear();
+                                _performSearch('');
+                              },
+                            )
+                          : null,
+                    ),
+                    onChanged: _performSearch,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: voice.isListening
+                      ? () => ref.read(voiceProvider.notifier).stopListening()
+                      : _startVoiceSearch,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: voice.isListening ? AppColors.danger : AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      voice.isListening ? Icons.stop : Icons.mic,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (voice.isListening)
+            Container(
+              padding: const EdgeInsets.all(8),
+              child: Text('Listening: "${voice.lastTranscription}"',
+                style: const TextStyle(color: AppColors.primary, fontSize: 13)),
+            ),
+          Expanded(
+            child: _results.isEmpty
+                ? const EmptyState(
+                    icon: Icons.search_off,
+                    title: 'No results',
+                    subtitle: 'Try a different search',
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _results.length,
+                    itemBuilder: (_, i) {
+                      final item = _results[i];
+                      final output = item['output'] as String?;
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: ListTile(
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: SizedBox(
+                              width: 48, height: 48,
+                              child: output != null && File(output).existsSync()
+                                  ? Image.file(File(output), fit: BoxFit.cover)
+                                  : Container(color: AppColors.surfaceAlt),
+                            ),
+                          ),
+                          title: Text(item['op'] ?? ''),
+                          subtitle: Text(
+                            (item['ts'] as String? ?? '').substring(0, 16),
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                          trailing: output != null
+                              ? IconButton(
+                                  icon: const Icon(Icons.share, size: 18),
+                                  onPressed: () => Share.shareXFiles([XFile(output)]),
+                                )
+                              : null,
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #51: 🟡 MODIFY
+📁 الملف: lib/features/chat/chat_controller.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة 1: أضف في الأعلى:
+
+import '../../services/voice_service.dart';
+
+الخطوة 2: أضف داخل ChatController:
+
+  final _voice = VoiceService();
+
+الخطوة 3: في submit()، بعد نجاح العملية، أضف:
+
+        // Voice feedback
+        try {
+          await _voice.announceOperation(
+            operation: req.op.name,
+            success: res.ok,
+          );
+        } catch (_) {}
+
+الخطوة 4: في _init()، أضف:
+
+    await _voice.init();
+    await VoicePresetsService().seedDefaults();
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #52: 🟡 MODIFY
+📁 الملف: lib/core/router.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة: أضف هذه المسارات قبل errorBuilder:
+
+      // ─── Voice ───
+      GoRoute(
+        path: '/voice-settings',
+        builder: (_, __) => const VoiceSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/voice-presets',
+        builder: (_, __) => const VoicePresetsScreen(),
+      ),
+      GoRoute(
+        path: '/voice-search',
+        builder: (_, __) => const VoiceSearchScreen(),
+      ),
+
+الخطوة 2: أضف في الأعلى:
+
+import '../features/settings/voice_settings_screen.dart';
+import '../features/settings/voice_presets_screen.dart';
+import '../features/chat/voice_search_screen.dart';
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #53: 🟡 MODIFY
+📁 الملف: lib/features/settings/settings_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة: أضف قسم Voice قبل Support:
+
+          _Section('Voice & Audio'),
+          _Tile(
+            icon: Icons.record_voice_over,
+            title: 'Voice Settings',
+            subtitle: 'Language, speed, pitch',
+            onTap: () => context.push('/voice-settings'),
+          ),
+          _Tile(
+            icon: Icons.mic_none,
+            title: 'Voice Presets',
+            subtitle: 'Saved voice commands',
+            onTap: () => context.push('/voice-presets'),
+          ),
+          _Tile(
+            icon: Icons.search,
+            title: 'Voice Search',
+            subtitle: 'Search history by voice',
+            onTap: () => context.push('/voice-search'),
+          ),
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #54: 🟡 MODIFY
+📁 الملف: lib/main.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة: ابحث عن:
+
+  await Hive.openBox('analytics');
+
+الخطوة: أضف بعده:
+
+  await Hive.openBox('voice_presets');
+  await Hive.openBox('presets');
+  await Hive.openBox('favorites');
+  await Hive.openBox('feedback');
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الملف 20_VOICE_COMPLETE.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
