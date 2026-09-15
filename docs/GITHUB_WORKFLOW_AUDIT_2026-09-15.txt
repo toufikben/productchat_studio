@@ -1,0 +1,59 @@
+GitHub Actions workflow audit
+Repository: toufikben/productchat_studio
+Branch inspected: feat/beta-system-validation-20260915
+Date: 2026-09-15
+
+## Executive result
+
+All six files in `.github/workflows` were inspected locally and through GitHub's parsed workflow view. GitHub accepts and parses the workflow YAML; no malformed YAML or missing `jobs` block was found.
+
+The failed runs on the feature branch are not compiler/build-step failures. The GitHub Actions API reports `completed` + `failure` with `jobs: []`, and the run log endpoint reports no logs. This means the run failed before a runner job was created. The workflow files themselves cannot expose a step-level error for these runs.
+
+## Workflow trigger audit
+
+| Workflow | Current trigger | Will a normal push to `feat/beta-system-validation-20260915` run it? |
+|---|---|---|
+| `build-release-aab.yml` | push tags `v*`, or manual dispatch | No, not by the declared trigger |
+| `release-ios.yml` | push tags `v*`, or manual dispatch | No, not by the declared trigger |
+| `deploy-web.yml` | push to `main`, or manual dispatch | No, not by the declared trigger |
+| `analysis.yml` | push to `main`/`develop`, pull request to `main` | No push validation on this feature branch |
+| `quality.yml` | pull request to `main`/`develop` | Only after opening a PR targeting those branches |
+| `secrets-check.yml` | push to `main`, pull request to `main`/`develop` | Only after opening a PR targeting those branches |
+
+The repository therefore has no declared automatic CI workflow for a direct push to an arbitrary feature branch. To validate this branch automatically, add the branch to `analysis.yml` (and optionally `quality.yml`/`secrets-check.yml`) or open a pull request targeting `main`.
+
+## Observed run evidence
+
+The following runs were recorded for commit `1aa44da547899cd170a08a7e1748d9f700c0a474` and again for `77fb246832b0388ee36486769b1ab75576fba5fa`:
+
+* Android AAB workflow: completed/failure, zero jobs, no logs.
+* Web deployment workflow: completed/failure, zero jobs, no logs.
+* iOS release workflow: completed/failure, zero jobs, no logs.
+
+The GitHub Actions repository setting reports `enabled: true`, and allowed actions are `all`. The workflow records are active and GitHub can parse their YAML. No runner step reached `flutter pub get`, `flutter analyze`, or a build command.
+
+## Findings requiring attention
+
+1. **Feature branch CI is not configured.** The current trigger filters intentionally exclude this branch. This is a configuration gap for development validation, but it does not explain a compiler failure because no build step was scheduled.
+2. **All three unrelated workflows fail at initialization with zero jobs.** Because Android, web, and iOS fail identically before jobs are created, the evidence points to a GitHub Actions run initialization/repository-policy/account issue rather than a shared Flutter or platform build error.
+3. **No step logs are available.** GitHub returns `log not found` because no job was created. The workflow files do not contain a diagnostic step that could run before job creation.
+4. **Secrets access is restricted from this session.** The API denied reading the repository secrets public key with HTTP 403. This prevents verifying secret configuration, but missing secrets should not block the Android fallback workflow because it generates an ephemeral key; it also should not prevent a job from being created.
+5. **The workflows should be validated through a pull request or manual dispatch.** A PR to `main` would exercise `analysis.yml`, `quality.yml`, and `secrets-check.yml`. Manual dispatch can exercise the AAB, web, and iOS workflows. The current feature-branch push is not a reliable trigger for those workflows based on their declared filters.
+
+## Recommended configuration change
+
+For normal feature-branch validation, update the analysis workflow trigger to include feature branches, for example:
+
+```yaml
+on:
+  push:
+    branches: [main, develop, 'feat/**']
+  pull_request:
+    branches: [main]
+```
+
+Alternatively, use pull requests as the only CI gate and do not expect direct feature-branch pushes to launch all release workflows. Release AAB/iOS workflows should remain tag/manual workflows unless release artifacts are intentionally built on every feature branch.
+
+## Conclusion
+
+No malformed workflow file was found. The actionable workflow defect is missing feature-branch CI coverage. The specific observed `failure` with zero jobs is outside the build steps and cannot be diagnosed from the repository YAML alone; it requires GitHub repository/account Actions diagnostics or a manually dispatched/PR-triggered run that creates a job.
