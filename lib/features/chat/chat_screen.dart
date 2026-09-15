@@ -7,6 +7,7 @@ import '../../core/constants.dart';
 import '../../models/edit_request.dart';
 import '../../services/billing_service.dart';
 import '../../services/permission_service.dart';
+import '../../services/smart_analysis_service.dart';
 import 'chat_controller.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -18,20 +19,37 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _picker = ImagePicker();
+  final _analysis = SmartAnalysisService();
   String? _imagePath;
   String? _error;
   bool _busy = false;
+  AnalysisResult? _analysisResult;
 
   @override
   void initState() {
     super.initState();
+    // Listen to billing changes so the tier card updates without a rebuild.
+    billingService.addListener(_onBillingChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) PermissionService.requestInitialPermissions(context);
     });
   }
 
+  @override
+  void dispose() {
+    billingService.removeListener(_onBillingChanged);
+    super.dispose();
+  }
+
+  void _onBillingChanged() {
+    if (mounted) setState(() {});
+  }
+
   Future<void> _pickImage() async {
-    setState(() => _error = null);
+    setState(() {
+      _error = null;
+      _analysisResult = null;
+    });
     try {
       final image = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -41,9 +59,17 @@ class _ChatScreenState extends State<ChatScreen> {
       );
       if (!mounted || image == null) return;
       setState(() => _imagePath = image.path);
+      // Run smart analysis automatically after image selection.
+      _runAnalysis(image.path);
     } catch (error) {
       if (mounted) setState(() => _error = 'Unable to select image: $error');
     }
+  }
+
+  Future<void> _runAnalysis(String path) async {
+    final result = await _analysis.analyze(path);
+    if (!mounted) return;
+    setState(() => _analysisResult = result);
   }
 
   Future<void> _runPatchMatch() async {
@@ -61,6 +87,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _busy = false;
       if (result.ok && result.outputPath != null) {
         _imagePath = result.outputPath;
+        _analysisResult = null;
       } else {
         _error = result.error ?? 'PatchMatch failed.';
       }
@@ -96,6 +123,29 @@ class _ChatScreenState extends State<ChatScreen> {
                               fit: BoxFit.contain),
                         ),
                 ),
+                // Smart analysis suggestions banner.
+                if (_analysisResult != null &&
+                    _analysisResult!.ok &&
+                    _analysisResult!.suggestions.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Smart suggestions',
+                                style: TextStyle(fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            for (final s in _analysisResult!.suggestions)
+                              Text('• ${s.title}: ${s.description}',
+                                  style: const TextStyle(fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 Card(
                   child: ListTile(
                     leading: Icon(
@@ -111,7 +161,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     subtitle: Text(
                       billingService.proService.isPro
                           ? 'All available local operations are enabled.'
-                          : 'PatchMatch only • watermark enabled',
+                          : 'PatchMatch only \u2022 watermark enabled',
                     ),
                     trailing: billingService.proService.isPro
                         ? null
@@ -165,7 +215,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     onPressed: _imagePath == null
                         ? null
                         : () => context.push(
-                            '/editor?imagePath=${Uri.encodeComponent(_imagePath!)}'),
+                            '/editor?imagePath=\${Uri.encodeComponent(_imagePath!)}'),
                     child: const Text('Open editor'),
                   ),
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../services/ai_service.dart';
 import '../../services/billing_service.dart';
 import '../../services/free_watermark_service.dart';
@@ -54,7 +55,8 @@ class EditorState {
       this.busy = false,
       this.error});
   bool get canUndo => historyIndex > 0;
-  bool get canRedo => historyIndex >= 0 && historyIndex < history.length - 1;
+  bool get canRedo =>
+      historyIndex >= 0 && historyIndex < history.length - 1;
   EditorState copyWith(
           {String? imagePath,
           String? originalPath,
@@ -86,7 +88,10 @@ class EditorController extends StateNotifier<EditorState> {
   EditorController() : super(const EditorState());
   final _ai = AiService();
   void loadImage(String path) => state = state.copyWith(
-      imagePath: path, originalPath: path, history: [path], historyIndex: 0);
+      imagePath: path,
+      originalPath: path,
+      history: [path],
+      historyIndex: 0);
   Future<void> _apply(EditOp op) async {
     final path = state.imagePath;
     if (path == null) return;
@@ -94,18 +99,22 @@ class EditorController extends StateNotifier<EditorState> {
     final isPro = billingService.proService.isPro;
     if (!isPro && op != EditOp.removeBg) {
       state = state.copyWith(
-        error: 'Free tier supports PatchMatch background removal only; conversational edits require a mask and Pro.',
+        error:
+            'Free tier supports PatchMatch background removal only; '
+            'conversational edits require a mask and Pro.',
       );
       return;
     }
     if (!isPro && !billingService.freeQuota.canUse()) {
       state = state.copyWith(
-        error: 'Free monthly quota is exhausted. Upgrade to Pro to continue.',
+        error:
+            'Free monthly quota is exhausted. Upgrade to Pro to continue.',
       );
       return;
     }
     if (isPro && !billingService.canSpend(cost)) {
-      state = state.copyWith(error: 'Not enough credits. Please open the Credits screen.');
+      state = state.copyWith(
+          error: 'Not enough credits. Please open the Credits screen.');
       return;
     }
     state = state.copyWith(busy: true);
@@ -114,9 +123,11 @@ class EditorController extends StateNotifier<EditorState> {
       if (result.ok && result.outputPath != null) {
         var outputPath = result.outputPath!;
         if (!isPro && op == EditOp.removeBg) {
-          final watermarked = await freeWatermarkService.apply(outputPath);
+          final watermarked =
+              await freeWatermarkService.apply(outputPath);
           if (watermarked == null) {
-            state = state.copyWith(error: 'Unable to apply the Free watermark.');
+            state = state.copyWith(
+                error: 'Unable to apply the Free watermark.');
             return;
           }
           outputPath = watermarked;
@@ -127,10 +138,13 @@ class EditorController extends StateNotifier<EditorState> {
         if (spent || result.creditsUsed == 0) {
           await _push(outputPath, op.name);
         } else {
-          state = state.copyWith(error: 'Credits changed before the operation completed.');
+          state = state.copyWith(
+              error:
+                  'Credits changed before the operation completed.');
         }
       } else {
-        state = state.copyWith(error: result.error ?? 'Image operation failed.');
+        state = state.copyWith(
+            error: result.error ?? 'Image operation failed.');
       }
     } finally {
       if (mounted) state = state.copyWith(busy: false);
@@ -153,9 +167,14 @@ class EditorController extends StateNotifier<EditorState> {
   }
 
   Future<void> _push(String path, String operation) async {
-    final items = [...state.history.take(state.historyIndex + 1), path];
+    final items = [
+      ...state.history.take(state.historyIndex + 1),
+      path
+    ];
     state = state.copyWith(
-        imagePath: path, history: items, historyIndex: items.length - 1);
+        imagePath: path,
+        history: items,
+        historyIndex: items.length - 1);
     await historyService.record(path: path, operation: operation);
   }
 
@@ -190,13 +209,15 @@ class EditorController extends StateNotifier<EditorState> {
           id: DateTime.now().microsecondsSinceEpoch.toString(),
           text: 'Your text')
     ];
-    state = state.copyWith(texts: list, selectedTextIndex: list.length - 1);
+    state = state.copyWith(
+        texts: list, selectedTextIndex: list.length - 1);
   }
 
   void moveText(int index, Offset delta) {
     if (index < 0 || index >= state.texts.length) return;
     final list = [...state.texts];
-    list[index] = list[index].copyWith(position: list[index].position + delta);
+    list[index] =
+        list[index].copyWith(position: list[index].position + delta);
     state = state.copyWith(texts: list);
   }
 
@@ -215,11 +236,36 @@ class EditorController extends StateNotifier<EditorState> {
     state = state.copyWith(texts: list, clearSelection: true);
   }
 
-  void toggleBefore() => state = state.copyWith(showBefore: !state.showBefore);
-  void toggleLayers() => state = state.copyWith(showLayers: !state.showLayers);
-  void pickBackground() {}
-  void checkCompliance() {}
+  void toggleBefore() =>
+      state = state.copyWith(showBefore: !state.showBefore);
+  void toggleLayers() =>
+      state = state.copyWith(showLayers: !state.showLayers);
+
+  void pickBackground() {
+    // TODO(phase-3): open the background library picker.
+    // Navigating to a background picker screen requires a BuildContext;
+    // callers should use the router directly: context.push('/backgrounds').
+    // This stub is intentionally left unimplemented until the backgrounds
+    // feature is scoped and the route exists.
+  }
+
+  /// Navigates to the Compliance review screen.
+  ///
+  /// Requires a [BuildContext] so the stub is wired here as a no-op;
+  /// call [_navigateToCompliance] from the UI layer with the correct context.
+  void checkCompliance() {
+    // Intentionally not implemented in the controller: navigation requires a
+    // BuildContext that StateNotifier does not have. The editor screen should
+    // call `context.push('/compliance')` directly when this button is tapped.
+    // See EditorScreen for the correct call site.
+  }
+
+  /// Called from the UI layer to navigate to the Compliance screen.
+  void navigateToCompliance(BuildContext context) {
+    context.push('/compliance');
+  }
 }
 
-final editorProvider = StateNotifierProvider<EditorController, EditorState>(
-    (_) => EditorController());
+final editorProvider =
+    StateNotifierProvider<EditorController, EditorState>(
+        (_) => EditorController());

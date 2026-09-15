@@ -5,6 +5,12 @@ import '../models/edit_request.dart';
 import '../models/platform_spec.dart';
 
 /// Performs lightweight, on-device image inspection and returns ranked actions.
+///
+/// Fix (2026-09-15): [_productCoverage] previously sampled only the top-left
+/// pixel (0, 0) as the background reference, which misidentified the product
+/// as background when the image was bleed-to-edge. The corrected version
+/// samples the four corners and uses the median colour as the background
+/// reference, which is robust against products that overlap any single corner.
 class SmartAnalysisService {
   Future<AnalysisResult> analyze(String imagePath,
       {PlatformSpec? targetPlatform}) async {
@@ -31,16 +37,24 @@ class SmartAnalysisService {
       }
       if (image.width < 1000 || image.height < 1000) {
         suggestions.add(const Suggestion('low_resolution', 'Low resolution',
-            'Upscale 2×?', 'high_quality', EditOp.enhance, 95));
+            'Upscale 2\u00d7?', 'high_quality', EditOp.enhance, 95));
       }
       if (complexity > .3) {
-        suggestions.add(const Suggestion('complex_bg',
-            'Complex background detected', 'Remove background?', 'content_cut',
-            EditOp.removeBg, 100));
+        suggestions.add(const Suggestion(
+            'complex_bg',
+            'Complex background detected',
+            'Remove background?',
+            'content_cut',
+            EditOp.removeBg,
+            100));
       } else if (complexity < .05) {
-        suggestions.add(const Suggestion('solid_bg', 'Solid background detected',
-            'Fast background removal available.', 'auto_fix_high',
-            EditOp.removeBg, 70));
+        suggestions.add(const Suggestion(
+            'solid_bg',
+            'Solid background detected',
+            'Fast background removal available.',
+            'auto_fix_high',
+            EditOp.removeBg,
+            70));
       }
       if (!_detectShadow(image) && complexity < .3) {
         suggestions.add(const Suggestion('no_shadow', 'No shadow detected',
@@ -55,7 +69,7 @@ class SmartAnalysisService {
               image.height < targetPlatform.minSize)) {
         suggestions.add(Suggestion(
             'platform_size',
-            'Not ready for ${targetPlatform.name}',
+            'Not ready for \${targetPlatform.name}',
             'Upscale before export.',
             'verified',
             EditOp.export,
@@ -80,7 +94,7 @@ class SmartAnalysisService {
         },
       );
     } catch (e) {
-      return AnalysisResult(ok: false, error: '$e', suggestions: []);
+      return AnalysisResult(ok: false, error: '\$e', suggestions: []);
     }
   }
 
@@ -113,7 +127,8 @@ class SmartAnalysisService {
     if (samples.isEmpty) return 0;
     final mean = List<double>.generate(
         3,
-        (i) => samples.map((s) => s[i]).reduce((a, b) => a + b) /
+        (i) =>
+            samples.map((s) => s[i]).reduce((a, b) => a + b) /
             samples.length);
     var variance = 0.0;
     for (final sample in samples) {
@@ -141,18 +156,45 @@ class SmartAnalysisService {
     return total > 0 && dark / total > .15;
   }
 
+  /// Estimates how much of the image is occupied by the product (non-background
+  /// pixels).
+  ///
+  /// Previous implementation: sampled only pixel (0, 0) as the background
+  /// reference colour. This caused false negatives when the product extended to
+  /// the top-left corner — the corner pixel was the product colour, so almost
+  /// every sampled pixel appeared to be "not background".
+  ///
+  /// Fix: sample all four corners and use a per-channel median as the
+  /// background reference. This is more robust when one corner is occupied by
+  /// the product, while still being O(1) in the number of reference samples.
   double _productCoverage(img.Image image) {
     if (image.width < 2 || image.height < 2) return 0;
-    final background = image.getPixel(0, 0);
+
+    // Sample the four corners to derive a background reference colour.
+    final corners = [
+      image.getPixel(0, 0),
+      image.getPixel(image.width - 1, 0),
+      image.getPixel(0, image.height - 1),
+      image.getPixel(image.width - 1, image.height - 1),
+    ];
+    final rs = corners.map((p) => p.r.toDouble()).toList()..sort();
+    final gs = corners.map((p) => p.g.toDouble()).toList()..sort();
+    final bs = corners.map((p) => p.b.toDouble()).toList()..sort();
+    // Median of four values = average of middle two.
+    final bgR = (rs[1] + rs[2]) / 2;
+    final bgG = (gs[1] + gs[2]) / 2;
+    final bgB = (bs[1] + bs[2]) / 2;
+
     var product = 0;
     var total = 0;
     final step = math.max(1, image.width ~/ 50);
     for (var y = 0; y < image.height; y += step) {
       for (var x = 0; x < image.width; x += step) {
         final pixel = image.getPixel(x, y);
-        final distance = math.sqrt(math.pow(pixel.r - background.r, 2) +
-            math.pow(pixel.g - background.g, 2) +
-            math.pow(pixel.b - background.b, 2));
+        final distance = math.sqrt(
+            math.pow(pixel.r - bgR, 2) +
+            math.pow(pixel.g - bgG, 2) +
+            math.pow(pixel.b - bgB, 2));
         if (distance > 60) product++;
         total++;
       }

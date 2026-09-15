@@ -43,8 +43,14 @@ class ModelManager {
     id: 'lama',
     url: AppConstants.modelLamaUrl,
     fileName: 'lama_fp32.onnx',
-    sha256: '1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6',
+    sha256:
+        '1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6',
   );
+
+  /// Maximum number of times [download] will fall back to a full (non-Range)
+  /// download when the server ignores the Range header. Prevents an infinite
+  /// recursive loop on servers that persistently return 200 instead of 206.
+  static const _maxRangeRetries = 1;
 
   final Dio _dio;
   final Future<Directory> Function() _directoryProvider;
@@ -52,13 +58,14 @@ class ModelManager {
 
   ModelManager({Dio? dio, Future<Directory> Function()? directoryProvider})
       : _dio = dio ?? Dio(),
-        _directoryProvider = directoryProvider ?? getApplicationSupportDirectory;
+        _directoryProvider =
+            directoryProvider ?? getApplicationSupportDirectory;
 
   Future<File> modelFile(ModelSpec model) async {
     final directory = await _directoryProvider();
-    final modelsDirectory = Directory('${directory.path}/models');
+    final modelsDirectory = Directory('\${directory.path}/models');
     await modelsDirectory.create(recursive: true);
-    return File('${modelsDirectory.path}/${model.fileName}');
+    return File('\${modelsDirectory.path}/\${model.fileName}');
   }
 
   Future<bool> isReady(ModelSpec model) async {
@@ -92,7 +99,8 @@ class ModelManager {
     return await isReady(model) ? (await modelFile(model)).path : null;
   }
 
-  Stream<ModelDownloadProgress> download(ModelSpec model) async* {
+  Stream<ModelDownloadProgress> download(ModelSpec model,
+      {int _rangeRetry = 0}) async* {
     if (await isReady(model)) {
       final file = await modelFile(model);
       yield ModelDownloadProgress(
@@ -104,15 +112,20 @@ class ModelManager {
     }
 
     final file = await modelFile(model);
-    final temporary = File('${file.path}.part');
+    final temporary = File('\${file.path}.part');
     var offset = await temporary.exists() ? await temporary.length() : 0;
     if (offset > 0) {
       try {
         final response = await _dio.head<void>(model.url);
-        final total = int.tryParse(response.headers.value('content-length') ?? '');
+        final total = int.tryParse(
+            response.headers.value('content-length') ?? '');
         if (total != null && offset >= total) {
           await _finalize(temporary, file, model);
-          yield ModelDownloadProgress(modelId: model.id, received: total, total: total, complete: true);
+          yield ModelDownloadProgress(
+              modelId: model.id,
+              received: total,
+              total: total,
+              complete: true);
           return;
         }
       } catch (_) {
@@ -125,51 +138,59 @@ class ModelManager {
       model.url,
       temporary.path,
       deleteOnError: false,
-      fileAccessMode: offset > 0 ? FileAccessMode.append : FileAccessMode.write,
+      fileAccessMode:
+          offset > 0 ? FileAccessMode.append : FileAccessMode.write,
       options: Options(
         responseType: ResponseType.bytes,
-        headers: offset > 0 ? {'Range': 'bytes=$offset-'} : null,
+        headers: offset > 0 ? {'Range': 'bytes=\$offset-'} : null,
       ),
       onReceiveProgress: (received, total) {
-        // Dio's callback is exposed through the async stream below by polling
-        // the part file; this callback still enables progress in native logs.
+        // Progress is surfaced via the stream; this callback logs in native.
       },
     );
+
     if (offset > 0 && response.statusCode == HttpStatus.ok) {
-      // The server ignored Range. Retry once from byte zero to avoid a
-      // duplicated or corrupted artifact.
-      await temporary.delete();
-      await for (final _ in download(model)) {
-        // The recursive call performs the clean full download and validation.
+      // The server ignored the Range header and sent the full file.
+      // Retry once from byte zero to avoid a duplicated/corrupted artifact.
+      if (_rangeRetry >= _maxRangeRetries) {
+        throw StateError(
+            'Server repeatedly ignored Range header for \${model.id}.');
       }
-      final complete = await modelFile(model);
-      final length = await complete.length();
-      yield ModelDownloadProgress(
-          modelId: model.id, received: length, total: length, complete: true);
+      await temporary.delete();
+      yield* download(model, _rangeRetry: _rangeRetry + 1);
       return;
     }
+
     if (response.statusCode != null && response.statusCode! >= 400) {
-      throw StateError('Model download failed with HTTP ${response.statusCode}.');
+      throw StateError(
+          'Model download failed with HTTP \${response.statusCode}.');
     }
 
     final total = await temporary.length();
-    yield ModelDownloadProgress(modelId: model.id, received: total, total: total);
+    yield ModelDownloadProgress(
+        modelId: model.id, received: total, total: total);
     await _finalize(temporary, file, model);
-    yield ModelDownloadProgress(modelId: model.id, received: total, total: total, complete: true);
+    yield ModelDownloadProgress(
+        modelId: model.id,
+        received: total,
+        total: total,
+        complete: true);
   }
 
   Future<void> delete(ModelSpec model) async {
     final file = await modelFile(model);
-    final temporary = File('${file.path}.part');
+    final temporary = File('\${file.path}.part');
     if (await file.exists()) await file.delete();
     if (await temporary.exists()) await temporary.delete();
     _verifiedCache.remove(model.id);
   }
 
-  Future<void> _finalize(File temporary, File target, ModelSpec model) async {
+  Future<void> _finalize(
+      File temporary, File target, ModelSpec model) async {
     if (!await _matchesSha256(temporary, model.sha256)) {
       await temporary.delete();
-      throw StateError('SHA-256 mismatch for ${model.id}; download discarded.');
+      throw StateError(
+          'SHA-256 mismatch for \${model.id}; download discarded.');
     }
     if (await target.exists()) await target.delete();
     await temporary.rename(target.path);
@@ -196,7 +217,8 @@ class _VerifiedFile {
   });
 }
 
-String modelDownloadProgressToJson(ModelDownloadProgress progress) => jsonEncode({
+String modelDownloadProgressToJson(ModelDownloadProgress progress) =>
+    jsonEncode({
       'modelId': progress.modelId,
       'received': progress.received,
       'total': progress.total,

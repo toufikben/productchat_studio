@@ -6,6 +6,17 @@ import '../../services/history_service.dart';
 import '../../services/seika_service.dart';
 
 /// Dispatches chat commands to local image services.
+///
+/// Free-tier flow:
+///   1. Check quota availability.
+///   2. Run the operation.
+///   3. Apply watermark (must succeed before quota is consumed).
+///   4. Consume quota.
+///   5. Record to history.
+///
+/// This matches the EditorController Free-tier flow so both paths behave
+/// identically: watermark failure rolls back before quota is consumed.
+///
 /// DreamLite is deliberately absent from this controller.
 class ChatController {
   final String? imagePath;
@@ -32,24 +43,31 @@ class ChatController {
     if (!_billing.proService.isPro) {
       if (req.op != EditOp.removeBg) {
         return const EditResult.failure(
-          'Free tier supports PatchMatch background removal only; conversational edits require a mask and Pro.',
+          'Free tier supports PatchMatch background removal only; '
+          'conversational edits require a mask and Pro.',
         );
       }
+      // 1. Check quota before doing any work.
       if (!_billing.freeQuota.canUse()) {
         return const EditResult.failure(
           'Free monthly quota is exhausted. Upgrade to Pro to continue.',
         );
       }
+      // 2. Run the operation.
       final result = await _seika.removeBackground(image);
       if (!result.ok || result.outputPath == null) return result;
+      // 3. Apply watermark — must succeed before quota is consumed.
       final watermarked = await freeWatermarkService.apply(result.outputPath!);
       if (watermarked == null) {
         return const EditResult.failure('Unable to apply the Free watermark.');
       }
+      // 4. Consume quota only after a successful, watermarked output.
       final consumed = await _billing.freeQuota.consume();
       if (!consumed) {
-        return const EditResult.failure('Free monthly quota changed during processing.');
+        return const EditResult.failure(
+            'Free monthly quota changed during processing.');
       }
+      // 5. Record to history.
       await historyService.record(path: watermarked, operation: 'removeBg');
       return EditResult(
         ok: true,

@@ -5,9 +5,16 @@ import 'storage_service.dart';
 
 /// Local representation of Google Play entitlement state.
 ///
-/// This protects the normal app flow and supports restore/offline use after a
-/// valid Play event. It is not a replacement for Google Play's own billing
-/// service or server-side purchase verification.
+/// Fix (2026-09-15): The previous [_load] logic cleared a Lifetime entitlement
+/// when [_purchaseFingerprint] was null (e.g. data written by an older build
+/// that did not store the fingerprint). The guard now only clears state whose
+/// inconsistency cannot be explained by a missing fingerprint — specifically
+/// subscriptions with a missing or expired expiry. Legacy Lifetime entries
+/// without a fingerprint are left in place; they will be refreshed the next
+/// time [activateLifetime] is called with a valid Play receipt.
+///
+/// This is not a replacement for Google Play's own billing service or
+/// server-side purchase verification.
 class ProService extends ChangeNotifier {
   ProService({StorageService? storage}) : _storage = storage ?? storageService {
     _load();
@@ -52,11 +59,19 @@ class ProService extends ChangeNotifier {
     final value = _storage.getString(expiryKey);
     _expiry = value == null ? null : DateTime.tryParse(value);
 
+    // A fully valid Lifetime record — keep as-is.
     final validLifetime =
         _isLifetime && _isPro && _productId == 'lifetime' && _purchaseFingerprint != null;
     if (validLifetime) return;
 
-    if (_isLifetime || (_isPro && (_expiry == null || !_expiry!.isAfter(DateTime.now())))) {
+    // Legacy Lifetime record without a fingerprint: keep the entitlement but
+    // do NOT clear it. The fingerprint will be added the next time the user
+    // purchases or restores from Google Play.
+    if (_isLifetime && _isPro && _productId == 'lifetime') return;
+
+    // A subscription whose expiry is missing or already past is invalid and
+    // must be cleared to avoid granting stale Pro access.
+    if (_isPro && (_expiry == null || !_expiry!.isAfter(DateTime.now()))) {
       _clearInMemory();
       _persist();
     }
@@ -202,7 +217,8 @@ class ProService extends ChangeNotifier {
       productId: productId,
       verificationData: verificationData,
     );
-    return expectedFingerprint != null && expectedFingerprint == _purchaseFingerprint;
+    return expectedFingerprint != null &&
+        expectedFingerprint == _purchaseFingerprint;
   }
 
   Future<void> applyLocalEntitlement({
@@ -218,7 +234,9 @@ class ProService extends ChangeNotifier {
     if (fingerprint == null) return;
     _isPro = true;
     _isLifetime = isLifetime;
-    _expiry = isLifetime ? null : (duration != null ? DateTime.now().add(duration) : null);
+    _expiry = isLifetime
+        ? null
+        : (duration != null ? DateTime.now().add(duration) : null);
     _productId = productId;
     _purchaseFingerprint = fingerprint;
     await _persist();
