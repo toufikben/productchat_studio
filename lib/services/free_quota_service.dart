@@ -35,6 +35,12 @@ class FreeQuotaService extends StateNotifier<QuotaState> {
 
   bool _shouldReset(String value, DateTime now) {
     try {
+      final monthParts = value.split('-');
+      if (monthParts.length == 2) {
+        final year = int.parse(monthParts[0]);
+        final month = int.parse(monthParts[1]);
+        return year != now.year || month != now.month;
+      }
       final last = DateTime.parse(value);
       return last.month != now.month || last.year != now.year;
     } catch (_) {

@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:productchat_studio/features/batch/batch_screen.dart';
 import 'package:productchat_studio/features/billing/paywall_screen.dart';
 import 'package:productchat_studio/features/history/history_screen.dart';
@@ -12,6 +15,19 @@ import 'package:productchat_studio/services/storage_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    final directory = await Directory.systemTemp.createTemp('productchat-widget-');
+    Hive.init(directory.path);
+    await Hive.openBox<dynamic>('settings');
+    await Hive.openBox<dynamic>('payments');
+    await Hive.openBox<dynamic>('analytics');
+    await Hive.openBox<dynamic>('credits');
+  });
+
+  tearDownAll(() async {
+    await Hive.close();
+  });
 
   testWidgets('Paywall renders all plan sections without initializing Play Billing',
       (tester) async {
@@ -102,13 +118,21 @@ void main() {
 
   testWidgets('Router navigates to Settings and handles unknown routes',
       (tester) async {
-    routerProvider.go('/settings');
-    await tester.pumpWidget(const ProviderScope(child: ProductChatApp()));
+    final container = ProviderContainer();
+    final router = container.read(routerProvider);
+    router.go('/settings');
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const ProductChatApp(),
+      ),
+    );
     await tester.pump();
     expect(find.text('Settings'), findsOneWidget);
 
     routerProvider.go('/route-that-does-not-exist');
     await tester.pumpAndSettle();
     expect(find.text('Page not found'), findsOneWidget);
+    container.dispose();
   });
 }
