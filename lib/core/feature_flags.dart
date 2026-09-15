@@ -108,10 +108,6 @@ class FeatureFlags {
       key: 'floatingNavBar',
       tier: FeatureTier.stable,
     ),
-    'floatingNavBar': FeatureFlag(
-      key: 'floatingNavBar',
-      tier: FeatureTier.stable,
-    ),
 
     // ─── ⚡ Beta ───
     'miGan': FeatureFlag(
@@ -227,8 +223,6 @@ class FeatureFlags {
   static bool get useWatermark => isEnabled('watermark');
   static bool get useQuota => true;
   static int get freeQuota => 3;
-  static bool get floatingNavBar => isEnabled('floatingNavBar');
-  static bool get batchProcessing => isEnabled('batchProcessing');
   static bool get floatingNavBar => isEnabled('floatingNavBar');
 
   static List<FeatureFlag> get allFeatures =>
