@@ -1,16 +1,45 @@
-name: Flutter checks
-on: [push, pull_request]
+name: Analyze & Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
 jobs:
   analyze:
+    name: Analyze & Test
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.27.0'
           channel: 'stable'
           cache: true
-      - run: flutter pub get
-      - run: flutter gen-l10n
-      - run: flutter analyze
-      - run: flutter test
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed lib/ test/
+        continue-on-error: true
+
+      - name: Analyze code
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Run tests
+        run: flutter test --coverage
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false

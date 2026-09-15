@@ -540,3 +540,13 @@ All repair work must follow these rules:
 - [x] تعديل `main.dart` وإضافة Hive box باسم `tickets`؛ بقية الصناديق كانت موجودة مسبقاً.
 - [x] التحقق من JSON و`git diff --check` بنجاح.
 - [ ] `flutter gen-l10n && flutter analyze`: تعذر التنفيذ لأن Flutter SDK غير موجود في `PATH`.
+
+## سجل التحديثات — 2026-09-15 — CI/CD Complete FIX #109–#116
+
+- [x] استبدال workflow التحليل والاختبارات وworkflow بناء Android AAB.
+- [x] إضافة secrets hygiene، نشر Web إلى Vercel، بناء iOS، وفحص الجودة.
+- [x] إضافة Dependabot وPull Request template.
+- [x] فحص الأسرار محلياً: لا توجد placeholders من `YOUR_ORG`، ولا Firebase، ولا keystores، ولا `.env`، ولا Google Services، ولا ملفات أكبر من 50MB.
+- [x] workflows تدعم fallback للبناء غير الموقّع عند غياب secrets.
+- [ ] يجب إضافة GitHub Secrets عند الحاجة للبناء/النشر الموقّع: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_PASSWORD`, `KEY_ALIAS`, `VERCEL_TOKEN`, وبيانات توقيع iOS.
+- [ ] لم يُشغّل Flutter محلياً لأن Flutter SDK غير موجود في `PATH`؛ التنفيذ الفعلي سيتم عبر GitHub Actions بعد الرفع.

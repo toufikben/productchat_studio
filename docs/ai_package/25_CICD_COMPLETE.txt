@@ -1,0 +1,562 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 25: CI/CD COMPLETION                                           ║
+║  إكمال GitHub Actions — 5 ملفات (1 جزئي + 4 جديد)                    ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #109: 🔴 REPLACE
+📁 الملف: .github/workflows/analysis.yml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+استبدل الملف بالكامل بهذا:
+
+name: Analyze & Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  analyze:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed lib/ test/
+        continue-on-error: true
+
+      - name: Analyze code
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Run tests
+        run: flutter test --coverage
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #110: 🔴 REPLACE
+📁 الملف: .github/workflows/build-release-aab.yml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+استبدل الملف بالكامل بهذا:
+
+name: Build Release AAB
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build Android AAB
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Decode Keystore
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/release-key.jks
+
+      - name: Create key.properties
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        run: |
+          cat > android/key.properties << EOF
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=release-key.jks
+          EOF
+
+      - name: Build AAB (signed)
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        run: |
+          flutter build appbundle --release \
+            --obfuscate \
+            --split-debug-info=build/symbols/android
+
+      - name: Build AAB (unsigned, fallback)
+        if: ${{ secrets.KEYSTORE_BASE64 == '' }}
+        run: |
+          flutter build appbundle --release
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-aab
+          path: build/app/outputs/bundle/release/*.aab
+          retention-days: 30
+
+      - name: Upload symbols
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-symbols
+          path: build/symbols/android/
+          retention-days: 30
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/app/outputs/bundle/release/*.aab
+          generate_release_notes: true
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #111: 🟢 CREATE
+📁 الملف الجديد: .github/workflows/secrets-check.yml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+name: Secrets & Hygiene
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    name: Check for Secrets & Bad Files
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for YOUR_ORG placeholder
+        run: |
+          MATCHES=$(grep -rn "YOUR_ORG" lib/ --include='*.dart' | grep -v '//' || true)
+          if [ -n "$MATCHES" ]; then
+            echo "❌ Found YOUR_ORG placeholder:"
+            echo "$MATCHES"
+            exit 1
+          fi
+          echo "✅ No YOUR_ORG placeholder"
+
+      - name: Check for keystore files
+        run: |
+          MATCHES=$(find . -name '*.jks' -o -name '*.keystore' 2>/dev/null | grep -v '.git/' || true)
+          if [ -n "$MATCHES" ]; then
+            echo "❌ Keystore files committed!"
+            echo "$MATCHES"
+            exit 1
+          fi
+          echo "✅ No keystore files"
+
+      - name: Check for Firebase references
+        run: |
+          MATCHES=$(grep -rn "firebase" lib/ pubspec.yaml 2>/dev/null || true)
+          if [ -n "$MATCHES" ]; then
+            echo "❌ Firebase references found (must be removed):"
+            echo "$MATCHES"
+            exit 1
+          fi
+          echo "✅ No Firebase references"
+
+      - name: Check for large files
+        run: |
+          FOUND=0
+          while IFS= read -r f; do
+            echo "❌ Large file: $f"
+            FOUND=1
+          done < <(find . -type f -size +50M -not -path './.git/*' -not -path './build/*' -not -path './.dart_tool/*' 2>/dev/null)
+          if [ $FOUND -eq 1 ]; then
+            exit 1
+          fi
+          echo "✅ No large files >50MB"
+
+      - name: Check for .env files
+        run: |
+          MATCHES=$(find . -name '.env' -o -name '.env.*' 2>/dev/null | grep -v '.git/' || true)
+          if [ -n "$MATCHES" ]; then
+            echo "❌ .env files committed!"
+            echo "$MATCHES"
+            exit 1
+          fi
+          echo "✅ No .env files"
+
+      - name: Check for GoogleService-Info
+        run: |
+          MATCHES=$(find . -name 'GoogleService-Info.plist' -o -name 'google-services.json' 2>/dev/null | grep -v '.git/' || true)
+          if [ -n "$MATCHES" ]; then
+            echo "❌ Google services files committed!"
+            exit 1
+          fi
+          echo "✅ No Google services files"
+
+      - name: Check for TODO markers in critical files
+        run: |
+          echo "ℹ️ TODOs in critical files (info only):"
+          grep -rn "TODO\|FIXME" lib/services/ lib/core/ 2>/dev/null | head -20 || true
+
+      - name: Success
+        run: echo "✅ All hygiene checks passed"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #112: 🟢 CREATE
+📁 الملف الجديد: .github/workflows/deploy-web.yml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+name: Deploy Web to Vercel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy Web
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Build web
+        run: |
+          flutter build web --release \
+            --web-renderer canvaskit \
+            --pwa-strategy offline-first \
+            --dart-define=FLUTTER_WEB_USE_SKIA=true
+
+      - name: Verify build
+        run: |
+          if [ ! -f build/web/index.html ]; then
+            echo "❌ Web build failed"
+            exit 1
+          fi
+          echo "✅ Web build succeeded"
+          du -sh build/web
+
+      - name: Deploy to Vercel
+        if: ${{ secrets.VERCEL_TOKEN != '' }}
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./
+
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: build/web/
+          retention-days: 14
+
+      - name: Deployment summary
+        run: |
+          echo "## 🌐 Web Deployment" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ secrets.VERCEL_TOKEN }}" ]; then
+            echo "✅ Deployed to Vercel" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Vercel secrets not configured" >> $GITHUB_STEP_SUMMARY
+            echo "Build artifact available for manual deployment" >> $GITHUB_STEP_SUMMARY
+          fi
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #113: 🟢 CREATE
+📁 الملف الجديد: .github/workflows/release-ios.yml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+name: Build iOS
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: Build iOS IPA
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install --repo-update
+
+      - name: Setup signing (if configured)
+        if: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' }}
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Create keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+          # Import certificate
+          echo "$CERTIFICATE_BASE64" | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+
+          # Install provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+
+      - name: Build iOS (unsigned, fallback)
+        if: ${{ secrets.IOS_CERTIFICATE_BASE64 == '' }}
+        run: |
+          flutter build ios --release --no-codesign
+
+      - name: Build iOS IPA (signed)
+        if: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' }}
+        run: |
+          flutter build ipa --release \
+            --obfuscate \
+            --split-debug-info=build/symbols/ios
+
+      - name: Upload IPA
+        if: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: build/ios/ipa/*.ipa
+          retention-days: 30
+
+      - name: Upload iOS build
+        if: ${{ secrets.IOS_CERTIFICATE_BASE64 == '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-unsigned-build
+          path: build/ios/iphoneos/
+          retention-days: 14
+
+      - name: Upload symbols
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-symbols
+          path: build/symbols/ios/
+          retention-days: 30
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #114: 🟢 CREATE
+📁 الملف الجديد: .github/workflows/quality.yml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+name: Quality Check
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  quality:
+    name: Quality Metrics
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Count lines of code
+        run: |
+          echo "## 📊 Code Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Dart files | $(find lib -name '*.dart' | wc -l) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dart lines | $(find lib -name '*.dart' -exec cat {} \; | wc -l) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test files | $(find test -name '*.dart' | wc -l) |" >> $GITHUB_STEP_SUMMARY
+          echo "| ARB files | $(find lib/l10n -name '*.arb' | wc -l) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Kotlin files | $(find android -name '*.kt' | wc -l) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Swift files | $(find ios -name '*.swift' | wc -l) |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check for dead code
+        run: |
+          flutter analyze 2>&1 | grep -c "unused" || echo "0 unused detected"
+        continue-on-error: true
+
+      - name: Check dependencies
+        run: flutter pub outdated || true
+
+      - name: Verify no debug prints
+        run: |
+          COUNT=$(grep -rn "print(" lib/ --include='*.dart' | grep -v 'avoid_print' | wc -l || echo "0")
+          echo "Debug prints found: $COUNT"
+          if [ "$COUNT" -gt 5 ]; then
+            echo "⚠️ Too many print statements ($COUNT > 5)"
+          fi
+        continue-on-error: true
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #115: 🟢 CREATE
+📁 الملف الجديد: .github/dependabot.yml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+version: 2
+updates:
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "flutter"
+    commit-message:
+      prefix: "deps"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "ci"
+
+  - package-ecosystem: "gradle"
+    directory: "/android"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "android"
+
+  - package-ecosystem: "bundler"
+    directory: "/ios"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "ios"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #116: 🟢 CREATE
+📁 الملف الجديد: .github/PULL_REQUEST_TEMPLATE.md
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 📝 Description
+
+<!-- وصف موجز للتغييرات -->
+
+## 🎯 Type of Change
+
+- [ ] 🐛 Bug fix
+- [ ] ✨ New feature
+- [ ] 💄 UI/Style update
+- [ ] 📝 Documentation
+- [ ] ♻️ Refactor
+- [ ] ⚡ Performance
+- [ ] 🔧 Configuration
+- [ ] 🌍 Localization
+
+## 📋 Checklist
+
+- [ ] Code follows style guide
+- [ ] Self-reviewed
+- [ ] Tests added/updated
+- [ ] Documentation updated
+- [ ] No new warnings from `flutter analyze`
+- [ ] All tests pass
+- [ ] No secrets committed
+- [ ] Localizations updated (if UI changed)
+
+## 🧪 Testing
+
+<!-- كيف تم اختبار التغييرات -->
+
+## 📸 Screenshots (if UI)
+
+<!-- صور قبل/بعد إذا كانت UI -->
+
+## 🔗 Related Issues
+
+<!-- اربط PR بـ issue إن وُجد -->
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الملف 25_CICD_COMPLETE.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,0 +1,70 @@
+name: Deploy Web to Vercel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy Web
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Build web
+        run: |
+          flutter build web --release \
+            --web-renderer canvaskit \
+            --pwa-strategy offline-first \
+            --dart-define=FLUTTER_WEB_USE_SKIA=true
+
+      - name: Verify build
+        run: |
+          if [ ! -f build/web/index.html ]; then
+            echo "❌ Web build failed"
+            exit 1
+          fi
+          echo "✅ Web build succeeded"
+          du -sh build/web
+
+      - name: Deploy to Vercel
+        if: ${{ secrets.VERCEL_TOKEN != '' }}
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./
+
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: build/web/
+          retention-days: 14
+
+      - name: Deployment summary
+        run: |
+          echo "## 🌐 Web Deployment" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ secrets.VERCEL_TOKEN }}" ]; then
+            echo "✅ Deployed to Vercel" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Vercel secrets not configured" >> $GITHUB_STEP_SUMMARY
+            echo "Build artifact available for manual deployment" >> $GITHUB_STEP_SUMMARY
+          fi

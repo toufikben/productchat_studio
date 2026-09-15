@@ -1,0 +1,56 @@
+name: Quality Check
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  quality:
+    name: Quality Metrics
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Count lines of code
+        run: |
+          echo "## 📊 Code Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Dart files | $(find lib -name '*.dart' | wc -l) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dart lines | $(find lib -name '*.dart' -exec cat {} \; | wc -l) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test files | $(find test -name '*.dart' | wc -l) |" >> $GITHUB_STEP_SUMMARY
+          echo "| ARB files | $(find lib/l10n -name '*.arb' | wc -l) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Kotlin files | $(find android -name '*.kt' | wc -l) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Swift files | $(find ios -name '*.swift' | wc -l) |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check for dead code
+        run: |
+          flutter analyze 2>&1 | grep -c "unused" || echo "0 unused detected"
+        continue-on-error: true
+
+      - name: Check dependencies
+        run: flutter pub outdated || true
+
+      - name: Verify no debug prints
+        run: |
+          COUNT=$(grep -rn "print(" lib/ --include='*.dart' | grep -v 'avoid_print' | wc -l || echo "0")
+          echo "Debug prints found: $COUNT"
+          if [ "$COUNT" -gt 5 ]; then
+            echo "⚠️ Too many print statements ($COUNT > 5)"
+          fi
+        continue-on-error: true
