@@ -492,3 +492,14 @@ All repair work must follow these rules:
 - **2026-09-14 — تصحيح سعر Lifetime من الوثائق السابقة:** السعر المستهدف الموثق في `docs/PLAY_STORE_LOCALE_AND_ASSETS_PLAN_2026-09-14.md` هو `$79.99` مع هدف إقليمي تقريبي `22,000 DZD`. تم تعبئة `lifetime` و`Lifetime Pro` والوصف و`pro-lifetime` في جلسة Play Console، والوصول إلى خطوة Availability and pricing؛ لم يتم الضغط على Activate ولم يُنشأ المنتج لأن محرر Set prices لم يفتح بنجاح.
 - **2026-09-14 — إصلاح CI:** التشغيل `34882882551` نجح فيه `pub get` و`flutter analyze` و39 اختبارًا، وفشل اختبار `ai_operation_contract_test.dart` لأن رسالة Free tier لم تتضمن `mask`. تم توحيد الرسالة في `ChatController` و`EditorController` لتذكر أن conversational edits تتطلب mask وPro؛ يلزم تشغيل CI جديد للتحقق.
 - **2026-09-14 — فحص Real-ESRGAN وأسعار Billing:** فحص Real-ESRGAN الثابت نجح مع عدم وجود ONNX/PTH artifact، لذلك لا يمكن تنفيذ inference runtime. الأسعار المرجعية متضاربة بين وثائق P7/ROADMAP_REVIEW وأسعار المتجر المستهدفة؛ يجب اعتماد `docs/PLAY_STORE_LOCALE_AND_ASSETS_PLAN_2026-09-14.md` للكتالوج الحالي، والتحقق النهائي من Play Console.
+
+## سجل التحديثات — 2026-09-15 — Native Complete FIX #68–#83
+
+- [x] إضافة SeikaChannel ONNX لـ LaMa وReal-ESRGAN مع fallback PatchMatch.
+- [x] إضافة Android Home Widget وموارد `layout` و`drawable` و`xml`.
+- [x] إضافة Batch Foreground Service وإعدادات الإشعارات وManifest permissions.
+- [x] إضافة استقبال الصور المشتركة على Android وFlutter service المقابل.
+- [x] تحديث iOS SeikaChannel وShareReceiver وAppDelegate وInfo.plist.
+- [x] تحديث Android Gradle/ProGuard لحفظ ONNX وإبقاء native bindings.
+- [x] إنشاء مجلدات Android المطلوبة والتحقق من XML و`git diff --check`.
+- [ ] `flutter clean && flutter pub get && flutter analyze`: تعذر التنفيذ لأن Flutter SDK غير موجود في `PATH`.

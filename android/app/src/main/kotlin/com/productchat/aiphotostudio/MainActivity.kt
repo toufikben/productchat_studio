@@ -6,6 +6,7 @@ import io.flutter.plugin.common.MethodChannel
 import com.productchat.aiphotostudio.native.SeikaChannel
 import com.productchat.studio.native.MIGanChannel
 import com.productchat.studio.native.QwenEditChannel
+import com.productchat.studio.native.SeikaChannel as NativeSeikaChannel
 
 class MainActivity : FlutterActivity() {
     private val channelName = "productchat/studio/seika"
@@ -16,6 +17,10 @@ class MainActivity : FlutterActivity() {
         val channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
         seika = SeikaChannel(this)
         seika.attach(channel)
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            NativeSeikaChannel.CHANNEL,
+        ).setMethodCallHandler(NativeSeikaChannel(this))
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,

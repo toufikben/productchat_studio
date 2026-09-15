@@ -1,2 +1,6 @@
 import Flutter
-final class PatchMatchRemover {}
+import UIKit
+
+final class PatchMatchRemover {
+    static func removeBackground(_ image: UIImage) -> UIImage { image }
+}

@@ -55,6 +55,12 @@ android {
         noCompress += "onnx"
     }
 
+    packaging {
+        resources {
+            excludes += setOf("META-INF/DEPENDENCIES", "META-INF/LICENSE")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -70,6 +76,7 @@ android {
 
 dependencies {
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.19.0")
+    implementation("androidx.core:core-ktx:1.13.1")
 }
 
 flutter {

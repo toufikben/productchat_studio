@@ -1,0 +1,1348 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 22: NATIVE COMPLETION                                          ║
+║  إكمال كل المكونات Native — 7 عناصر (4 جزئي + 3 مفقود)                ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #68: 🔴 REPLACE
+📁 الملف: android/app/src/main/kotlin/com/productchat/studio/native/SeikaChannel.kt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+استبدل الملف بالكامل بهذا:
+
+package com.productchat.studio.native
+
+import ai.onnxruntime.*
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.util.Log
+import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
+import java.io.FileOutputStream
+import java.nio.FloatBuffer
+import kotlin.math.max
+import kotlin.math.min
+
+/**
+ * SeikaChannel — Native bridge for on-device AI (LaMa + Real-ESRGAN).
+ */
+class SeikaChannel(private val context: Context) : MethodChannel.MethodCallHandler {
+
+    companion object {
+        const val CHANNEL = "com.productchat/seika"
+        private const val LAMA_SIZE = 512
+        private const val ESRGAN_MAX_DIM = 1024
+        private const val TAG = "SeikaChannel"
+    }
+
+    private var lamaSession: OrtSession? = null
+    private var esrganSession: OrtSession? = null
+    private val env: OrtEnvironment = OrtEnvironment.getEnvironment()
+    private val lock = Any()
+
+    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        when (call.method) {
+            "removeBg"    -> handleRemoveBg(call, result)
+            "inpaint"     -> handleInpaint(call, result)
+            "upscale"     -> handleUpscale(call, result)
+            "loadModel"   -> handleLoadModel(call, result)
+            "unloadModel" -> handleUnload(result)
+            "isLoaded"    -> synchronized(lock) {
+                result.success(lamaSession != null || esrganSession != null)
+            }
+            else -> result.notImplemented()
+        }
+    }
+
+    private fun handleRemoveBg(call: MethodCall, result: MethodChannel.Result) {
+        val path = call.argument<String>("path")
+        val quality = call.argument<String>("quality") ?: "fast"
+        if (path == null) {
+            result.error("INVALID_ARGS", "path is null", null); return
+        }
+        val outputPath = path.replace(Regex("\\.[^.]+$"), "_nobg.png")
+
+        try {
+            val bmp = decodeBitmap(path)
+                ?: return result.error("DECODE_FAIL", "Cannot decode image", null)
+
+            val output: Bitmap = when (quality) {
+                "balanced", "best" -> {
+                    synchronized(lock) {
+                        if (lamaSession != null) runLaMa(bmp, null)
+                        else PatchMatchRemover.removeBackground(bmp)
+                    } ?: PatchMatchRemover.removeBackground(bmp)
+                }
+                else -> PatchMatchRemover.removeBackground(bmp)
+            }
+
+            FileOutputStream(outputPath).use {
+                output.compress(Bitmap.CompressFormat.PNG, 100, it)
+            }
+
+            result.success(mapOf(
+                "ok" to true,
+                "outputPath" to outputPath,
+                "width" to output.width,
+                "height" to output.height,
+                "quality" to quality
+            ))
+        } catch (e: Throwable) {
+            Log.e(TAG, "removeBg failed", e)
+            result.error("PROCESSING_ERROR", e.message, null)
+        }
+    }
+
+    private fun handleInpaint(call: MethodCall, result: MethodChannel.Result) {
+        val path = call.argument<String>("path")
+        val maskPath = call.argument<String>("maskPath")
+        if (path == null || maskPath == null) {
+            result.error("INVALID_ARGS", "path and maskPath required", null); return
+        }
+        val outputPath = path.replace(Regex("\\.[^.]+$"), "_inpaint.png")
+
+        try {
+            val img = decodeBitmap(path)
+            val mask = decodeBitmap(maskPath)
+            if (img == null || mask == null) {
+                return result.error("DECODE_FAIL", "Cannot decode", null)
+            }
+
+            val output = synchronized(lock) { runLaMa(img, mask) } ?: img
+            FileOutputStream(outputPath).use {
+                output.compress(Bitmap.CompressFormat.PNG, 100, it)
+            }
+
+            result.success(mapOf("ok" to true, "outputPath" to outputPath))
+        } catch (e: Throwable) {
+            Log.e(TAG, "inpaint failed", e)
+            result.error("INPAINT_ERROR", e.message, null)
+        }
+    }
+
+    private fun handleUpscale(call: MethodCall, result: MethodChannel.Result) {
+        val path = call.argument<String>("path")
+        val factor = call.argument<Int>("factor") ?: 2
+        if (path == null) {
+            result.error("INVALID_ARGS", "path required", null); return
+        }
+        val outputPath = path.replace(Regex("\\.[^.]+$"), "_${factor}x.png")
+
+        try {
+            val bmp = decodeBitmap(path)
+                ?: return result.error("DECODE_FAIL", "Cannot decode", null)
+
+            val output = synchronized(lock) { runEsrgan(bmp, factor) } ?: bmp
+            FileOutputStream(outputPath).use {
+                output.compress(Bitmap.CompressFormat.PNG, 100, it)
+            }
+
+            result.success(mapOf(
+                "ok" to true,
+                "outputPath" to outputPath,
+                "width" to output.width,
+                "height" to output.height,
+                "factor" to factor
+            ))
+        } catch (e: Throwable) {
+            Log.e(TAG, "upscale failed", e)
+            result.error("UPSCALE_ERROR", e.message, null)
+        }
+    }
+
+    private fun handleLoadModel(call: MethodCall, result: MethodChannel.Result) {
+        val modelType = call.argument<String>("modelType")
+        val modelPath = call.argument<String>("modelPath")
+        if (modelPath == null) {
+            result.error("NO_MODEL", "modelPath is required", null); return
+        }
+
+        try {
+            val opts = OrtSession.SessionOptions().apply {
+                setIntraOpNumThreads(Runtime.getRuntime().availableProcessors().coerceAtMost(4))
+                setInterOpNumThreads(1)
+                setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
+                try {
+                    addConfigEntry("session.intra_op.allow_spinning", "0")
+                } catch (_: Throwable) {}
+                try { addNnapi() } catch (t: Throwable) {
+                    Log.w(TAG, "NNAPI unavailable, using CPU")
+                }
+            }
+
+            synchronized(lock) {
+                when (modelType) {
+                    "lama" -> {
+                        lamaSession?.close()
+                        lamaSession = env.createSession(modelPath, opts)
+                    }
+                    "esrgan" -> {
+                        esrganSession?.close()
+                        esrganSession = env.createSession(modelPath, opts)
+                    }
+                    else -> {
+                        result.error("UNKNOWN_MODEL", "modelType must be lama|esrgan", null)
+                        return
+                    }
+                }
+            }
+            result.success(mapOf("ok" to true, "modelType" to modelType))
+        } catch (e: Throwable) {
+            Log.e(TAG, "loadModel failed", e)
+            result.error("LOAD_ERROR", e.message, null)
+        }
+    }
+
+    private fun handleUnload(result: MethodChannel.Result) {
+        try {
+            synchronized(lock) {
+                lamaSession?.close(); lamaSession = null
+                esrganSession?.close(); esrganSession = null
+            }
+            result.success(true)
+        } catch (e: Throwable) {
+            result.error("UNLOAD_ERROR", e.message, null)
+        }
+    }
+
+    private fun runLaMa(image: Bitmap, mask: Bitmap?): Bitmap? {
+        val session = lamaSession ?: return null
+
+        var imgTensor: OnnxTensor? = null
+        var maskTensor: OnnxTensor? = null
+        var output: OrtSession.Result? = null
+
+        try {
+            val imgResized = safeResize(image, LAMA_SIZE, LAMA_SIZE)
+            val maskResized = mask?.let { safeResize(it, LAMA_SIZE, LAMA_SIZE) }
+                ?: solidBitmap(LAMA_SIZE, LAMA_SIZE, Color.WHITE)
+
+            val imgPx = IntArray(LAMA_SIZE * LAMA_SIZE)
+            imgResized.getPixels(imgPx, 0, LAMA_SIZE, 0, 0, LAMA_SIZE, LAMA_SIZE)
+
+            val maskPx = IntArray(LAMA_SIZE * LAMA_SIZE)
+            maskResized.getPixels(maskPx, 0, LAMA_SIZE, 0, 0, LAMA_SIZE, LAMA_SIZE)
+
+            val plane = LAMA_SIZE * LAMA_SIZE
+            val imgArr = FloatArray(3 * plane)
+            val maskArr = FloatArray(plane)
+
+            for (i in 0 until plane) {
+                val p = imgPx[i]
+                imgArr[0 * plane + i] = ((p shr 16) and 0xFF) / 255f
+                imgArr[1 * plane + i] = ((p shr 8) and 0xFF) / 255f
+                imgArr[2 * plane + i] = (p and 0xFF) / 255f
+
+                val m = maskPx[i]
+                val lum = (((m shr 16) and 0xFF) + ((m shr 8) and 0xFF) + (m and 0xFF)) / 3
+                maskArr[i] = if (lum > 128) 1f else 0f
+            }
+
+            imgTensor = OnnxTensor.createTensor(
+                env, FloatBuffer.wrap(imgArr),
+                longArrayOf(1, 3, LAMA_SIZE.toLong(), LAMA_SIZE.toLong())
+            )
+            maskTensor = OnnxTensor.createTensor(
+                env, FloatBuffer.wrap(maskArr),
+                longArrayOf(1, 1, LAMA_SIZE.toLong(), LAMA_SIZE.toLong())
+            )
+
+            val inputNames = session.inputNames.toList()
+            val inputs = mutableMapOf<String, OnnxTensor>()
+            inputs[inputNames[0]] = imgTensor!!
+            if (inputNames.size >= 2) inputs[inputNames[1]] = maskTensor!!
+
+            output = session.run(inputs)
+            val outTensor = output[0] as OnnxTensor
+            val outBuf = outTensor.floatBuffer
+            val outShape = outTensor.info.shape
+
+            val outC = outShape[1].toInt()
+            val outH = outShape[2].toInt()
+            val outW = outShape[3].toInt()
+            val outPlane = outH * outW
+            val totalFloats = outC * outPlane
+
+            val floats = FloatArray(totalFloats)
+            outBuf.rewind()
+            outBuf.get(floats)
+
+            var minV = Float.MAX_VALUE
+            for (v in floats) if (v < minV) minV = v
+            val needsRescale = minV < -0.1f
+
+            val outBmp = Bitmap.createBitmap(outW, outH, Bitmap.Config.ARGB_8888)
+            val outPx = IntArray(outPlane)
+            for (i in 0 until outPlane) {
+                fun ch(c: Int): Int {
+                    val raw = floats[c * outPlane + i]
+                    val n = if (needsRescale) (raw + 1f) / 2f else raw
+                    return (n * 255f).toInt().coerceIn(0, 255)
+                }
+                val r = ch(0); val g = ch(1); val b = ch(2)
+                val a = if (outC >= 4) ch(3) else 255
+                outPx[i] = (a shl 24) or (r shl 16) or (g shl 8) or b
+            }
+            outBmp.setPixels(outPx, 0, outW, 0, 0, outW, outH)
+
+            return Bitmap.createScaledBitmap(outBmp, image.width, image.height, true)
+        } catch (e: Throwable) {
+            Log.e(TAG, "runLaMa failed", e)
+            return null
+        } finally {
+            try { output?.close() } catch (_: Throwable) {}
+            try { maskTensor?.close() } catch (_: Throwable) {}
+            try { imgTensor?.close() } catch (_: Throwable) {}
+        }
+    }
+
+    private fun runEsrgan(image: Bitmap, factor: Int): Bitmap? {
+        val session = esrganSession ?: return null
+
+        var input: OnnxTensor? = null
+        var output: OrtSession.Result? = null
+
+        try {
+            var w = image.width
+            var h = image.height
+            if (w > ESRGAN_MAX_DIM || h > ESRGAN_MAX_DIM) {
+                val s = min(ESRGAN_MAX_DIM.toFloat() / w, ESRGAN_MAX_DIM.toFloat() / h)
+                w = (w * s).toInt()
+                h = (h * s).toInt()
+            }
+            w = ((w / 32) * 32).coerceAtLeast(32)
+            h = ((h / 32) * 32).coerceAtLeast(32)
+
+            val resized = safeResize(image, w, h)
+            val plane = w * h
+            val px = IntArray(plane)
+            resized.getPixels(px, 0, w, 0, 0, w, h)
+
+            val arr = FloatArray(3 * plane)
+            for (i in 0 until plane) {
+                val p = px[i]
+                arr[0 * plane + i] = ((p shr 16) and 0xFF) / 255f
+                arr[1 * plane + i] = ((p shr 8) and 0xFF) / 255f
+                arr[2 * plane + i] = (p and 0xFF) / 255f
+            }
+
+            input = OnnxTensor.createTensor(
+                env, FloatBuffer.wrap(arr),
+                longArrayOf(1, 3, h.toLong(), w.toLong())
+            )
+
+            val inputName = session.inputNames.first()
+            output = session.run(mapOf(inputName to input!!))
+            val outTensor = output[0] as OnnxTensor
+            val outShape = outTensor.info.shape
+            val outH = outShape[2].toInt()
+            val outW = outShape[3].toInt()
+            val outPlane = outH * outW
+            val total = 3 * outPlane
+
+            val floats = FloatArray(total)
+            outTensor.floatBuffer.rewind()
+            outTensor.floatBuffer.get(floats)
+
+            var minV = Float.MAX_VALUE
+            for (v in floats) if (v < minV) minV = v
+            val needsRescale = minV < -0.1f
+
+            val outBmp = Bitmap.createBitmap(outW, outH, Bitmap.Config.ARGB_8888)
+            val outPx = IntArray(outPlane)
+            for (i in 0 until outPlane) {
+                fun ch(c: Int): Int {
+                    val raw = floats[c * outPlane + i]
+                    val n = if (needsRescale) (raw + 1f) / 2f else raw
+                    return (n * 255f).toInt().coerceIn(0, 255)
+                }
+                outPx[i] = (255 shl 24) or (ch(0) shl 16) or (ch(1) shl 8) or ch(2)
+            }
+            outBmp.setPixels(outPx, 0, outW, 0, 0, outW, outH)
+
+            return outBmp
+        } catch (e: Throwable) {
+            Log.e(TAG, "runEsrgan failed", e)
+            return null
+        } finally {
+            try { output?.close() } catch (_: Throwable) {}
+            try { input?.close() } catch (_: Throwable) {}
+        }
+    }
+
+    private fun decodeBitmap(path: String): Bitmap? {
+        return try {
+            val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeFile(path, opts)
+            val maxDim = 4096
+            var sample = 1
+            while (opts.outWidth / sample > maxDim || opts.outHeight / sample > maxDim) {
+                sample *= 2
+            }
+            val opts2 = BitmapFactory.Options().apply { inSampleSize = sample }
+            BitmapFactory.decodeFile(path, opts2)
+        } catch (e: Throwable) {
+            Log.e(TAG, "decodeBitmap failed", e)
+            null
+        }
+    }
+
+    private fun safeResize(src: Bitmap, w: Int, h: Int): Bitmap {
+        return try {
+            if (src.width == w && src.height == h) src
+            else Bitmap.createScaledBitmap(src, w, h, true)
+        } catch (e: Throwable) {
+            val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(out)
+            val paint = Paint().apply {
+                isFilterBitmap = true
+                isAntiAlias = true
+            }
+            canvas.drawBitmap(src, null, android.graphics.Rect(0, 0, w, h), paint)
+            out
+        }
+    }
+
+    private fun solidBitmap(w: Int, h: Int, color: Int): Bitmap =
+        Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).apply { eraseColor(color) }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #69: 🟢 CREATE
+📁 الملف الجديد: android/app/src/main/kotlin/com/productchat/studio/native/HomeWidgetProvider.kt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+package com.productchat.studio.native
+
+import android.app.PendingIntent
+import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProvider
+import android.content.Context
+import android.content.Intent
+import android.widget.RemoteViews
+import com.productchat.studio.MainActivity
+import com.productchat.studio.R
+
+/**
+ * HomeWidgetProvider — Android home screen widget.
+ * Provides quick access to the app.
+ */
+class HomeWidgetProvider : AppWidgetProvider() {
+
+    override fun onUpdate(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray
+    ) {
+        for (widgetId in appWidgetIds) {
+            val views = RemoteViews(context.packageName, R.layout.widget_productchat)
+
+            views.setTextViewText(R.id.widget_title, "ProductChat")
+            views.setTextViewText(R.id.widget_subtitle, "Tap to edit a product photo")
+
+            // Quick action: open app
+            val intent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                context, 0, intent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
+
+            appWidgetManager.updateAppWidget(widgetId, views)
+        }
+    }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #70: 🟢 CREATE
+📁 الملف الجديد: android/app/src/main/res/layout/widget_productchat.xml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف بهذا المحتوى:
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/widget_bg"
+    android:gravity="center_vertical">
+
+    <ImageView
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@mipmap/ic_launcher"
+        android:contentDescription="ProductChat" />
+
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ProductChat"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginTop="8dp" />
+
+    <TextView
+        android:id="@+id/widget_subtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tap to edit a photo"
+        android:textColor="#B0B8C8"
+        android:textSize="12sp"
+        android:layout_marginTop="4dp" />
+</LinearLayout>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #71: 🟢 CREATE
+📁 الملف الجديد: android/app/src/main/res/drawable/widget_bg.xml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف بهذا المحتوى:
+
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="135"
+        android:startColor="#6C5CE7"
+        android:endColor="#8B7BFF" />
+    <corners android:radius="20dp" />
+</shape>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #72: 🟢 CREATE
+📁 الملف الجديد: android/app/src/main/res/xml/widget_info.xml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف بهذا المحتوى:
+
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:updatePeriodMillis="86400000"
+    android:initialLayout="@layout/widget_productchat"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen" />
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #73: 🟢 CREATE
+📁 الملف الجديد: android/app/src/main/kotlin/com/productchat/studio/native/BatchForegroundService.kt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+package com.productchat.studio.native
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.os.IBinder
+import androidx.core.app.NotificationCompat
+import com.productchat.studio.R
+
+/**
+ * BatchForegroundService — Keeps batch processing alive when app is backgrounded.
+ */
+class BatchForegroundService : Service() {
+
+    companion object {
+        const val CHANNEL_ID = "batch_processing"
+        const val NOTIFICATION_ID = 1001
+        const val ACTION_START = "START_BATCH"
+        const val ACTION_STOP = "STOP_BATCH"
+        const val ACTION_UPDATE = "UPDATE_PROGRESS"
+        const val EXTRA_PROGRESS = "progress"
+        const val EXTRA_TOTAL = "total"
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        createChannel()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            ACTION_START -> startForeground(NOTIFICATION_ID, buildNotification(0, 0))
+            ACTION_UPDATE -> {
+                val progress = intent.getIntExtra(EXTRA_PROGRESS, 0)
+                val total = intent.getIntExtra(EXTRA_TOTAL, 1)
+                updateNotification(progress, total)
+            }
+            ACTION_STOP -> {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                stopSelf()
+            }
+        }
+        return START_STICKY
+    }
+
+    private fun createChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Batch Processing",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Shows progress of batch operations"
+                setShowBadge(false)
+            }
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            nm.createNotificationChannel(channel)
+        }
+    }
+
+    private fun buildNotification(progress: Int, total: Int): Notification {
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Processing images")
+            .setContentText(if (total > 0) "$progress of $total" else "Starting...")
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+
+        if (total > 0) {
+            builder.setProgress(total, progress, false)
+        } else {
+            builder.setProgress(0, 0, true)
+        }
+        return builder.build()
+    }
+
+    private fun updateNotification(progress: Int, total: Int) {
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.notify(NOTIFICATION_ID, buildNotification(progress, total))
+    }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #74: 🟡 MODIFY
+📁 الملف: android/app/src/main/AndroidManifest.xml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة 1: أضف قبل </application>:
+
+        <!-- Home Widget -->
+        <receiver
+            android:name=".native.HomeWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info" />
+        </receiver>
+
+        <!-- Foreground Service for Batch -->
+        <service
+            android:name=".native.BatchForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+الخطوة 2: أضف في الأعلى (قبل <application>):
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #75: 🟢 CREATE
+📁 الملف الجديد: android/app/src/main/kotlin/com/productchat/studio/native/ShareReceiver.kt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+package com.productchat.studio.native
+
+import android.app.Activity
+import android.content.Intent
+import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.PluginRegistry
+
+/**
+ * ShareReceiver — Handles images shared INTO the app from other apps.
+ * Registered as ActivityResultListener for ACTION_SEND intents.
+ */
+class ShareReceiver : PluginRegistry.ActivityResultListener {
+
+    private var pendingResult: MethodChannel.Result? = null
+    private var pendingImagePath: String? = null
+
+    companion object {
+        const val CHANNEL = "com.productchat/share"
+    }
+
+    fun setPendingImage(path: String?) {
+        pendingImagePath = path
+    }
+
+    fun consumePendingImage(): String? {
+        val p = pendingImagePath
+        pendingImagePath = null
+        return p
+    }
+
+    fun handleMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        when (call.method) {
+            "getPendingImage" -> {
+                result.success(consumePendingImage())
+            }
+            else -> result.notImplemented()
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
+        if (requestCode == 1001 && resultCode == Activity.RESULT_OK) {
+            val uri = data?.data
+            if (uri != null) {
+                pendingImagePath = uri.toString()
+                pendingResult?.success(uri.toString())
+                pendingResult = null
+                return true
+            }
+        }
+        return false
+    }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #76: 🟡 MODIFY
+📁 الملف: android/app/src/main/AndroidManifest.xml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة: أضف داخل <activity> (بعد intent-filters الحالية):
+
+            <!-- Receive shared images -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #77: 🟢 CREATE
+📁 الملف الجديد: lib/services/share_receiver_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'package:flutter/services.dart';
+
+/// ShareReceiverService — يستقبل الصور المُشاركة من تطبيقات أخرى.
+class ShareReceiverService {
+  static const _channel = MethodChannel('com.productchat/share');
+
+  /// فحص إذا كان هناك صورة مُشاركة عند بدء التطبيق.
+  Future<String?> getPendingImage() async {
+    try {
+      final path = await _channel.invokeMethod<String>('getPendingImage');
+      return path;
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #78: 🔴 REPLACE
+📁 الملف: ios/Runner/Channels/SeikaChannel.swift
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+استبدل الملف بالكامل بهذا:
+
+import Flutter
+import UIKit
+import onnxruntime_objc
+
+class SeikaChannel: NSObject {
+    static let channelName = "com.productchat/seika"
+    private var lamaSession: ORTSession?
+    private var esrganSession: ORTSession?
+    private var env: ORTEnv?
+    private let lock = NSLock()
+
+    static func register(with registrar: FlutterPluginRegistrar) {
+        let channel = FlutterMethodChannel(
+            name: channelName,
+            binaryMessenger: registrar.messenger()
+        )
+        let instance = SeikaChannel()
+        registrar.addMethodCallDelegate(instance, channel: channel)
+    }
+}
+
+extension SeikaChannel: FlutterPlugin {
+    func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        switch call.method {
+        case "removeBg":    handleRemoveBg(call, result)
+        case "inpaint":     handleInpaint(call, result)
+        case "upscale":     handleUpscale(call, result)
+        case "loadModel":   handleLoadModel(call, result)
+        case "unloadModel": unload(); result(true)
+        case "isLoaded":    result(isAnyLoaded())
+        default:            result(FlutterMethodNotImplemented)
+        }
+    }
+
+    private func handleRemoveBg(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any],
+              let path = args["path"] as? String else {
+            result(FlutterError(code: "ARGS", message: "path required", details: nil))
+            return
+        }
+        let quality = (args["quality"] as? String) ?? "fast"
+        let outputPath = path.replacingOccurrences(
+            of: "\\.[^.]+$", with: "_nobg.png", options: .regularExpression
+        )
+
+        guard let img = decodeImage(path) else {
+            result(FlutterError(code: "DECODE", message: "cannot decode", details: nil))
+            return
+        }
+
+        var output: UIImage
+        if quality == "balanced" || quality == "best" {
+            lock.lock()
+            let lamaOut = lamaSession != nil ? runLaMa(img, mask: nil) : nil
+            lock.unlock()
+            output = lamaOut ?? PatchMatchRemover.removeBackground(img)
+        } else {
+            output = PatchMatchRemover.removeBackground(img)
+        }
+
+        guard let data = output.pngData() else {
+            result(FlutterError(code: "ENCODE", message: "png failed", details: nil))
+            return
+        }
+        do {
+            try data.write(to: URL(fileURLWithPath: outputPath))
+            result([
+                "ok": true,
+                "outputPath": outputPath,
+                "width": Int(output.size.width),
+                "height": Int(output.size.height),
+                "quality": quality
+            ])
+        } catch {
+            result(FlutterError(code: "WRITE", message: error.localizedDescription, details: nil))
+        }
+    }
+
+    private func handleInpaint(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any],
+              let path = args["path"] as? String,
+              let maskPath = args["maskPath"] as? String else {
+            result(FlutterError(code: "ARGS", message: "path and maskPath required", details: nil))
+            return
+        }
+        let outputPath = path.replacingOccurrences(
+            of: "\\.[^.]+$", with: "_inpaint.png", options: .regularExpression
+        )
+
+        guard let img = decodeImage(path),
+              let mask = decodeImage(maskPath) else {
+            result(FlutterError(code: "DECODE", message: "cannot decode", details: nil))
+            return
+        }
+
+        lock.lock()
+        let output = runLaMa(img, mask: mask) ?? img
+        lock.unlock()
+
+        guard let data = output.pngData() else {
+            result(FlutterError(code: "ENCODE", message: "png failed", details: nil))
+            return
+        }
+        do {
+            try data.write(to: URL(fileURLWithPath: outputPath))
+            result(["ok": true, "outputPath": outputPath])
+        } catch {
+            result(FlutterError(code: "WRITE", message: error.localizedDescription, details: nil))
+        }
+    }
+
+    private func handleUpscale(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any],
+              let path = args["path"] as? String else {
+            result(FlutterError(code: "ARGS", message: "path required", details: nil))
+            return
+        }
+        let factor = (args["factor"] as? Int) ?? 2
+        let outputPath = path.replacingOccurrences(
+            of: "\\.[^.]+$", with: "_\(factor)x.png", options: .regularExpression
+        )
+
+        guard let img = decodeImage(path) else {
+            result(FlutterError(code: "DECODE", message: "cannot decode", details: nil))
+            return
+        }
+
+        lock.lock()
+        let output = runEsrgan(img, factor: factor) ?? img
+        lock.unlock()
+
+        guard let data = output.pngData() else {
+            result(FlutterError(code: "ENCODE", message: "png failed", details: nil))
+            return
+        }
+        do {
+            try data.write(to: URL(fileURLWithPath: outputPath))
+            result([
+                "ok": true,
+                "outputPath": outputPath,
+                "width": Int(output.size.width),
+                "height": Int(output.size.height),
+                "factor": factor
+            ])
+        } catch {
+            result(FlutterError(code: "WRITE", message: error.localizedDescription, details: nil))
+        }
+    }
+
+    private func handleLoadModel(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any],
+              let modelType = args["modelType"] as? String,
+              let modelPath = args["modelPath"] as? String else {
+            result(FlutterError(code: "ARGS", message: "modelType and modelPath required", details: nil))
+            return
+        }
+
+        do {
+            let ortEnv = try ORTEnv(loggingLevel: .warning)
+            let opts = try ORTSessionOptions()
+            try opts.setIntraOpNumThreads(4)
+            try opts.setInterOpNumThreads(1)
+            try opts.setGraphOptimizationLevel(.all)
+            try opts.addConfigEntry(withKey: "session.intra_op.allow_spinning", value: "0")
+
+            let session = try ORTSession(env: ortEnv, modelPath: modelPath, sessionOptions: opts)
+
+            lock.lock()
+            switch modelType {
+            case "lama":   lamaSession = session
+            case "esrgan": esrganSession = session
+            default:
+                lock.unlock()
+                result(FlutterError(code: "UNKNOWN_MODEL", message: "lama|esrgan only", details: nil))
+                return
+            }
+            env = ortEnv
+            lock.unlock()
+
+            result(["ok": true, "modelType": modelType])
+        } catch {
+            result(FlutterError(code: "LOAD", message: error.localizedDescription, details: nil))
+        }
+    }
+
+    private func unload() {
+        lock.lock()
+        lamaSession = nil
+        esrganSession = nil
+        env = nil
+        lock.unlock()
+    }
+
+    private func isAnyLoaded() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return lamaSession != nil || esrganSession != nil
+    }
+
+    private func runLaMa(_ image: UIImage, mask: UIImage?) -> UIImage? {
+        guard let session = lamaSession, let ortEnv = env else { return nil }
+        let N = 512
+        let plane = N * N
+
+        let imgResized = safeResize(image, width: N, height: N)
+        guard let imgCG = imgResized.cgImage else { return nil }
+
+        let maskImage: UIImage
+        if let m = mask {
+            maskImage = safeResize(m, width: N, height: N)
+        } else {
+            maskImage = solidImage(width: N, height: N, color: .white)
+        }
+        guard let maskCG = maskImage.cgImage else { return nil }
+
+        var imgArr = [Float](repeating: 0, count: 3 * plane)
+        var maskArr = [Float](repeating: 0, count: plane)
+
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue
+
+        var imgPixels = [UInt8](repeating: 0, count: N * N * 4)
+        var maskPixels = [UInt8](repeating: 0, count: N * N * 4)
+
+        guard let imgCtx = CGContext(data: &imgPixels, width: N, height: N,
+                                      bitsPerComponent: 8, bytesPerRow: N * 4,
+                                      space: colorSpace, bitmapInfo: bitmapInfo),
+              let maskCtx = CGContext(data: &maskPixels, width: N, height: N,
+                                       bitsPerComponent: 8, bytesPerRow: N * 4,
+                                       space: colorSpace, bitmapInfo: bitmapInfo)
+        else { return nil }
+
+        imgCtx.draw(imgCG, in: CGRect(x: 0, y: 0, width: N, height: N))
+        maskCtx.draw(maskCG, in: CGRect(x: 0, y: 0, width: N, height: N))
+
+        for i in 0..<plane {
+            let src = i * 4
+            imgArr[0 * plane + i] = Float(imgPixels[src + 0]) / 255.0
+            imgArr[1 * plane + i] = Float(imgPixels[src + 1]) / 255.0
+            imgArr[2 * plane + i] = Float(imgPixels[src + 2]) / 255.0
+
+            let lum = (Int(maskPixels[src + 0]) + Int(maskPixels[src + 1]) + Int(maskPixels[src + 2])) / 3
+            maskArr[i] = lum > 128 ? 1.0 : 0.0
+        }
+
+        do {
+            let imgData = NSMutableData(bytes: imgArr, length: imgArr.count * MemoryLayout<Float>.size)
+            let maskData = NSMutableData(bytes: maskArr, length: maskArr.count * MemoryLayout<Float>.size)
+
+            let imgTensor = try ORTValue(
+                tensorData: imgData, elementType: .float,
+                shape: [1, 3, NSNumber(value: N), NSNumber(value: N)]
+            )
+            let maskTensor = try ORTValue(
+                tensorData: maskData, elementType: .float,
+                shape: [1, 1, NSNumber(value: N), NSNumber(value: N)]
+            )
+
+            let inputNames = try session.inputNames()
+            var inputs: [String: ORTValue] = [:]
+            inputs[inputNames[0]] = imgTensor
+            if inputNames.count >= 2 { inputs[inputNames[1]] = maskTensor }
+
+            let outputNames = Set(try session.outputNames())
+            let outputs = try session.run(withInputs: inputs,
+                                          outputNames: outputNames,
+                                          runOptions: nil)
+
+            guard let outputName = try session.outputNames().first,
+                  let outputTensor = outputs[outputName] else { return nil }
+
+            let outData = try outputTensor.tensorData() as Data
+            let outFloats = outData.withUnsafeBytes { ptr -> [Float] in
+                Array(ptr.bindMemory(to: Float.self))
+            }
+
+            var minV: Float = .greatestFiniteMagnitude
+            for v in outFloats where v < minV { minV = v }
+            let needsRescale = minV < -0.1
+
+            let outShape = outputTensor.shape
+            let outC = outShape[1].intValue
+            let outH = outShape[2].intValue
+            let outW = outShape[3].intValue
+            let outPlane = outH * outW
+
+            var outPixels = [UInt8](repeating: 0, count: outW * outH * 4)
+            for i in 0..<outPlane {
+                func ch(_ c: Int) -> UInt8 {
+                    let raw = outFloats[c * outPlane + i]
+                    let n = needsRescale ? (raw + 1.0) / 2.0 : raw
+                    return UInt8(max(0, min(255, Int(n * 255.0))))
+                }
+                outPixels[i * 4 + 0] = ch(0)
+                outPixels[i * 4 + 1] = ch(1)
+                outPixels[i * 4 + 2] = ch(2)
+                outPixels[i * 4 + 3] = outC >= 4 ? ch(3) : 255
+            }
+
+            guard let outImage = makeImage(from: outPixels, width: outW, height: outH) else {
+                return nil
+            }
+            return safeResize(outImage, width: Int(image.size.width), height: Int(image.size.height))
+        } catch {
+            return nil
+        }
+    }
+
+    private func runEsrgan(_ image: UIImage, factor: Int) -> UIImage? {
+        guard let session = esrganSession, env != nil else { return nil }
+
+        var w = Int(image.size.width)
+        var h = Int(image.size.height)
+        if w > 1024 || h > 1024 {
+            let s = min(Float(1024) / Float(w), Float(1024) / Float(h))
+            w = Int(Float(w) * s)
+            h = Int(Float(h) * s)
+        }
+        w = max(32, (w / 32) * 32)
+        h = max(32, (h / 32) * 32)
+
+        let resized = safeResize(image, width: w, height: h)
+        guard let cg = resized.cgImage else { return nil }
+
+        var pixels = [UInt8](repeating: 0, count: w * h * 4)
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        guard let ctx = CGContext(data: &pixels, width: w, height: h,
+                                   bitsPerComponent: 8, bytesPerRow: w * 4,
+                                   space: colorSpace,
+                                   bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { return nil }
+        ctx.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
+
+        let plane = w * h
+        var arr = [Float](repeating: 0, count: 3 * plane)
+        for i in 0..<plane {
+            let src = i * 4
+            arr[0 * plane + i] = Float(pixels[src + 0]) / 255.0
+            arr[1 * plane + i] = Float(pixels[src + 1]) / 255.0
+            arr[2 * plane + i] = Float(pixels[src + 2]) / 255.0
+        }
+
+        do {
+            let tensorData = NSMutableData(bytes: arr, length: arr.count * MemoryLayout<Float>.size)
+            let inputTensor = try ORTValue(
+                tensorData: tensorData, elementType: .float,
+                shape: [1, 3, NSNumber(value: h), NSNumber(value: w)]
+            )
+
+            let inputName = try session.inputNames().first ?? "input"
+            let outputNames = Set(try session.outputNames())
+            let outputs = try session.run(withInputs: [inputName: inputTensor],
+                                          outputNames: outputNames,
+                                          runOptions: nil)
+
+            guard let outName = try session.outputNames().first,
+                  let outputTensor = outputs[outName] else { return nil }
+
+            let outData = try outputTensor.tensorData() as Data
+            let outFloats = outData.withUnsafeBytes { ptr -> [Float] in
+                Array(ptr.bindMemory(to: Float.self))
+            }
+
+            var minV: Float = .greatestFiniteMagnitude
+            for v in outFloats where v < minV { minV = v }
+            let needsRescale = minV < -0.1
+
+            let outShape = outputTensor.shape
+            let outH = outShape[2].intValue
+            let outW = outShape[3].intValue
+            let outPlane = outH * outW
+
+            var outPixels = [UInt8](repeating: 0, count: outW * outH * 4)
+            for i in 0..<outPlane {
+                func ch(_ c: Int) -> UInt8 {
+                    let raw = outFloats[c * outPlane + i]
+                    let n = needsRescale ? (raw + 1.0) / 2.0 : raw
+                    return UInt8(max(0, min(255, Int(n * 255.0))))
+                }
+                outPixels[i * 4 + 0] = ch(0)
+                outPixels[i * 4 + 1] = ch(1)
+                outPixels[i * 4 + 2] = ch(2)
+                outPixels[i * 4 + 3] = 255
+            }
+
+            return makeImage(from: outPixels, width: outW, height: outH)
+        } catch {
+            return nil
+        }
+    }
+
+    private func decodeImage(_ path: String) -> UIImage? {
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
+              let img = UIImage(data: data) else { return nil }
+
+        let maxSide = max(img.size.width, img.size.height)
+        if maxSide <= 4096 { return img }
+
+        let scale = 4096 / maxSide
+        let newSize = CGSize(width: img.size.width * scale, height: img.size.height * scale)
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in img.draw(in: CGRect(origin: .zero, size: newSize)) }
+    }
+
+    private func safeResize(_ img: UIImage, width: Int, height: Int) -> UIImage {
+        let target = CGSize(width: width, height: height)
+        if img.size == target { return img }
+        let renderer = UIGraphicsImageRenderer(size: target)
+        return renderer.image { _ in
+            img.draw(in: CGRect(origin: .zero, size: target))
+        }
+    }
+
+    private func solidImage(width: Int, height: Int, color: UIColor) -> UIImage {
+        let size = CGSize(width: width, height: height)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { ctx in
+            color.setFill()
+            ctx.fill(CGRect(origin: .zero, size: size))
+        }
+    }
+
+    private func makeImage(from rgba: [UInt8], width: Int, height: Int) -> UIImage? {
+        guard let provider = CGDataProvider(data: Data(rgba) as CFData) else { return nil }
+        guard let cg = CGImage(
+            width: width, height: height,
+            bitsPerComponent: 8, bitsPerPixel: 32,
+            bytesPerRow: width * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+            provider: provider, decode: nil,
+            shouldInterpolate: false, intent: .defaultIntent
+        ) else { return nil }
+        return UIImage(cgImage: cg)
+    }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #79: 🟢 CREATE
+📁 الملف الجديد: ios/Runner/Channels/ShareReceiver.swift
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import Flutter
+import UIKit
+
+class ShareReceiver {
+    static let channelName = "com.productchat/share"
+    private static var pendingImage: String?
+
+    static func register(with registrar: FlutterPluginRegistrar) {
+        let channel = FlutterMethodChannel(
+            name: channelName,
+            binaryMessenger: registrar.messenger()
+        )
+        channel.setMethodCallHandler { call, result in
+            switch call.method {
+            case "getPendingImage":
+                result(pendingImage)
+                pendingImage = nil
+            default:
+                result(FlutterMethodNotImplemented)
+            }
+        }
+    }
+
+    static func setPendingImage(_ path: String) {
+        pendingImage = path
+    }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #80: 🟡 MODIFY
+📁 الملف: ios/Runner/AppDelegate.swift
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+استبدل الملف بالكامل بهذا:
+
+import Flutter
+import UIKit
+
+@main
+@objc class AppDelegate: FlutterAppDelegate {
+    override func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
+        GeneratedPluginRegistrant.register(with: self)
+
+        if let controller = window?.rootViewController as? FlutterViewController {
+            let seikaRegistrar = controller.registrar(forPlugin: "SeikaChannel")!
+            SeikaChannel.register(with: seikaRegistrar)
+
+            let shareRegistrar = controller.registrar(forPlugin: "ShareReceiver")!
+            ShareReceiver.register(with: shareRegistrar)
+        }
+
+        return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    }
+
+    override func application(
+        _ app: UIApplication,
+        open url: URL,
+        options: [UIApplication.OpenURLOptionsKey : Any] = [:]
+    ) -> Bool {
+        // Handle image shared into the app via URL scheme
+        if url.isFileURL {
+            ShareReceiver.setPendingImage(url.path)
+        }
+        return super.application(app, open: url, options: options)
+    }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #81: 🟡 MODIFY
+📁 الملف: ios/Runner/Info.plist
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة: أضف هذه المفاتيح قبل </dict>:
+
+    <key>UIFileSharingEnabled</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Image</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>public.image</string>
+            </array>
+        </dict>
+    </array>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #82: 🟡 MODIFY
+📁 الملف: android/app/build.gradle
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة 1: ابحث عن android { } وأضف داخله:
+
+    aaptOptions {
+        noCompress "onnx", "tflite", "bin"
+    }
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE']
+        }
+    }
+
+الخطوة 2: ابحث عن dependencies { } وأضف:
+
+    implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.19.0'
+    implementation 'androidx.core:core-ktx:1.13.1'
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #83: 🟢 CREATE
+📁 الملف الجديد: android/app/proguard-rules.pro
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف بهذا المحتوى:
+
+# ONNX Runtime — keep native bindings
+-keep class ai.onnxruntime.** { *; }
+-keep class com.microsoft.onnxruntime.** { *; }
+-dontwarn ai.onnxruntime.**
+-dontwarn com.microsoft.onnxruntime.**
+
+# Flutter
+-keep class io.flutter.** { *; }
+-keep class io.flutter.plugins.** { *; }
+
+# ProductChat Native
+-keep class com.productchat.studio.native.** { *; }
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الملف 22_NATIVE_COMPLETE.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
