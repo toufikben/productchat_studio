@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="new_edit" android:enabled="true" android:icon="@mipmap/ic_launcher" android:shortcutShortLabel="@string/shortcut_new_edit" android:shortcutLongLabel="@string/shortcut_new_edit_long">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.productchat.studio" android:targetClass="com.productchat.studio.MainActivity"><extra android:name="shortcut_type" android:value="new_edit" /></intent>
+    </shortcut>
+    <shortcut android:shortcutId="batch" android:enabled="true" android:icon="@mipmap/ic_launcher" android:shortcutShortLabel="@string/shortcut_batch" android:shortcutLongLabel="@string/shortcut_batch_long">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.productchat.studio" android:targetClass="com.productchat.studio.MainActivity"><extra android:name="shortcut_type" android:value="batch" /></intent>
+    </shortcut>
+    <shortcut android:shortcutId="history" android:enabled="true" android:icon="@mipmap/ic_launcher" android:shortcutShortLabel="@string/shortcut_history" android:shortcutLongLabel="@string/shortcut_history_long">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.productchat.studio" android:targetClass="com.productchat.studio.MainActivity"><extra android:name="shortcut_type" android:value="history" /></intent>
+    </shortcut>
+    <shortcut android:shortcutId="scan" android:enabled="true" android:icon="@mipmap/ic_launcher" android:shortcutShortLabel="@string/shortcut_scan" android:shortcutLongLabel="@string/shortcut_scan_long">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.productchat.studio" android:targetClass="com.productchat.studio.MainActivity"><extra android:name="shortcut_type" android:value="scan" /></intent>
+    </shortcut>
+</shortcuts>

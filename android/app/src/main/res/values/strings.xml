@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ProductChat Studio</string>
+    <string name="shortcut_new_edit">New Edit</string>
+    <string name="shortcut_new_edit_long">Start a new photo edit</string>
+    <string name="shortcut_batch">Batch</string>
+    <string name="shortcut_batch_long">Process multiple images</string>
+    <string name="shortcut_history">History</string>
+    <string name="shortcut_history_long">View recent edits</string>
+    <string name="shortcut_scan">Scan</string>
+    <string name="shortcut_scan_long">Capture and edit</string>
+</resources>

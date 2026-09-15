@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme.dart';
-import '../core/voice_service.dart';
+import '../services/voice_service.dart';
 import '../features/chat/chat_studio_screen.dart';
 import '../features/home/home_screen.dart';
 import '../widgets/floating_nav_bar.dart';
+
+export '../core/theme.dart' show AppColors, AppTheme;
+export '../services/voice_service.dart'
+    show VoiceService, VoiceState, voiceProvider;
+export '../features/chat/chat_studio_screen.dart' show ChatStudioScreen;
+export '../features/home/home_screen.dart' show HomeScreen;
+export '../widgets/floating_nav_bar.dart' show FloatingNavBar, NavItem;
 
 /// Feature gates for the ProductChat Studio 2.0 interface.
 class FeatureFlags {
@@ -35,9 +42,3 @@ class ProductChatUiOverhaul {
   static ThemeData get darkTheme => AppTheme.dark;
   static ThemeData get lightTheme => AppTheme.light;
 }
-
-export '../core/theme.dart' show AppColors, AppTheme;
-export '../core/voice_service.dart' show VoiceService, VoiceState, voiceProvider;
-export '../features/chat/chat_studio_screen.dart' show ChatStudioScreen;
-export '../features/home/home_screen.dart' show HomeScreen;
-export '../widgets/floating_nav_bar.dart' show FloatingNavBar, NavItem;

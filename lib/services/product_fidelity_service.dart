@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math' as math;
 import 'package:image/image.dart' as img;
 
@@ -41,14 +42,16 @@ class ProductFidelityService {
       if (colorDelta > threshold) {
         deviations.add(FidelityDeviation(
           type: 'color',
-          message: 'Color shift detected: ${(colorDelta * 100).toStringAsFixed(0)}%',
+          message:
+              'Color shift detected: ${(colorDelta * 100).toStringAsFixed(0)}%',
           severity: colorDelta > 0.3 ? 'high' : 'medium',
         ));
       }
       if (coverageDelta > threshold) {
         deviations.add(FidelityDeviation(
           type: 'shape',
-          message: 'Product shape changed: ${(coverageDelta * 100).toStringAsFixed(0)}%',
+          message:
+              'Product shape changed: ${(coverageDelta * 100).toStringAsFixed(0)}%',
           severity: coverageDelta > 0.3 ? 'high' : 'medium',
         ));
       }
@@ -76,7 +79,9 @@ class ProductFidelityService {
     for (var y = 0; y < im.height; y += step) {
       for (var x = 0; x < im.width; x += step) {
         final p = im.getPixel(x, y);
-        r += p.r.toInt(); g += p.g.toInt(); b += p.b.toInt();
+        r += p.r.toInt();
+        g += p.g.toInt();
+        b += p.b.toInt();
         count++;
       }
     }
@@ -97,8 +102,8 @@ class ProductFidelityService {
         final p = im.getPixel(x, y);
         final d = math.sqrt(
           math.pow(p.r - corner.r, 2) +
-          math.pow(p.g - corner.g, 2) +
-          math.pow(p.b - corner.b, 2),
+              math.pow(p.g - corner.g, 2) +
+              math.pow(p.b - corner.b, 2),
         );
         if (d > 60) productPixels++;
         total++;

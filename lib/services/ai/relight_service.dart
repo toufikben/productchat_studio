@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math' as math;
 import 'package:image/image.dart' as img;
 import '../../models/edit_request.dart';
@@ -20,9 +21,11 @@ class RelightService {
     try {
       final bytes = await File(inputPath).readAsBytes();
       final src = img.decodeImage(bytes);
-      if (src == null) return const EditResult(ok: false, error: 'Decode failed');
+      if (src == null)
+        return const EditResult(ok: false, error: 'Decode failed');
 
-      final out = img.Image(width: src.width, height: src.height, numChannels: 3);
+      final out =
+          img.Image(width: src.width, height: src.height, numChannels: 3);
 
       final (rMul, gMul, bMul, contrast) = switch (style) {
         'warm' => (1.10, 1.02, 0.92, 1.05),
@@ -50,7 +53,8 @@ class RelightService {
           b *= intensity;
 
           out.setPixelRgb(
-            x, y,
+            x,
+            y,
             r.round().clamp(0, 255),
             g.round().clamp(0, 255),
             b.round().clamp(0, 255),

@@ -67,10 +67,13 @@ class AppConstants {
   static const modelQwenEditUrl =
       'https://huggingface.co/Toufikben/productchat-models/resolve/main/qwen_edit_int8.onnx';
 
-  // ─── SHA-256 (املأها بعد الرفع) ───
-  static const modelMiganSha256 = 'REPLACE_AFTER_UPLOAD';
-  static const modelLamaSha256 = 'REPLACE_AFTER_UPLOAD';
-  static const modelRealEsrganSha256 = 'REPLACE_AFTER_UPLOAD';
+  // ─── SHA-256 for committed Hugging Face artifacts ───
+  static const modelMiganSha256 =
+      '593eba0b7e04730f1b61c0a3cbca68d97d8d6a7ff5c6a44a7b9d7fcd880fc5ae';
+  static const modelLamaSha256 =
+      '37f2e4888eb27aa08841786b506fa094156c497de3d954ebf7a297c61a7fb4ea';
+  static const modelRealEsrganSha256 =
+      '5c586662929cbc686c1a5c38d9c060dbdb4ea5863a1f7672b8c0761e6b89c033';
   static const modelQwenEditSha256 = 'REPLACE_AFTER_UPLOAD';
   static const dreamLiteEnabled = false;
 

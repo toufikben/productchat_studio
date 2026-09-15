@@ -54,8 +54,8 @@ class RatingPromptDialog extends StatelessWidget {
                       await RatingPromptService.markRated();
                     } else {
                       await StoreRedirect.redirect(
-                        androidAppId: 'com.productchat.aiphotostudio',
-                        iOSAppId: 'com.productchat.aiphotostudio',
+                        androidAppId: 'com.productchat.studio',
+                        iOSAppId: 'com.productchat.studio',
                       );
                     }
                     if (context.mounted) Navigator.pop(context);

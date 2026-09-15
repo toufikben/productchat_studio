@@ -22,9 +22,9 @@ if (requestedReleaseBuild && !signingPropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.productchat.aiphotostudio"
+    namespace = "com.productchat.studio"
     compileSdk = 36
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -32,7 +32,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.productchat.aiphotostudio"
+        applicationId = "com.productchat.studio"
         minSdk = 24
         targetSdk = 36
         versionCode = flutter.versionCode

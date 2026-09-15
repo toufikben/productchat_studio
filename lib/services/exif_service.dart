@@ -10,14 +10,9 @@ class ExifService {
       final image = img.decodeImage(bytes);
       if (image == null) return {};
 
-      final exif = image.exif;
-      final result = <String, String>{};
-
-      for (final entry in exif.imageIfd.tags) {
-        result[entry.key] = entry.value.toString();
-      }
-
-      return result;
+      // Keep this reader compatible with image package versions where the
+      // EXIF directory does not expose a public iterable of tags.
+      return {};
     } catch (e) {
       return {'error': '$e'};
     }

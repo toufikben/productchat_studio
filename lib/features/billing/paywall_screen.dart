@@ -3,6 +3,7 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
+import '../../core/theme.dart';
 import '../../services/billing_service.dart';
 import '../../services/trial_service.dart';
 
@@ -104,8 +105,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
                         const Icon(Icons.timer, color: Colors.white, size: 32),
                         const SizedBox(width: 14),
                         const Expanded(
-                          child: Text('Try Pro Free for 7 Days\nNo credit card required',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                          child: Text(
+                              'Try Pro Free for 7 Days\nNo credit card required',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600)),
                         ),
                         FilledButton(
                           onPressed: () async {

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:image/image.dart' as img;
 import '../../models/edit_request.dart';
 
@@ -9,9 +10,11 @@ class ColorizeService {
     try {
       final bytes = await File(inputPath).readAsBytes();
       final src = img.decodeImage(bytes);
-      if (src == null) return const EditResult(ok: false, error: 'Decode failed');
+      if (src == null)
+        return const EditResult(ok: false, error: 'Decode failed');
 
-      final out = img.Image(width: src.width, height: src.height, numChannels: 3);
+      final out =
+          img.Image(width: src.width, height: src.height, numChannels: 3);
 
       for (var y = 0; y < src.height; y++) {
         for (var x = 0; x < src.width; x++) {
@@ -38,11 +41,11 @@ class ColorizeService {
   }
 
   (int, int, int) _luminanceToColor(int lum) {
-    if (lum < 40) return (30, 25, 20);           // dark brown
-    if (lum < 80) return (90, 70, 55);           // brown
-    if (lum < 130) return (160, 130, 100);       // tan
-    if (lum < 180) return (210, 180, 150);       // beige
-    if (lum < 220) return (240, 220, 200);       // cream
-    return (250, 245, 240);                       // warm white
+    if (lum < 40) return (30, 25, 20); // dark brown
+    if (lum < 80) return (90, 70, 55); // brown
+    if (lum < 130) return (160, 130, 100); // tan
+    if (lum < 180) return (210, 180, 150); // beige
+    if (lum < 220) return (240, 220, 200); // cream
+    return (250, 245, 240); // warm white
   }
 }

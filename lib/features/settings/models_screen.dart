@@ -138,7 +138,7 @@ class ModelCenter extends StateNotifier<ModelCenterState> {
       await part.rename(target.path);
       _update(id, ModelState.ready, 1.0, path: target.path);
     } catch (e) {
-      if (CancelToken.isCancel(e)) {
+      if (e is DioException && CancelToken.isCancel(e)) {
         _update(id, ModelState.notDownloaded, 0.0);
       } else {
         _update(id, ModelState.failed, 0.0, error: '$e');
@@ -162,7 +162,8 @@ class ModelCenter extends StateNotifier<ModelCenterState> {
     _update(id, ModelState.notDownloaded, 0.0);
   }
 
-  void _update(String id, ModelState s, double p, {String? path, String? error}) {
+  void _update(String id, ModelState s, double p,
+      {String? path, String? error}) {
     if (!mounted) return;
     final states = Map<String, ModelState>.from(state.states);
     final progress = Map<String, double>.from(state.progress);
@@ -172,11 +173,13 @@ class ModelCenter extends StateNotifier<ModelCenterState> {
     progress[id] = p;
     if (path != null) paths[id] = path;
     if (error != null) errors[id] = error;
-    state = state.copyWith(states: states, progress: progress, paths: paths, errors: errors);
+    state = state.copyWith(
+        states: states, progress: progress, paths: paths, errors: errors);
   }
 }
 
-final modelCenterProvider = StateNotifierProvider<ModelCenter, ModelCenterState>(
+final modelCenterProvider =
+    StateNotifierProvider<ModelCenter, ModelCenterState>(
   (_) => ModelCenter(),
 );
 
@@ -186,7 +189,8 @@ class ModelsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(modelCenterProvider);
-    final ready = state.states.values.where((s) => s == ModelState.ready).length;
+    final ready =
+        state.states.values.where((s) => s == ModelState.ready).length;
 
     return Scaffold(
       appBar: AppBar(title: const Text('AI Models')),
@@ -217,7 +221,8 @@ class ModelsScreen extends ConsumerWidget {
                           )),
                       const SizedBox(height: 4),
                       const Text('Download only what you need',
-                          style: TextStyle(color: Colors.white70, fontSize: 13)),
+                          style:
+                              TextStyle(color: Colors.white70, fontSize: 13)),
                     ],
                   ),
                 ),
@@ -235,9 +240,12 @@ class ModelsScreen extends ConsumerWidget {
                   state: state.states[m.id] ?? ModelState.notDownloaded,
                   progress: state.progress[m.id] ?? 0.0,
                   error: state.errors[m.id],
-                  onDownload: () => ref.read(modelCenterProvider.notifier).download(m.id),
-                  onCancel: () => ref.read(modelCenterProvider.notifier).cancel(m.id),
-                  onDelete: () => ref.read(modelCenterProvider.notifier).delete(m.id),
+                  onDownload: () =>
+                      ref.read(modelCenterProvider.notifier).download(m.id),
+                  onCancel: () =>
+                      ref.read(modelCenterProvider.notifier).cancel(m.id),
+                  onDelete: () =>
+                      ref.read(modelCenterProvider.notifier).delete(m.id),
                 );
               },
             ),
@@ -287,7 +295,9 @@ class _ModelCard extends StatelessWidget {
               AppIcons.outline(
                 Icons.healing,
                 size: 48,
-                color: state == ModelState.ready ? AppColors.success : AppColors.primary,
+                color: state == ModelState.ready
+                    ? AppColors.success
+                    : AppColors.primary,
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -317,7 +327,8 @@ class _ModelCard extends StatelessWidget {
               _actionButton(),
             ],
           ),
-          if (state == ModelState.downloading || state == ModelState.verifying) ...[
+          if (state == ModelState.downloading ||
+              state == ModelState.verifying) ...[
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
@@ -326,7 +337,9 @@ class _ModelCard extends StatelessWidget {
                 minHeight: 6,
                 backgroundColor: AppColors.surfaceAlt,
                 valueColor: AlwaysStoppedAnimation(
-                  state == ModelState.verifying ? AppColors.warning : AppColors.primary,
+                  state == ModelState.verifying
+                      ? AppColors.warning
+                      : AppColors.primary,
                 ),
               ),
             ),
@@ -343,7 +356,8 @@ class _ModelCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(text,
-            style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+            style: TextStyle(
+                color: color, fontSize: 11, fontWeight: FontWeight.w600)),
       );
 
   Widget _actionButton() {
@@ -367,7 +381,8 @@ class _ModelCard extends StatelessWidget {
             backgroundColor: AppColors.primary.withValues(alpha: 0.15),
             foregroundColor: AppColors.primary,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
           child: const Text('Download'),
         );

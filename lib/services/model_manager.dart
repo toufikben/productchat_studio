@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
@@ -22,212 +21,162 @@ class ModelSpec {
   });
 }
 
-class ModelDownloadProgress {
-  final String modelId;
-  final int received;
-  final int total;
-  final bool complete;
-
-  const ModelDownloadProgress({
-    required this.modelId,
-    required this.received,
-    required this.total,
-    this.complete = false,
-  });
-
-  double get fraction => total <= 0 ? 0 : (received / total).clamp(0, 1);
-}
-
 class ModelManager {
+  static const _models = {
+    'migan.onnx': AppConstants.modelMiganUrl,
+    'lama_fp16.onnx': AppConstants.modelLamaUrl,
+    'real_esrgan_x4.onnx': AppConstants.modelRealEsrganUrl,
+    'qwen_edit_int8.onnx': AppConstants.modelQwenEditUrl,
+  };
+
   static const lama = ModelSpec(
-    id: 'lama',
-    url: AppConstants.modelLamaUrl,
-    fileName: 'lama_fp32.onnx',
-    sha256:
-        '1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6',
-  );
-
+      id: 'lama',
+      url: AppConstants.modelLamaUrl,
+      fileName: 'lama_fp16.onnx',
+      sha256: AppConstants.modelLamaSha256);
   static const realEsrgan = ModelSpec(
-    id: 'real_esrgan',
-    url: AppConstants.modelRealEsrganUrl,
-    fileName: 'real_esrgan_x4.onnx',
-    sha256: AppConstants.modelRealEsrganSha256,
-  );
-
-  /// Maximum number of times [download] will fall back to a full (non-Range)
-  /// download when the server ignores the Range header. Prevents an infinite
-  /// recursive loop on servers that persistently return 200 instead of 206.
-  static const _maxRangeRetries = 1;
+      id: 'real_esrgan',
+      url: AppConstants.modelRealEsrganUrl,
+      fileName: 'real_esrgan_x4.onnx',
+      sha256: AppConstants.modelRealEsrganSha256);
+  static const migan = ModelSpec(
+      id: 'migan',
+      url: AppConstants.modelMiganUrl,
+      fileName: 'migan.onnx',
+      sha256: AppConstants.modelMiganSha256);
+  static const qwenEdit = ModelSpec(
+      id: 'qwen_edit',
+      url: AppConstants.modelQwenEditUrl,
+      fileName: 'qwen_edit_int8.onnx',
+      sha256: AppConstants.modelQwenEditSha256);
 
   final Dio _dio;
-  final Future<Directory> Function() _directoryProvider;
-  final Map<String, _VerifiedFile> _verifiedCache = {};
+  final Future<Directory> Function()? _directoryProvider;
 
   ModelManager({Dio? dio, Future<Directory> Function()? directoryProvider})
-      : _dio = dio ?? Dio(),
-        _directoryProvider =
-            directoryProvider ?? getApplicationSupportDirectory;
+      : _dio = dio ??
+            Dio(BaseOptions(
+                receiveTimeout: const Duration(minutes: 15),
+                connectTimeout: const Duration(seconds: 30))),
+        _directoryProvider = directoryProvider;
+
+  Future<Directory> _modelsDir() async {
+    final dir =
+        await (_directoryProvider?.call() ?? getApplicationSupportDirectory());
+    final models = Directory('${dir.path}/models');
+    if (!await models.exists()) await models.create(recursive: true);
+    return models;
+  }
 
   Future<File> modelFile(ModelSpec model) async {
-    final directory = await _directoryProvider();
-    final modelsDirectory = Directory('\${directory.path}/models');
-    await modelsDirectory.create(recursive: true);
-    return File('\${modelsDirectory.path}/\${model.fileName}');
+    final dir = await _modelsDir();
+    return File('${dir.path}/${model.fileName}');
   }
 
   Future<bool> isReady(ModelSpec model) async {
     final file = await modelFile(model);
     if (!await file.exists()) return false;
-    final length = await file.length();
-    final modified = await file.lastModified();
-    final cached = _verifiedCache[model.id];
-    if (cached != null &&
-        cached.path == file.path &&
-        cached.length == length &&
-        cached.modified == modified &&
-        cached.sha256 == model.sha256) {
-      return true;
-    }
-    final valid = await _matchesSha256(file, model.sha256);
-    if (valid) {
-      _verifiedCache[model.id] = _VerifiedFile(
-        path: file.path,
-        length: length,
-        modified: modified,
-        sha256: model.sha256,
-      );
-    } else {
-      _verifiedCache.remove(model.id);
-    }
-    return valid;
+    final expected = model.sha256;
+    if (expected.isEmpty || expected == 'REPLACE_AFTER_UPLOAD') return true;
+    return _verifySha256(file, expected);
   }
 
-  Future<String?> readyPath(ModelSpec model) async {
-    return await isReady(model) ? (await modelFile(model)).path : null;
-  }
-
-  Stream<ModelDownloadProgress> download(ModelSpec model,
-      {int _rangeRetry = 0}) async* {
-    if (await isReady(model)) {
-      final file = await modelFile(model);
-      yield ModelDownloadProgress(
-          modelId: model.id,
-          received: await file.length(),
-          total: await file.length(),
-          complete: true);
-      return;
+  Future<File> download(String name,
+      {void Function(double)? onProgress, CancelToken? cancelToken}) async {
+    final dir = await _modelsDir();
+    final target = File('${dir.path}/$name');
+    final part = File('${dir.path}/$name.part');
+    if (await target.exists()) {
+      onProgress?.call(1.0);
+      return target;
     }
-
-    final file = await modelFile(model);
-    final temporary = File('\${file.path}.part');
-    var offset = await temporary.exists() ? await temporary.length() : 0;
-    if (offset > 0) {
-      try {
-        final response = await _dio.head<void>(model.url);
-        final total = int.tryParse(
-            response.headers.value('content-length') ?? '');
-        if (total != null && offset >= total) {
-          await _finalize(temporary, file, model);
-          yield ModelDownloadProgress(
-              modelId: model.id,
-              received: total,
-              total: total,
-              complete: true);
-          return;
-        }
-      } catch (_) {
-        offset = 0;
-        if (await temporary.exists()) await temporary.delete();
+    final url = _models[name];
+    if (url == null) throw StateError('Unknown model: $name');
+    var startByte = await part.exists() ? await part.length() : 0;
+    var response = await _dio.get<ResponseBody>(url,
+        options: Options(
+            responseType: ResponseType.stream,
+            headers: startByte > 0 ? {'Range': 'bytes=$startByte-'} : null),
+        cancelToken: cancelToken);
+    if (startByte > 0 && response.statusCode == HttpStatus.ok) {
+      await part.delete();
+      startByte = 0;
+      response = await _dio.get<ResponseBody>(url,
+          options: Options(responseType: ResponseType.stream),
+          cancelToken: cancelToken);
+    }
+    final totalBytes =
+        int.tryParse(response.headers.value('content-length') ?? '') ?? 0;
+    final sink =
+        part.openWrite(mode: startByte > 0 ? FileMode.append : FileMode.write);
+    var received = startByte;
+    try {
+      await for (final chunk in response.data!.stream) {
+        sink.add(chunk);
+        received += chunk.length;
+        if (totalBytes > 0)
+          onProgress?.call(received / (totalBytes + startByte));
       }
+      await sink.close();
+    } catch (_) {
+      await sink.close();
+      rethrow;
     }
-
-    final response = await _dio.download(
-      model.url,
-      temporary.path,
-      deleteOnError: false,
-      fileAccessMode:
-          offset > 0 ? FileAccessMode.append : FileAccessMode.write,
-      options: Options(
-        responseType: ResponseType.bytes,
-        headers: offset > 0 ? {'Range': 'bytes=\$offset-'} : null,
-      ),
-      onReceiveProgress: (received, total) {
-        // Progress is surfaced via the stream; this callback logs in native.
-      },
-    );
-
-    if (offset > 0 && response.statusCode == HttpStatus.ok) {
-      // The server ignored the Range header and sent the full file.
-      // Retry once from byte zero to avoid a duplicated/corrupted artifact.
-      if (_rangeRetry >= _maxRangeRetries) {
-        throw StateError(
-            'Server repeatedly ignored Range header for \${model.id}.');
-      }
-      await temporary.delete();
-      yield* download(model, _rangeRetry: _rangeRetry + 1);
-      return;
-    }
-
-    if (response.statusCode != null && response.statusCode! >= 400) {
-      throw StateError(
-          'Model download failed with HTTP \${response.statusCode}.');
-    }
-
-    final total = await temporary.length();
-    yield ModelDownloadProgress(
-        modelId: model.id, received: total, total: total);
-    await _finalize(temporary, file, model);
-    yield ModelDownloadProgress(
-        modelId: model.id,
-        received: total,
-        total: total,
-        complete: true);
-  }
-
-  Future<void> delete(ModelSpec model) async {
-    final file = await modelFile(model);
-    final temporary = File('\${file.path}.part');
-    if (await file.exists()) await file.delete();
-    if (await temporary.exists()) await temporary.delete();
-    _verifiedCache.remove(model.id);
-  }
-
-  Future<void> _finalize(
-      File temporary, File target, ModelSpec model) async {
-    if (!await _matchesSha256(temporary, model.sha256)) {
-      await temporary.delete();
-      throw StateError(
-          'SHA-256 mismatch for \${model.id}; download discarded.');
+    final expectedSha = _shaFor(name);
+    if (expectedSha.isNotEmpty &&
+        expectedSha != 'REPLACE_AFTER_UPLOAD' &&
+        !await _verifySha256(part, expectedSha)) {
+      await part.delete();
+      throw StateError('SHA-256 mismatch for $name');
     }
     if (await target.exists()) await target.delete();
-    await temporary.rename(target.path);
-    _verifiedCache.remove(model.id);
+    await part.rename(target.path);
+    onProgress?.call(1.0);
+    return target;
   }
 
-  Future<bool> _matchesSha256(File file, String expected) async {
-    final digest = await sha256.bind(file.openRead()).first;
-    return digest.toString().toLowerCase() == expected.toLowerCase();
+  String _shaFor(String name) {
+    if (name.contains('migan')) return AppConstants.modelMiganSha256;
+    if (name.contains('lama')) return AppConstants.modelLamaSha256;
+    if (name.contains('esrgan')) return AppConstants.modelRealEsrganSha256;
+    if (name.contains('qwen')) return AppConstants.modelQwenEditSha256;
+    return '';
+  }
+
+  Future<bool> _verifySha256(File file, String expected) async {
+    try {
+      final digest = await sha256.bind(file.openRead()).first;
+      return digest.toString().toLowerCase() == expected.toLowerCase();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> isCached(String name) async =>
+      File('${(await _modelsDir()).path}/$name').exists();
+
+  Future<Map<String, bool>> cacheStatus() async =>
+      {for (final n in _models.keys) n: await isCached(n)};
+
+  Future<void> deleteModel(String name) async =>
+      delete(ModelSpec(id: name, url: '', fileName: name, sha256: ''));
+
+  Future<void> delete(ModelSpec model) async {
+    final dir = await _modelsDir();
+    final file = File('${dir.path}/${model.fileName}');
+    final part = File('${dir.path}/${model.fileName}.part');
+    if (await file.exists()) await file.delete();
+    if (await part.exists()) await part.delete();
+  }
+
+  Future<void> clearAll() async {
+    final dir = await _modelsDir();
+    if (await dir.exists()) await dir.delete(recursive: true);
+  }
+
+  Future<String?> readyPath(Object modelKey) async {
+    final name = modelKey is ModelSpec ? modelKey.fileName : modelKey.toString();
+    final file = File('${(await _modelsDir()).path}/$name');
+    return await file.exists() ? file.path : null;
   }
 }
-
-class _VerifiedFile {
-  final String path;
-  final int length;
-  final DateTime modified;
-  final String sha256;
-
-  const _VerifiedFile({
-    required this.path,
-    required this.length,
-    required this.modified,
-    required this.sha256,
-  });
-}
-
-String modelDownloadProgressToJson(ModelDownloadProgress progress) =>
-    jsonEncode({
-      'modelId': progress.modelId,
-      'received': progress.received,
-      'total': progress.total,
-      'complete': progress.complete,
-    });

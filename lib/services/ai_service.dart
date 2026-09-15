@@ -29,7 +29,8 @@ class BorderCutService {
         'quality': 'fast',
       });
       if (out == null || out['ok'] != true) {
-        return EditResult(ok: false, error: out?['error']?.toString() ?? 'Failed');
+        return EditResult(
+            ok: false, error: out?['error']?.toString() ?? 'Failed');
       }
       return EditResult(
         ok: true,
@@ -59,7 +60,8 @@ class SeikaService {
         'quality': quality,
       });
       if (out == null || out['ok'] != true) {
-        return EditResult(ok: false, error: out?['error']?.toString() ?? 'Failed');
+        return EditResult(
+            ok: false, error: out?['error']?.toString() ?? 'Failed');
       }
       return EditResult(
         ok: true,
@@ -103,7 +105,8 @@ class BasicEnhanceService {
     try {
       final bytes = await File(inputPath).readAsBytes();
       final src = img.decodeImage(bytes);
-      if (src == null) return const EditResult(ok: false, error: 'Decode failed');
+      if (src == null)
+        return const EditResult(ok: false, error: 'Decode failed');
 
       var out = img.copyResize(
         src,
@@ -131,7 +134,8 @@ class BasicEnhanceService {
     }
   }
 
-  img.Image _unsharp(img.Image src, {required double amount, required int radius}) {
+  img.Image _unsharp(img.Image src,
+      {required double amount, required int radius}) {
     final blurred = img.gaussianBlur(src, radius: radius);
     final out = img.Image(width: src.width, height: src.height, numChannels: 3);
     for (var y = 0; y < src.height; y++) {
@@ -139,7 +143,8 @@ class BasicEnhanceService {
         final s = src.getPixel(x, y);
         final b = blurred.getPixel(x, y);
         out.setPixelRgb(
-          x, y,
+          x,
+          y,
           (s.r + amount * (s.r - b.r)).round().clamp(0, 255),
           (s.g + amount * (s.g - b.g)).round().clamp(0, 255),
           (s.b + amount * (s.b - b.b)).round().clamp(0, 255),
@@ -162,7 +167,8 @@ class ShadowService {
     try {
       final bytes = await File(inputPath).readAsBytes();
       final src = img.decodeImage(bytes);
-      if (src == null) return const EditResult(ok: false, error: 'Decode failed');
+      if (src == null)
+        return const EditResult(ok: false, error: 'Decode failed');
 
       final (blurRadius, dx, dy) = switch (type) {
         'hard' => (3, 6, 6),
@@ -174,7 +180,8 @@ class ShadowService {
       final shifted = _shift(alpha, src.width, src.height, dx, dy);
       final blurred = _blur(shifted, src.width, src.height, blurRadius);
 
-      final out = img.Image(width: src.width, height: src.height, numChannels: 4);
+      final out =
+          img.Image(width: src.width, height: src.height, numChannels: 4);
       for (var y = 0; y < src.height; y++) {
         for (var x = 0; x < src.width; x++) {
           final sp = src.getPixel(x, y);
@@ -182,7 +189,8 @@ class ShadowService {
           final scaled = (sA * intensity).round().clamp(0, 255);
           final factor = 1.0 - (scaled / 255.0) * 0.6;
           out.setPixelRgba(
-            x, y,
+            x,
+            y,
             (sp.r * factor).round().clamp(0, 255),
             (sp.g * factor).round().clamp(0, 255),
             (sp.b * factor).round().clamp(0, 255),
@@ -265,7 +273,8 @@ class UpscaleService {
         'factor': factor,
       });
       if (out == null || out['ok'] != true) {
-        return EditResult(ok: false, error: out?['error']?.toString() ?? 'Failed');
+        return EditResult(
+            ok: false, error: out?['error']?.toString() ?? 'Failed');
       }
       return EditResult(
         ok: true,
@@ -275,6 +284,39 @@ class UpscaleService {
       );
     } on PlatformException catch (e) {
       return EditResult(ok: false, error: '${e.code}: ${e.message}');
+    }
+  }
+}
+
+/// Stable facade used by controllers and contract tests.
+class AiService {
+  final BorderCutService _border = BorderCutService();
+  final BasicEnhanceService _enhance = BasicEnhanceService();
+  final ShadowService _shadow = ShadowService();
+
+  Future<EditResult> apply(String imagePath, EditOp op,
+      {String? maskPath}) async {
+    if (imagePath.trim().isEmpty) {
+      return const EditResult.failure('Invalid image path');
+    }
+    if (op == EditOp.relight ||
+        op == EditOp.inpaint ||
+        op == EditOp.conversational) {
+      if (maskPath == null || maskPath.trim().isEmpty) {
+        return const EditResult.failure(
+            'A mask is required for this operation');
+      }
+    }
+    switch (op) {
+      case EditOp.removeBg:
+        return _border.removeBg(imagePath);
+      case EditOp.enhance:
+        return _enhance.enhance(imagePath, factor: 2);
+      case EditOp.shadow:
+        return _shadow.addShadow(imagePath);
+      default:
+        return const EditResult.failure(
+            'Operation is not available through AiService');
     }
   }
 }

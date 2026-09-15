@@ -72,19 +72,24 @@ class StorageService {
     await set('history', history);
   }
 
+  Future<void> clearHistory() => remove('history');
+
   List<Map<String, dynamic>> getHistory() {
     final raw = get('history');
     if (raw is! List) return [];
-    return raw.map((item) {
-      if (item is Map) return Map<String, dynamic>.from(item);
-      if (item is String) {
-        try {
-          final decoded = jsonDecode(item);
-          if (decoded is Map) return Map<String, dynamic>.from(decoded);
-        } catch (_) {}
-      }
-      return <String, dynamic>{};
-    }).where((item) => item.isNotEmpty).toList();
+    return raw
+        .map((item) {
+          if (item is Map) return Map<String, dynamic>.from(item);
+          if (item is String) {
+            try {
+              final decoded = jsonDecode(item);
+              if (decoded is Map) return Map<String, dynamic>.from(decoded);
+            } catch (_) {}
+          }
+          return <String, dynamic>{};
+        })
+        .where((item) => item.isNotEmpty)
+        .toList();
   }
 
   Future<void> remove(String key) async {

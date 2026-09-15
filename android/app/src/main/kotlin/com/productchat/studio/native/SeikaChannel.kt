@@ -1,7 +1,7 @@
 package com.productchat.studio.native
 
 import ai.onnxruntime.*
-import com.productchat.aiphotostudio.native.PatchMatchRemover
+import com.productchat.studio.native.PatchMatchRemover
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory

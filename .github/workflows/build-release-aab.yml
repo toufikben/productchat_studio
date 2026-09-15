@@ -47,6 +47,23 @@ jobs:
           storeFile=release-key.jks
           EOF
 
+      - name: Generate ephemeral signing key (fallback)
+        if: ${{ secrets.KEYSTORE_BASE64 == '' }}
+        run: |
+          keytool -genkeypair -v \
+            -keystore android/app/release-key.jks \
+            -storepass github-actions \
+            -keypass github-actions \
+            -alias github-actions \
+            -keyalg RSA -keysize 2048 -validity 3650 \
+            -dname "CN=ProductChat Studio CI, OU=Build, O=ProductChat Studio, C=US"
+          cat > android/key.properties << EOF
+          storePassword=github-actions
+          keyPassword=github-actions
+          keyAlias=github-actions
+          storeFile=release-key.jks
+          EOF
+
       - name: Build AAB (signed)
         if: ${{ secrets.KEYSTORE_BASE64 != '' }}
         run: |
@@ -54,10 +71,12 @@ jobs:
             --obfuscate \
             --split-debug-info=build/symbols/android
 
-      - name: Build AAB (unsigned, fallback)
+      - name: Build AAB (fallback-signed)
         if: ${{ secrets.KEYSTORE_BASE64 == '' }}
         run: |
-          flutter build appbundle --release
+          flutter build appbundle --release \
+            --obfuscate \
+            --split-debug-info=build/symbols/android
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4

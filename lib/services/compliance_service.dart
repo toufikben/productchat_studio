@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image/image.dart' as img;
@@ -42,7 +43,10 @@ class ComplianceService {
       return const ComplianceResult(
         passed: false,
         issues: [
-          ComplianceIssue(code: 'DECODE', message: 'Failed to decode image', severity: 'error'),
+          ComplianceIssue(
+              code: 'DECODE',
+              message: 'Failed to decode image',
+              severity: 'error'),
         ],
       );
     }
@@ -53,11 +57,13 @@ class ComplianceService {
     if (im.width < spec.minSize || im.height < spec.minSize) {
       issues.add(ComplianceIssue(
         code: 'DIMENSIONS',
-        message: 'Current: ${im.width}×${im.height}. Required ≥${spec.minSize}px.',
+        message:
+            'Current: ${im.width}×${im.height}. Required ≥${spec.minSize}px.',
         severity: 'error',
         fix: 'Resize to ${spec.recommendedSize}×${spec.recommendedSize}',
       ));
-    } else if (im.width < spec.recommendedSize || im.height < spec.recommendedSize) {
+    } else if (im.width < spec.recommendedSize ||
+        im.height < spec.recommendedSize) {
       issues.add(ComplianceIssue(
         code: 'DIMENSIONS_SUBOPTIMAL',
         message: 'Recommended: ${spec.recommendedSize}px.',
@@ -101,7 +107,8 @@ class ComplianceService {
       if (cov < 0.85) {
         issues.add(ComplianceIssue(
           code: 'LOW_COVERAGE',
-          message: 'Product fills ${(cov * 100).toStringAsFixed(0)}%. Amazon requires 85%+.',
+          message:
+              'Product fills ${(cov * 100).toStringAsFixed(0)}%. Amazon requires 85%+.',
           severity: 'warning',
           fix: 'Crop closer or enlarge product',
         ));
@@ -124,7 +131,8 @@ class ComplianceService {
     if (spec.format == 'jpg' && ext != 'jpg' && ext != 'jpeg') {
       issues.add(ComplianceIssue(
         code: 'FORMAT',
-        message: 'Expected format: ${spec.format.toUpperCase()}, got: ${ext.toUpperCase()}.',
+        message:
+            'Expected format: ${spec.format.toUpperCase()}, got: ${ext.toUpperCase()}.',
         severity: 'warning',
         fix: 'Export as ${spec.format.toUpperCase()}',
       ));
@@ -145,7 +153,8 @@ class ComplianceService {
         if (alphaCount / total > 0.1) {
           issues.add(const ComplianceIssue(
             code: 'TRANSPARENT_BG',
-            message: 'PNG has transparent areas — not compatible with white BG requirement.',
+            message:
+                'PNG has transparent areas — not compatible with white BG requirement.',
             severity: 'warning',
             fix: 'Flatten with white background',
           ));
@@ -206,7 +215,9 @@ class ComplianceService {
     ];
     var r = 0, g = 0, b = 0;
     for (final p in pts) {
-      r += p.r.toInt(); g += p.g.toInt(); b += p.b.toInt();
+      r += p.r.toInt();
+      g += p.g.toInt();
+      b += p.b.toInt();
     }
     return [r ~/ 4, g ~/ 4, b ~/ 4];
   }

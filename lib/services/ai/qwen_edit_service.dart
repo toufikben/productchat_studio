@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
@@ -30,7 +31,8 @@ class QwenEditService {
         'operation': req.op.name,
       });
       if (out == null || out['ok'] != true) {
-        return EditResult(ok: false, error: out?['error']?.toString() ?? 'Failed');
+        return EditResult(
+            ok: false, error: out?['error']?.toString() ?? 'Failed');
       }
       return EditResult(
         ok: true,

@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+
 /// ShareReceiverService — يستقبل الصور المُشاركة من تطبيقات أخرى.
 class ShareReceiverService {
   static const _channel = MethodChannel('com.productchat/share');

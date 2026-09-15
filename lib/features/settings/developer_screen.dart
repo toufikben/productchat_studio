@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -104,6 +105,12 @@ Models: $count (${(size / 1024 / 1024).toStringAsFixed(1)} MB)
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('+100 credits')));
               },
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('View Crash Logs'),
+              trailing: const Icon(Icons.bug_report, color: AppColors.warning),
+              onTap: () => context.push('/crash-logs'),
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,

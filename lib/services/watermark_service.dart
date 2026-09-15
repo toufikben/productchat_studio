@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:image/image.dart' as img;
 
 /// WatermarkService — Adds a configurable watermark to exported images.

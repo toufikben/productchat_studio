@@ -9,6 +9,15 @@
 > **الالتزام المرجعي قبل هذا التحديث:** `4494d25`
 > **مصادر الحقيقة:** هذه الخارطة، `docs/FEATURE_VERIFICATION_MATRIX.md`، `docs/MODEL_INVENTORY.md`، ووثائق التحقق المرتبطة.
 
+## سجل التحديثات — 2026-09-15 — Hugging Face model artifacts
+
+- [x] تسجيل الدخول إلى حساب Hugging Face `Toufikben` والتحقق من مستودع `Toufikben/productchat-models`.
+- [x] رفع `migan.onnx` و`lama_fp16.onnx` و`real_esrgan_x4.onnx` إلى commit `94592115e5ec95fe6be57f99ba6927da98f27795`.
+- [x] تحديث `lib/core/constants.dart` بروابط النماذج الثلاثة وقيم SHA-256 الفعلية.
+- [ ] نموذج `qwen_edit_int8.onnx` غير جاهز؛ المستودع الرسمي يوفّر Qwen بصيغة Safetensors وليس ONNX، لذلك لم يُرفع ملف غير متوافق أو يُعاد تسميته.
+- [ ] لم تُرفع تعديلات Git المحلية إلى GitHub بعد؛ يجب تنفيذ commit ومراجعة التحليل قبل push.
+- [ ] يجب إعادة تشغيل `flutter analyze` و`flutter test` بعد تحديث الثوابت، ثم اختبار تنزيل النماذج على Android.
+
 ## 1. قاعدة الحالة
 
 | الحالة | المعنى |

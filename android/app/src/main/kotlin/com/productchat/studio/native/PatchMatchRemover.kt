@@ -1,4 +1,4 @@
-package com.productchat.aiphotostudio.native
+package com.productchat.studio.native
 
 import android.graphics.Bitmap
 import java.util.ArrayDeque
