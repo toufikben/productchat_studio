@@ -22,6 +22,21 @@
 
 وجود شاشة أو dependency أو model file لا يثبت اكتمال الميزة.
 
+## سجل التحديثات — 2026-09-15 — Full Update Package 08–10
+
+- [x] قراءة تعليمات الحزمة الرئيسية وحفظها كـ `docs/ai_package/00_MASTER_INSTRUCTIONS.txt`.
+- [x] حفظ `08_BATCH_PROCESSING.txt` و`09_IOS_VOICE.swift.txt` و`10_ADVANCED_FEATURES.txt` داخل الحزمة.
+- [x] الحفاظ على `BatchService` الحالي المتوافق مع الاختبارات وPro/Lifetime gating، مع إبقاء الحد الأقصى 100 صورة ومسار المعالجة المحلي والتاريخ.
+- [x] إضافة FeatureFlags gating لشاشة Batch حتى لا تُعرض ميزة غير مكتملة للمستخدم.
+- [x] إضافة `AIDescriptionService` للتحليل المحلي للصور وتوليد العنوان والوصف والوسوم دون API خارجي.
+- [x] إضافة `AIDescriptionScreen` وربطها بالمسار `/ai-description`.
+- [x] التحقق من وجود `NSMicrophoneUsageDescription` و`NSSpeechRecognitionUsageDescription` في iOS `Info.plist`.
+- [x] التحقق من أن `ios/Podfile` يستخدم `flutter_install_all_ios_pods`، وبالتالي تُضاف Pods الصوت تلقائياً من `pubspec.yaml` بعد `flutter pub get`.
+- [x] اجتياز `git diff --check` والتحقق من صحة ملفات الترجمة JSON.
+- [ ] تشغيل Flutter وCocoaPods واختبارات iOS/Android؛ Flutter SDK غير موجود في بيئة التنفيذ الحالية.
+
+**ملاحظة توافق:** النص المرفق لـ Batch يعتمد على `BorderCutService` و`ShadowService` و`ExportService` غير الموجودة في المستودع الحالي، لذلك لم أُدخل imports مكسورة؛ تم الحفاظ على خدمة Batch الموجودة والمختبرة بدلاً من حذف API المشروع أو اختلاق خدمات غير موجودة.
+
 ## سجل التحديثات — 2026-09-15 — Package Extensions 04–07
 
 - [x] قراءة ملفات الحزمة الثمانية بالترتيب وحفظ نسخها في `docs/ai_package/`.

@@ -1,0 +1,32 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 09: iOS VOICE NATIVE                                          ║
+║  دعم Voice على iOS                                                   ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #18: 🟡 MODIFY FILE
+📁 الملف: ios/Runner/Info.plist
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+تحقق من وجود المفاتيح التالية (أضفها إذا لم تكن موجودة):
+
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>We use speech recognition to convert your voice commands into actions.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>We use the microphone for voice commands.</string>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #19: 🟡 MODIFY FILE
+📁 الملف: ios/Podfile
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+تحقق من وجود السطرين التاليين داخل target 'Runner' do:
+
+  pod 'speech_to_text', :path => '.symlinks/plugins/speech_to_text/ios'
+  pod 'flutter_tts', :path => '.symlinks/plugins/flutter_tts/ios'
+
+ملاحظة: هذه Pods تُضاف تلقائياً بواسطة Flutter عندما تكون الحزم في pubspec.yaml.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الملف 09_IOS_VOICE.swift.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

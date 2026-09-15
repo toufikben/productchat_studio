@@ -1,0 +1,126 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║  MASTER INSTRUCTIONS — اقرأ أولاً                                    ║
+║  ProductChat Studio — Full Update Package                            ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+أنت مساعد تنفيذي. ستحصل على 11 ملفاً في مجلد docs/ai_package/.
+نفّذها بالترتيب الصارم التالي:
+
+═══════════════════════════════════════════════════════════════════════
+الترتيب الإلزامي للتنفيذ
+═══════════════════════════════════════════════════════════════════════
+
+المرحلة 1: الإصلاحات الحرجة
+  1. 00_READ_FIRST.txt        — تعليمات
+  2. 01_ALL_FIXES.txt         — 10 إصلاحات
+  3. 04_ROUTER_UPDATE.txt     — ربط HomeScreen
+
+المرحلة 2: الميزات الجديدة
+  4. 02_NEW_FEATURES.txt      — 6 ميزات
+  5. 08_BATCH_PROCESSING.txt  — Batch كامل
+  6. 09_IOS_VOICE.swift.txt   — iOS Voice
+
+المرحلة 3: الميزات المتقدمة
+  7. 10_ADVANCED_FEATURES.txt — AI Description
+
+المرحلة 4: الترجمة والاختبارات
+  8. 06_L10N.txt              — الترجمات
+  9. 05_TESTS.txt             — الاختبارات
+
+المرحلة 5: التحقق
+  10. 07_VERIFY.txt           — التحقق النهائي
+  11. 03_ROADMAP.txt          — خارطة الطريق
+
+═══════════════════════════════════════════════════════════════════════
+الأوامر النهائية
+═══════════════════════════════════════════════════════════════════════
+
+بعد تنفيذ كل الملفات:
+
+  flutter clean
+  flutter pub get
+  flutter gen-l10n
+  flutter analyze
+  flutter test
+
+إذا نجحت كل الأوامر، ابنِ APK:
+
+  flutter build apk --debug
+
+═══════════════════════════════════════════════════════════════════════
+التقرير النهائي المطلوب
+═══════════════════════════════════════════════════════════════════════
+
+أرسل تقريراً بهذا الشكل:
+
+╔══════════════════════════════════════════════════════════════════════╗
+║  تقرير تنفيذ الحزمة الكاملة                                          ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+📁 الملفات الجديدة: [عدد] / 12
+   ✅ lib/core/feature_flags.dart
+   ✅ lib/services/voice_service.dart
+   ✅ lib/services/batch_service.dart
+   ✅ lib/services/ai_description_service.dart
+   ✅ lib/widgets/floating_nav_bar.dart
+   ✅ lib/features/home/home_screen.dart
+   ✅ lib/features/editor/mask_painter_screen.dart
+   ✅ lib/features/chat/chat_studio_screen.dart
+   ✅ lib/features/advanced/ai_description_screen.dart
+   ✅ android/app/src/main/res/xml/file_paths.xml
+   ✅ l10n.yaml
+   ✅ test files
+
+📁 الملفات المستبدلة: [عدد] / 5
+   ✅ AndroidManifest.xml
+   ✅ router.dart
+   ✅ main.dart
+   ✅ models_screen.dart
+   ✅ batch_screen.dart
+
+📁 الملفات المعدلة: [عدد] / 10
+   ✅ constants.dart
+   ✅ theme.dart
+   ✅ model_manager.dart
+   ✅ seika_service.dart
+   ✅ pubspec.yaml
+   ✅ app_en.arb
+   ✅ app_ar.arb
+   ✅ splash_screen.dart
+   ✅ onboarding_screen.dart
+   ✅ Info.plist
+
+📊 flutter analyze:
+   Errors: [عدد]
+   Warnings: [عدد]
+   Info: [عدد]
+
+📊 flutter test:
+   Passed: [عدد]
+   Failed: [عدد]
+
+📊 flutter build apk --debug:
+   [نجاح / فشل]
+
+❌ الفاشلة:
+   - [قائمة]
+
+⚠️ تحتاج مراجعة:
+   - [قائمة]
+
+═══════════════════════════════════════════════════════════════════════
+القواعد الصارمة
+═══════════════════════════════════════════════════════════════════════
+
+❌ لا تنشر التطبيق
+❌ لا تنشئ حسابات
+❌ لا ترفع نماذج
+❌ لا تخمن — إذا لم تجد شيئاً، أبلغ
+❌ لا تحذف أي ميزة موجودة
+✅ التزم بالكود المعطى حرفياً
+✅ إذا لم يجد ملفاً، أنشئه
+✅ أبلغ عن أي خطأ فوراً
+
+═══════════════════════════════════════════════════════════════════════
+ابدأ الآن بـ 00_READ_FIRST.txt
+═══════════════════════════════════════════════════════════════════════

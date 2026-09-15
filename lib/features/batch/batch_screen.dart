@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../services/batch_service.dart';
 import '../../services/billing_service.dart';
+import '../../core/feature_flags.dart';
 
 class BatchScreen extends ConsumerWidget {
   const BatchScreen({super.key});
@@ -10,6 +11,12 @@ class BatchScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final p = ref.watch(batchProvider);
     final service = ref.read(batchProvider.notifier);
+    if (!FeatureFlags.batchProcessing) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Batch processing')),
+        body: const Center(child: Text('Batch processing is under development')),
+      );
+    }
     return Scaffold(
         appBar: AppBar(title: const Text('Batch processing')),
         body: Padding(

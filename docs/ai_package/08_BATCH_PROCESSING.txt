@@ -1,0 +1,690 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 08: BATCH PROCESSING                                          ║
+║  معالجة الدفعات الكاملة مع Pro Gating                                ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FEAT #7: 🟢 CREATE NEW FILE
+📁 الملف الجديد: lib/services/batch_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف بهذا المحتوى:
+
+import 'dart:io';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'ai_service.dart';
+import 'seika_service.dart';
+import 'compliance_service.dart';
+
+class BatchJob {
+  final String inputPath;
+  final String outputPath;
+  final bool ok;
+  final String? error;
+  final Duration duration;
+
+  const BatchJob({
+    required this.inputPath,
+    required this.outputPath,
+    required this.ok,
+    this.error,
+    this.duration = Duration.zero,
+  });
+}
+
+class BatchProgress {
+  final int total;
+  final int completed;
+  final int failed;
+  final String? currentStep;
+  final bool running;
+  final bool cancelled;
+
+  const BatchProgress({
+    this.total = 0,
+    this.completed = 0,
+    this.failed = 0,
+    this.currentStep,
+    this.running = false,
+    this.cancelled = false,
+  });
+
+  double get fraction => total == 0 ? 0.0 : (completed + failed) / total;
+  bool get isDone => (completed + failed) >= total && total > 0;
+  int get remaining => total - completed - failed;
+
+  BatchProgress copyWith({
+    int? total,
+    int? completed,
+    int? failed,
+    String? currentStep,
+    bool? running,
+    bool? cancelled,
+  }) =>
+      BatchProgress(
+        total: total ?? this.total,
+        completed: completed ?? this.completed,
+        failed: failed ?? this.failed,
+        currentStep: currentStep ?? this.currentStep,
+        running: running ?? this.running,
+        cancelled: cancelled ?? this.cancelled,
+      );
+}
+
+class BatchService extends StateNotifier<BatchProgress> {
+  BatchService() : super(const BatchProgress());
+
+  final _border = BorderCutService();
+  final _shadow = ShadowService();
+  final _seika = SeikaService(quality: 'best');
+  final _export = ExportService();
+
+  bool _cancelRequested = false;
+
+  Future<List<BatchJob>> processAll(
+    List<String> inputs, {
+    bool addShadow = true,
+    String format = 'png',
+    int? size = 2048,
+    String? backgroundPreset,
+    Function(BatchProgress)? onProgress,
+  }) async {
+    _cancelRequested = false;
+    state = BatchProgress(total: inputs.length, running: true);
+    final results = <BatchJob>[];
+    var completed = 0;
+    var failed = 0;
+
+    for (var i = 0; i < inputs.length; i++) {
+      if (_cancelRequested) {
+        state = state.copyWith(
+          running: false,
+          cancelled: true,
+          currentStep: 'Cancelled at ${i + 1}/${inputs.length}',
+        );
+        break;
+      }
+
+      final input = inputs[i];
+      final sw = Stopwatch()..start();
+
+      try {
+        state = state.copyWith(
+          completed: completed,
+          failed: failed,
+          currentStep: 'Removing BG (${i + 1}/${inputs.length})',
+        );
+        onProgress?.call(state);
+
+        // ─── Step 1: Remove Background ───
+        final r1 = await _border.removeBg(input);
+        if (!r1.ok) throw Exception(r1.error ?? 'BG removal failed');
+
+        String currentPath = r1.outputPath!;
+
+        // ─── Step 2: Add Shadow (optional) ───
+        if (addShadow) {
+          state = state.copyWith(currentStep: 'Adding shadow (${i + 1}/${inputs.length})');
+          onProgress?.call(state);
+          final r2 = await _shadow.addShadow(currentPath);
+          if (r2.ok && r2.outputPath != null) currentPath = r2.outputPath!;
+        }
+
+        // ─── Step 3: Export ───
+        state = state.copyWith(currentStep: 'Exporting (${i + 1}/${inputs.length})');
+        onProgress?.call(state);
+        final file = await _export.export(
+          currentPath,
+          format: format,
+          size: size,
+        );
+
+        results.add(BatchJob(
+          inputPath: input,
+          outputPath: file.path,
+          ok: true,
+          duration: sw.elapsed,
+        ));
+        completed++;
+      } catch (e) {
+        results.add(BatchJob(
+          inputPath: input,
+          outputPath: '',
+          ok: false,
+          error: '$e',
+          duration: sw.elapsed,
+        ));
+        failed++;
+      }
+    }
+
+    state = BatchProgress(
+      total: inputs.length,
+      completed: completed,
+      failed: failed,
+      running: false,
+      cancelled: _cancelRequested,
+      currentStep: _cancelRequested
+          ? 'Cancelled'
+          : 'Done: $completed ok, $failed failed',
+    );
+    onProgress?.call(state);
+
+    return results;
+  }
+
+  void cancel() {
+    _cancelRequested = true;
+  }
+
+  void reset() {
+    state = const BatchProgress();
+  }
+}
+
+final batchProvider = StateNotifierProvider<BatchService, BatchProgress>(
+  (_) => BatchService(),
+);
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FEAT #8: 🔴 REPLACE ENTIRE FILE
+📁 الملف: lib/features/batch/batch_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+استبدل الملف بالكامل بهذا المحتوى:
+
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../core/theme.dart';
+import '../../core/constants.dart';
+import '../../core/feature_flags.dart';
+import '../../services/batch_service.dart';
+import '../../services/billing_service.dart';
+import '../../widgets/app_widgets.dart';
+
+class BatchScreen extends ConsumerStatefulWidget {
+  const BatchScreen({super.key});
+  @override
+  ConsumerState<BatchScreen> createState() => _BatchScreenState();
+}
+
+class _BatchScreenState extends ConsumerState<BatchScreen> {
+  final _inputs = <String>[];
+  final _results = <BatchJob>[];
+  bool _addShadow = true;
+  String _format = 'png';
+  int _size = 2048;
+
+  @override
+  Widget build(BuildContext context) {
+    final billing = ref.watch(billingProvider);
+    final progress = ref.watch(batchProvider);
+    final isPro = billing.proService.isPro;
+
+    if (!FeatureFlags.batchProcessing) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Batch Processing')),
+        body: const EmptyState(
+          icon: Icons.construction,
+          title: 'Coming Soon',
+          subtitle: 'Batch processing is under development',
+        ),
+      );
+    }
+
+    if (!isPro) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Batch Processing')),
+        body: _ProGate(onUpgrade: () => context.push('/paywall')),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Batch Processing'),
+        actions: [
+          if (_results.isNotEmpty && !progress.running)
+            IconButton(
+              icon: const Icon(Icons.delete_sweep),
+              onPressed: () => setState(() => _results.clear()),
+              tooltip: 'Clear results',
+            ),
+          if (progress.running)
+            IconButton(
+              icon: const Icon(Icons.cancel),
+              color: AppColors.danger,
+              onPressed: () => ref.read(batchProvider.notifier).cancel(),
+              tooltip: 'Cancel',
+            ),
+        ],
+      ),
+      body: Column(
+        children: [
+          _Toolbar(
+            count: _inputs.length,
+            running: progress.running,
+            onPick: _pickImages,
+            onProcess: _processAll,
+          ),
+          _Settings(
+            addShadow: _addShadow,
+            format: _format,
+            size: _size,
+            onShadowChange: (v) => setState(() => _addShadow = v),
+            onFormatChange: (v) => setState(() => _format = v),
+            onSizeChange: (v) => setState(() => _size = v),
+          ),
+          if (progress.running || progress.total > 0)
+            _ProgressSection(progress: progress),
+          Expanded(
+            child: _inputs.isEmpty
+                ? const EmptyState(
+                    icon: Icons.photo_library,
+                    title: 'No images selected',
+                    subtitle: 'Select up to 100 images',
+                  )
+                : _Grid(
+                    inputs: _inputs,
+                    results: _results,
+                    running: progress.running,
+                  ),
+          ),
+          if (progress.isDone && _results.any((r) => r.ok))
+            _ShareAll(results: _results, onShare: _shareAll),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickImages() async {
+    final res = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: true,
+      withData: false,
+    );
+    if (res == null) return;
+
+    final paths = res.paths.whereType<String>().toList();
+    if (paths.length > AppConstants.maxBatchImages) {
+      if (!mounted) return;
+      showErrorSnack(context, 'Max ${AppConstants.maxBatchImages} images');
+      return;
+    }
+
+    setState(() {
+      _inputs
+        ..clear()
+        ..addAll(paths);
+      _results.clear();
+    });
+  }
+
+  Future<void> _processAll() async {
+    final results = await ref.read(batchProvider.notifier).processAll(
+          _inputs,
+          addShadow: _addShadow,
+          format: _format,
+          size: _size,
+        );
+    if (!mounted) return;
+    setState(() {
+      _results
+        ..clear()
+        ..addAll(results);
+    });
+  }
+
+  Future<void> _shareAll() async {
+    final files = _results
+        .where((r) => r.ok)
+        .map((r) => XFile(r.outputPath))
+        .toList();
+    if (files.isEmpty) return;
+    await Share.shareXFiles(files, text: 'Processed with ProductChat Studio');
+  }
+}
+
+class _ProGate extends StatelessWidget {
+  final VoidCallback onUpgrade;
+  const _ProGate({required this.onUpgrade});
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.primaryGlow],
+                  ),
+                  borderRadius: BorderRadius.circular(28),
+                ),
+                child: const Icon(Icons.workspace_premium,
+                    size: 48, color: Colors.white),
+              ),
+              const SizedBox(height: 24),
+              Text('Batch Processing is Pro',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              const Text(
+                'Process up to 100 images at once with a single tap.',
+                style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: onUpgrade,
+                  icon: const Icon(Icons.arrow_forward),
+                  label: const Text('Upgrade Now'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
+class _Toolbar extends StatelessWidget {
+  final int count;
+  final bool running;
+  final VoidCallback onPick;
+  final VoidCallback onProcess;
+
+  const _Toolbar({
+    required this.count,
+    required this.running,
+    required this.onPick,
+    required this.onProcess,
+  });
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: running ? null : onPick,
+                icon: const Icon(Icons.add_photo_alternate),
+                label: Text('Select ($count)'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: (count == 0 || running) ? null : onProcess,
+                icon: const Icon(Icons.play_arrow),
+                label: const Text('Process All'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+}
+
+class _Settings extends StatelessWidget {
+  final bool addShadow;
+  final String format;
+  final int size;
+  final ValueChanged<bool> onShadowChange;
+  final ValueChanged<String> onFormatChange;
+  final ValueChanged<int> onSizeChange;
+
+  const _Settings({
+    required this.addShadow,
+    required this.format,
+    required this.size,
+    required this.onShadowChange,
+    required this.onFormatChange,
+    required this.onSizeChange,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.brightness_4, size: 18, color: AppColors.primary),
+                const SizedBox(width: 10),
+                const Expanded(child: Text('Add Shadow')),
+                Switch(
+                  value: addShadow,
+                  onChanged: onShadowChange,
+                  activeColor: AppColors.primary,
+                ),
+              ],
+            ),
+            const Divider(height: 16),
+            Row(
+              children: [
+                const Icon(Icons.image, size: 18, color: AppColors.primary),
+                const SizedBox(width: 10),
+                const Text('Format: '),
+                const SizedBox(width: 8),
+                ...['png', 'jpg'].map((f) => Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ChoiceChip(
+                        label: Text(f.toUpperCase()),
+                        selected: format == f,
+                        onSelected: (_) => onFormatChange(f),
+                      ),
+                    )),
+              ],
+            ),
+          ],
+        ),
+      );
+}
+
+class _ProgressSection extends StatelessWidget {
+  final BatchProgress progress;
+  const _ProgressSection({required this.progress});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            ProgressBar(value: progress.fraction),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(progress.currentStep ?? 'Idle',
+                    style: Theme.of(context).textTheme.bodyMedium),
+                Text(
+                  '${progress.completed + progress.failed}/${progress.total}',
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            if (progress.failed > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline,
+                        size: 14, color: AppColors.danger),
+                    const SizedBox(width: 4),
+                    Text('${progress.failed} failed',
+                        style: const TextStyle(
+                            color: AppColors.danger, fontSize: 12)),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      );
+}
+
+class _Grid extends StatelessWidget {
+  final List<String> inputs;
+  final List<BatchJob> results;
+  final bool running;
+
+  const _Grid({
+    required this.inputs,
+    required this.results,
+    required this.running,
+  });
+
+  @override
+  Widget build(BuildContext context) => GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+        ),
+        itemCount: inputs.length,
+        itemBuilder: (_, i) {
+          final input = inputs[i];
+          final result = results.firstWhere(
+            (r) => r.inputPath == input,
+            orElse: () => const BatchJob(
+              inputPath: '',
+              outputPath: '',
+              ok: false,
+            ),
+          );
+          final processed = result.inputPath.isNotEmpty;
+          return _ImageTile(
+            input: input,
+            result: processed ? result : null,
+            running: running,
+          );
+        },
+      );
+}
+
+class _ImageTile extends StatelessWidget {
+  final String input;
+  final BatchJob? result;
+  final bool running;
+
+  const _ImageTile({
+    required this.input,
+    this.result,
+    required this.running,
+  });
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.file(
+              File(result?.ok == true ? result!.outputPath : input),
+              fit: BoxFit.cover,
+            ),
+            if (result == null && running)
+              Container(
+                color: Colors.black54,
+                child: const Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
+                  ),
+                ),
+              ),
+            if (result != null)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: result!.ok ? AppColors.success : AppColors.danger,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    result!.ok ? Icons.check : Icons.close,
+                    size: 14,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+}
+
+class _ShareAll extends StatelessWidget {
+  final List<BatchJob> results;
+  final VoidCallback onShare;
+  const _ShareAll({required this.results, required this.onShare});
+
+  @override
+  Widget build(BuildContext context) {
+    final okCount = results.where((r) => r.ok).length;
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: SizedBox(
+        width: double.infinity,
+        child: FilledButton.icon(
+          onPressed: onShare,
+          icon: const Icon(Icons.share),
+          label: Text('Share $okCount images'),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.success,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الملف 08_BATCH_PROCESSING.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -8,6 +8,7 @@ import '../features/chat/chat_studio_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/editor/editor_screen.dart';
 import '../features/editor/mask_painter_screen.dart';
+import '../features/advanced/ai_description_screen.dart';
 import '../features/recipes/recipes_screen.dart';
 import '../features/compliance/compliance_screen.dart';
 import '../features/settings/settings_screen.dart';
@@ -31,6 +32,7 @@ final routerProvider = Provider<GoRouter>((ref) => GoRouter(
     GoRoute(path: '/chat-studio', builder: (_, __) => const ChatStudioScreen()),
     GoRoute(path: '/editor', builder: (_, s) => EditorScreen(imagePath: s.extra as String?)),
     GoRoute(path: '/mask-painter', builder: (_, s) => MaskPainterScreen(imagePath: s.extra as String)),
+    GoRoute(path: '/ai-description', builder: (_, s) => AIDescriptionScreen(imagePath: s.extra as String)),
     GoRoute(path: '/recipes', builder: (_, __) => const RecipesScreen()),
     GoRoute(path: '/compliance', builder: (_, __) => const ComplianceScreen()),
     GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
