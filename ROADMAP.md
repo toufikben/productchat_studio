@@ -29,6 +29,16 @@
 
 التفصيل الكامل للأحجام ومكان التنفيذ والأسعار والجودة والخصائص غير المغلقة موجود في [`docs/IMPLEMENTATION_DECISION_AND_REMAINING_WORK_2026-09-15.md`](docs/IMPLEMENTATION_DECISION_AND_REMAINING_WORK_2026-09-15.md).
 
+### تنفيذ المرحلة الأولى — 2026-09-15
+
+- [x] توصيل `MIGanService` بقناة Android الصحيحة `com.productchat/migan` بدلاً من قناة Seika.
+- [x] جعل ChatController يستخدم MI-GAN عند توفر النموذج، مع fallback إلى إزالة الخلفية المحلية الحالية عند عدم توفره.
+- [x] جعل ChatController يستخدم Real-ESRGAN عبر Seika عند تحقق النموذج، مع fallback آمن إلى التحسين الأساسي.
+- [x] إصلاح مسار inpainting حتى يرفض غياب القناع الحقيقي ولا يمرر صورة الإدخال كقناع.
+- [x] إصلاح Shadow Compositor ليضع الظل خلف المنتج ولا يعتّم المنتج المعتم بالكامل.
+- [ ] MODNet وMobileSAM: لم تُضف binaries أو graph Android بعد؛ يلزم تثبيت artifacts وchecksum ثم تنفيذ platform channel وbenchmark قبل تفعيلهما.
+- [ ] لم تُعلن هذه المرحلة «متحققة على Android» لأن Flutter/ADB والجهاز الفعلي غير متوفرين في بيئة التنفيذ الحالية.
+
 التفصيل المقارن لكل وظيفة، مع البدائل والحجم والترخيص وخطة اختبار Android، موثق في [`docs/AI_FUNCTION_ALTERNATIVES_RESEARCH_2026-09-15.md`](docs/AI_FUNCTION_ALTERNATIVES_RESEARCH_2026-09-15.md). القرار الحالي هو استخدام نموذج متخصص أو خوارزمية حتمية لكل عملية، وعدم استخدام Qwen إلا للتعديل المحادثي العام.
 
 ## سجل التحديثات — 2026-09-15 — Hugging Face model artifacts

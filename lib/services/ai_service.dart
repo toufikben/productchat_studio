@@ -8,7 +8,6 @@ export 'ai/colorize_service.dart';
 export 'model_manager.dart';
 
 import 'dart:io';
-import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
@@ -187,15 +186,24 @@ class ShadowService {
           final sp = src.getPixel(x, y);
           final sA = blurred[y * src.width + x];
           final scaled = (sA * intensity).round().clamp(0, 255);
-          final factor = 1.0 - (scaled / 255.0) * 0.6;
-          out.setPixelRgba(
-            x,
-            y,
-            (sp.r * factor).round().clamp(0, 255),
-            (sp.g * factor).round().clamp(0, 255),
-            (sp.b * factor).round().clamp(0, 255),
-            math.max(sp.a.toInt(), scaled),
-          );
+          // The shadow is composited behind the source. The previous
+          // implementation darkened opaque product pixels and made the
+          // whole image look dirty instead of adding a cast shadow.
+          final srcA = sp.a.toInt().clamp(0, 255) / 255.0;
+          final shadowA = (scaled / 255.0) * (1.0 - srcA);
+          final outA = srcA + shadowA;
+          if (outA <= 0) {
+            out.setPixelRgba(x, y, 0, 0, 0, 0);
+          } else {
+            out.setPixelRgba(
+              x,
+              y,
+              (sp.r * srcA / outA).round().clamp(0, 255),
+              (sp.g * srcA / outA).round().clamp(0, 255),
+              (sp.b * srcA / outA).round().clamp(0, 255),
+              (outA * 255).round().clamp(0, 255),
+            );
+          }
         }
       }
       final path = inputPath.replaceAll(RegExp(r'\.[^.]+$'), '_shadow.png');

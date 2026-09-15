@@ -6,7 +6,7 @@ import '../model_manager.dart';
 
 /// MIGanService — On-device MI-GAN background removal (balanced quality).
 class MIGanService {
-  static const _channel = MethodChannel('com.productchat/seika');
+  static const _channel = MethodChannel('com.productchat/migan');
 
   Future<bool> isModelReady() async {
     final path = await _modelPath();

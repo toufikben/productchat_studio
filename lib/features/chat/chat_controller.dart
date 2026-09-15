@@ -309,8 +309,12 @@ class ChatController extends StateNotifier<ChatState> {
     final path = state.imagePath!;
     switch (req.op) {
       case EditOp.removeBg:
+        if (await _migan.isModelReady()) return _migan.removeBg(path);
         return _border.removeBg(path);
       case EditOp.enhance:
+        if (await _seika.isUpscaleReady()) {
+          return _seika.upscale(path, factor: 4);
+        }
         return _enhance.enhance(path, factor: 2);
       case EditOp.shadow:
         return _shadow.addShadow(path,
@@ -324,7 +328,11 @@ class ChatController extends StateNotifier<ChatState> {
         final f = await _export.export(path, format: 'jpg', size: 2000);
         return EditResult.success(outputPath: f.path, creditsUsed: 0);
       case EditOp.inpaint:
-        return _seika.inpaint(path, path);
+        final maskPath = req.params['maskPath'] as String?;
+        if (maskPath == null || maskPath.isEmpty) {
+          return const EditResult.failure('A real mask is required');
+        }
+        return _seika.inpaint(path, maskPath);
       case EditOp.conversational:
       case EditOp.recipe:
         return _qwen.run(req, path);

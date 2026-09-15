@@ -64,6 +64,10 @@ class SeikaService {
     return _invoke('upscale', {'imagePath': imagePath, 'factor': factor, 'modelPath': modelPath}, credits: 2);
   }
 
+  Future<bool> isUpscaleReady() async {
+    return (await _models.readyPath(ModelManager.realEsrgan)) != null;
+  }
+
   Future<EditResult> addShadow(String imagePath) =>
       _invoke('addShadow', {'imagePath': imagePath}, credits: 1);
 
