@@ -6,6 +6,8 @@ import 'package:productchat_studio/services/billing_service.dart';
 import 'package:productchat_studio/services/storage_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('BillingService can be constructed with injected storage without opening Play Billing', () {
     final billing = BillingService(storage: StorageService());
 
