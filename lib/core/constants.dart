@@ -64,8 +64,6 @@ class AppConstants {
       'https://huggingface.co/Toufikben/productchat-models/resolve/main/lama_fp16.onnx';
   static const modelRealEsrganUrl =
       'https://huggingface.co/Toufikben/productchat-models/resolve/main/real_esrgan_x4.onnx';
-  static const modelQwenEditUrl =
-      'https://huggingface.co/Toufikben/productchat-models/resolve/main/qwen_edit_int8.onnx';
 
   // ─── SHA-256 for committed Hugging Face artifacts ───
   static const modelMiganSha256 =
@@ -74,7 +72,6 @@ class AppConstants {
       '37f2e4888eb27aa08841786b506fa094156c497de3d954ebf7a297c61a7fb4ea';
   static const modelRealEsrganSha256 =
       '5c586662929cbc686c1a5c38d9c060dbdb4ea5863a1f7672b8c0761e6b89c033';
-  static const modelQwenEditSha256 = 'REPLACE_AFTER_UPLOAD';
   static const dreamLiteEnabled = false;
 
   // ─── Limits ───

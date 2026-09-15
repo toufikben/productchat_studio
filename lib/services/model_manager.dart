@@ -26,7 +26,6 @@ class ModelManager {
     'migan.onnx': AppConstants.modelMiganUrl,
     'lama_fp16.onnx': AppConstants.modelLamaUrl,
     'real_esrgan_x4.onnx': AppConstants.modelRealEsrganUrl,
-    'qwen_edit_int8.onnx': AppConstants.modelQwenEditUrl,
   };
 
   static const lama = ModelSpec(
@@ -44,12 +43,6 @@ class ModelManager {
       url: AppConstants.modelMiganUrl,
       fileName: 'migan.onnx',
       sha256: AppConstants.modelMiganSha256);
-  static const qwenEdit = ModelSpec(
-      id: 'qwen_edit',
-      url: AppConstants.modelQwenEditUrl,
-      fileName: 'qwen_edit_int8.onnx',
-      sha256: AppConstants.modelQwenEditSha256);
-
   final Dio _dio;
   final Future<Directory> Function()? _directoryProvider;
 
@@ -139,7 +132,6 @@ class ModelManager {
     if (name.contains('migan')) return AppConstants.modelMiganSha256;
     if (name.contains('lama')) return AppConstants.modelLamaSha256;
     if (name.contains('esrgan')) return AppConstants.modelRealEsrganSha256;
-    if (name.contains('qwen')) return AppConstants.modelQwenEditSha256;
     return '';
   }
 
@@ -175,7 +167,8 @@ class ModelManager {
   }
 
   Future<String?> readyPath(Object modelKey) async {
-    final name = modelKey is ModelSpec ? modelKey.fileName : modelKey.toString();
+    final name =
+        modelKey is ModelSpec ? modelKey.fileName : modelKey.toString();
     final file = File('${(await _modelsDir()).path}/$name');
     return await file.exists() ? file.path : null;
   }

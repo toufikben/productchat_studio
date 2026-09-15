@@ -1,49 +1,97 @@
-import 'dart:io';
-import 'dart:typed_data';
-import 'package:flutter/services.dart';
-import 'package:image/image.dart' as img;
-import 'package:path_provider/path_provider.dart';
+import 'package:dio/dio.dart';
+
 import '../../models/edit_request.dart';
 
-/// QwenEditService — On-device conversational AI editing via MethodChannel.
-/// Replaces DreamLite (which has non-commercial CC BY-NC license).
+/// QwenEditService — conversational image editing through a remote API.
 ///
-/// Qwen-Image-Edit is Apache 2.0 — fully commercial.
+/// Qwen-Image-Edit is a large server-side model. The API key is supplied at
+/// build/run time with --dart-define=QWEN_API_KEY=..., never committed here.
 class QwenEditService {
-  static const _channel = MethodChannel('com.productchat/qwen_edit');
+  static const _apiKey = String.fromEnvironment('QWEN_API_KEY');
+  static const _baseUrl =
+      'https://api.wavespeed.ai/api/v3/wavespeed-ai/qwen-image-edit';
 
-  Future<void> ensureLoaded() async {
-    final dir = await getApplicationSupportDirectory();
-    final modelPath = '${dir.path}/models/qwen_edit_int8.onnx';
-    if (!await File(modelPath).exists()) {
-      throw StateError('Qwen-Image-Edit model not downloaded');
-    }
-    await _channel.invokeMethod('loadModel', {'modelPath': modelPath});
-  }
+  final Dio _dio = Dio(BaseOptions(
+    connectTimeout: const Duration(seconds: 30),
+    receiveTimeout: const Duration(minutes: 3),
+  ));
 
   Future<EditResult> run(EditRequest req, String inputPath) async {
     final sw = Stopwatch()..start();
-    try {
-      await ensureLoaded();
-      final out = await _channel.invokeMapMethod<String, dynamic>('edit', {
-        'imagePath': inputPath,
-        'prompt': req.prompt ?? '',
-        'operation': req.op.name,
-      });
-      if (out == null || out['ok'] != true) {
-        return EditResult(
-            ok: false, error: out?['error']?.toString() ?? 'Failed');
-      }
-      return EditResult(
-        ok: true,
-        outputPath: out['outputPath'] as String,
-        creditsUsed: 3,
-        duration: sw.elapsed,
+
+    if (_apiKey.isEmpty) {
+      return const EditResult(
+        ok: false,
+        error: 'Qwen API key not configured',
       );
-    } on PlatformException catch (e) {
-      return EditResult(ok: false, error: e.message);
+    }
+
+    try {
+      final formData = FormData.fromMap({
+        'image': await MultipartFile.fromFile(inputPath),
+        'prompt': req.prompt ?? 'Enhance product photo',
+      });
+
+      final response = await _dio.post<dynamic>(
+        _baseUrl,
+        data: formData,
+        options: Options(
+          headers: {'Authorization': 'Bearer $_apiKey'},
+          responseType: ResponseType.json,
+        ),
+      );
+
+      if (response.statusCode != 200) {
+        return EditResult(
+          ok: false,
+          error: 'API error: ${response.statusCode}',
+        );
+      }
+
+      final taskId = response.data['data']?['id'];
+      if (taskId == null) {
+        return const EditResult(ok: false, error: 'No task ID returned');
+      }
+
+      for (var i = 0; i < 30; i++) {
+        await Future<void>.delayed(const Duration(seconds: 2));
+        final poll = await _dio.get<dynamic>(
+          '$_baseUrl/result/$taskId',
+          options: Options(headers: {'Authorization': 'Bearer $_apiKey'}),
+        );
+
+        final data = poll.data['data'];
+        final status = data?['status'];
+        if (status == 'completed') {
+          final imageUrl = data?['output']?.toString();
+          if (imageUrl == null) {
+            return const EditResult(ok: false, error: 'No output URL');
+          }
+
+          final outPath =
+              inputPath.replaceFirst(RegExp(r'\.[^.]+$'), '_qwen.png');
+          await _dio.download(imageUrl, outPath);
+          return EditResult(
+            ok: true,
+            outputPath: outPath,
+            creditsUsed: 3,
+            duration: sw.elapsed,
+          );
+        }
+        if (status == 'failed') {
+          return const EditResult(ok: false, error: 'API processing failed');
+        }
+      }
+
+      return const EditResult(ok: false, error: 'API timeout');
+    } on DioException catch (e) {
+      return EditResult(ok: false, error: 'Qwen API: ${e.message}');
     } catch (e) {
-      return EditResult(ok: false, error: '$e');
+      return EditResult(ok: false, error: 'Qwen API: $e');
     }
   }
+
+  Future<void> ensureLoaded() async {}
+
+  Future<bool> isAvailable() async => _apiKey.isNotEmpty;
 }
