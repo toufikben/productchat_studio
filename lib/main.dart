@@ -62,21 +62,10 @@ Future<void> _boot() async {
     'watermark_presets',
     'export_presets',
     'crash_reports',
+    'rate_limits',
   ];
   for (final name in hiveBoxNames) {
-    try {
-      if (!Hive.isBoxOpen(name)) await Hive.openBox<dynamic>(name);
-    } catch (e) {
-      // A corrupted box is deleted and re-opened so a bad cache never
-      // prevents startup.
-      debugPrint('[main] Hive box "$name" failed to open, deleting: $e');
-      try {
-        await Hive.deleteBoxFromDisk(name);
-        await Hive.openBox<dynamic>(name);
-      } catch (e2) {
-        debugPrint('[main] Hive box "$name" unrecoverable: $e2');
-      }
-    }
+    await _openHiveBoxSafely(name);
   }
 
   // ── 2. Crash reporting ───────────────────────────────────────────────────
@@ -158,4 +147,14 @@ Future<void> _boot() async {
 
   // ── 10. Launch ───────────────────────────────────────────────────────────
   runApp(const ProviderScope(child: ProductChatApp()));
+}
+
+Future<void> _openHiveBoxSafely(String name) async {
+  try {
+    if (!Hive.isBoxOpen(name)) await Hive.openBox<dynamic>(name);
+  } catch (error, stack) {
+    // Never delete user data automatically. The affected service must use
+    // its own defaults/in-memory fallback for this launch instead.
+    debugPrint('[main] Hive box "$name" unavailable: $error\n$stack');
+  }
 }
