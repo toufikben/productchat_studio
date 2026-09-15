@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 class AppColors {
   static const bg = Color(0xFF0A0D14);
   static const surface = Color(0xFF141821);
+  static const surfaceAlt = Color(0xFF1B2130);
   static const border = Color(0xFF252B3A);
   static const primary = Color(0xFF6C5CE7);
   static const primaryGlow = Color(0xFF8B7BFF);
+  static const success = Color(0xFF35C98A);
+  static const warning = Color(0xFFF4B942);
+  static const danger = Color(0xFFFF5C6C);
   static const textPrimary = Color(0xFFF5F7FA);
   static const textSecondary = Color(0xFF8B95A8);
+  static const textTertiary = Color(0xFF5D6678);
 }
 class AppTheme {
   static final light = ThemeData(

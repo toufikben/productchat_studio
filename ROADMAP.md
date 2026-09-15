@@ -2,11 +2,11 @@
 
 > **الحالة المرجعية:** Android-first. لا تُرفع أي ميزة من «موجودة في المصدر» إلى «متحققة» أو «جاهزة للإصدار» دون دليل قابل لإعادة الإنتاج.
 >
-> **آخر تحديث:** 2026-09-15 — تدقيق حالة المستودع وCI
+> **آخر تحديث:** 2026-09-15 — UI Overhaul + Voice Integration
 >
 > **المستودع:** [`toufikben/productchat_studio`](https://github.com/toufikben/productchat_studio)
 > **الفرع:** `main`
-> **الالتزام المرجعي قبل هذا التحديث:** `4df0a4c`
+> **الالتزام المرجعي قبل هذا التحديث:** `4494d25`
 > **مصادر الحقيقة:** هذه الخارطة، `docs/FEATURE_VERIFICATION_MATRIX.md`، `docs/MODEL_INVENTORY.md`، ووثائق التحقق المرتبطة.
 
 ## 1. قاعدة الحالة
@@ -21,6 +21,23 @@
 | **جاهز للإصدار** | اجتاز التشغيل، الأداء، الأخطاء، الخصوصية، الترخيص، الدفع، التوقيع، وCI عند الحاجة. |
 
 وجود شاشة أو dependency أو model file لا يثبت اكتمال الميزة.
+
+## سجل التحديثات — 2026-09-15
+
+### UI Overhaul + Voice Integration
+
+- [x] إنشاء `lib/ui/productchat_ui_overhaul.dart` مع `FeatureFlags` ونقاط تصدير الواجهة الجديدة.
+- [x] إنشاء `lib/core/voice_service.dart` لدمج Speech-to-Text وText-to-Speech عبر Riverpod.
+- [x] إنشاء `lib/features/home/home_screen.dart` مع لوحة التحكم والإجراءات السريعة والمشاريع الحديثة.
+- [x] إنشاء `lib/features/chat/chat_studio_screen.dart` للمحادثة النصية والصوتية مع waveform وإرسال الرسائل.
+- [x] إنشاء `lib/widgets/floating_nav_bar.dart` لشريط التنقل العائم بتأثير glassmorphism.
+- [x] تحديث `AppColors` وإضافة ألوان `surfaceAlt` و`success` و`warning` و`danger` و`textTertiary`.
+- [x] توجيه `/home` كنقطة الدخول الجديدة وتوجيه `/chat` إلى `ChatStudioScreen`.
+- [x] إضافة اعتماد `flutter_tts` إلى `pubspec.yaml`.
+- [x] التحقق من وجود الملفات الخمسة وفحص `git diff --check` بنجاح.
+- [ ] تشغيل `flutter pub get` و`flutter gen-l10n` و`flutter analyze` و`flutter test`؛ متعذر في بيئة التنفيذ الحالية لأن Flutter SDK غير موجود في `PATH`.
+
+**حالة هذه الدفعة:** موجودة وموصولة في المصدر؛ التحقق بالبناء والتشغيل على Android متبقٍ بعد توفير Flutter SDK.
 
 ## 2. قرار المنتج التجاري المعتمد من المواصفات المرفقة
 

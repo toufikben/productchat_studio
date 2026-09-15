@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../features/chat/chat_screen.dart';
+import '../features/home/home_screen.dart';
+import '../features/chat/chat_studio_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/editor/editor_screen.dart';
 import '../features/batch/batch_screen.dart';
@@ -17,11 +18,12 @@ import '../features/history/history_screen.dart';
 import '../features/billing/paywall_screen.dart';
 
 final routerProvider = GoRouter(
-    initialLocation: '/splash',
+    initialLocation: '/home',
     routes: [
       GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
+      GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
       GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
-      GoRoute(path: '/chat', builder: (_, __) => const ChatScreen()),
+      GoRoute(path: '/chat', builder: (_, __) => const ChatStudioScreen()),
       GoRoute(
           path: '/editor',
           builder: (_, state) =>
