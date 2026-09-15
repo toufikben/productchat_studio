@@ -4,16 +4,16 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for zh.
-class AppLocalizationsZH extends AppLocalizations {
-  AppLocalizationsZH([String locale = 'zh']) : super(locale);
+/// The translations for Chinese (`zh`).
+class AppLocalizationsZh extends AppLocalizations {
+  AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => "ProductChat Studio";
+  String get appTitle => 'ProductChat Studio';
 
   @override
-  String get smartAnalysis => "智能分析";
+  String get smartAnalysis => '智能分析';
 
   @override
-  String get uploadPrompt => "上传产品图片以开始";
+  String get uploadPrompt => '上传产品图片以开始';
 }

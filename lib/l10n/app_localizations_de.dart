@@ -4,16 +4,16 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for de.
-class AppLocalizationsDE extends AppLocalizations {
-  AppLocalizationsDE([String locale = 'de']) : super(locale);
+/// The translations for German (`de`).
+class AppLocalizationsDe extends AppLocalizations {
+  AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
-  String get appTitle => "ProductChat Studio";
+  String get appTitle => 'ProductChat Studio';
 
   @override
-  String get smartAnalysis => "Intelligente Analyse";
+  String get smartAnalysis => 'Intelligente Analyse';
 
   @override
-  String get uploadPrompt => "Lade ein Produktbild hoch, um zu beginnen";
+  String get uploadPrompt => 'Lade ein Produktbild hoch, um zu beginnen';
 }

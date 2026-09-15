@@ -574,7 +574,7 @@ packages:
     source: hosted
     version: "0.5.3"
   in_app_purchase_platform_interface:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: in_app_purchase_platform_interface
       sha256: "0b0076cac8ce4fa7048f01e76af8b123aeb6a7c4e0dea2a5206d6664454f3e36"
@@ -593,10 +593,10 @@ packages:
     dependency: "direct main"
     description:
       name: intl
-      sha256: "d6f56758b7d3014a48af9701c085700aac781a92a87a62b1333b46d8879661cf"
+      sha256: "1ca20c894b1717686a2319b8548763d812bc0aabdac580420a44c5178c57a867"
       url: "https://pub.dev"
     source: hosted
-    version: "0.19.0"
+    version: "0.20.3"
   jni:
     dependency: transitive
     description:
@@ -749,14 +749,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
-  onnxruntime_v2:
-    dependency: transitive
-    description:
-      name: onnxruntime_v2
-      sha256: a3a1f7baf40c6a77b4d359489643232414a4ee2e934d865dd7d30b758abaeef7
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.23.2+2"
   package_config:
     dependency: transitive
     description:

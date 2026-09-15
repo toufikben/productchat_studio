@@ -4,16 +4,16 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for ru.
-class AppLocalizationsRU extends AppLocalizations {
-  AppLocalizationsRU([String locale = 'ru']) : super(locale);
+/// The translations for Russian (`ru`).
+class AppLocalizationsRu extends AppLocalizations {
+  AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
-  String get appTitle => "ProductChat Studio";
+  String get appTitle => 'ProductChat Studio';
 
   @override
-  String get smartAnalysis => "Умный анализ";
+  String get smartAnalysis => 'Умный анализ';
 
   @override
-  String get uploadPrompt => "Загрузите изображение товара, чтобы начать";
+  String get uploadPrompt => 'Загрузите изображение товара, чтобы начать';
 }

@@ -4,16 +4,16 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for fa.
-class AppLocalizationsFA extends AppLocalizations {
-  AppLocalizationsFA([String locale = 'fa']) : super(locale);
+/// The translations for Persian (`fa`).
+class AppLocalizationsFa extends AppLocalizations {
+  AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
-  String get appTitle => "استودیو محصولات";
+  String get appTitle => 'استودیو محصولات';
 
   @override
-  String get smartAnalysis => "تحلیل هوشمند";
+  String get smartAnalysis => 'تحلیل هوشمند';
 
   @override
-  String get uploadPrompt => "برای شروع، تصویر محصول را بارگذاری کنید";
+  String get uploadPrompt => 'برای شروع، تصویر محصول را بارگذاری کنید';
 }

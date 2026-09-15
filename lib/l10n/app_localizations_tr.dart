@@ -4,16 +4,16 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for tr.
-class AppLocalizationsTR extends AppLocalizations {
-  AppLocalizationsTR([String locale = 'tr']) : super(locale);
+/// The translations for Turkish (`tr`).
+class AppLocalizationsTr extends AppLocalizations {
+  AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
-  String get appTitle => "ProductChat Studio";
+  String get appTitle => 'ProductChat Studio';
 
   @override
-  String get smartAnalysis => "Akıllı Analiz";
+  String get smartAnalysis => 'Akıllı Analiz';
 
   @override
-  String get uploadPrompt => "Başlamak için bir ürün görseli yükleyin";
+  String get uploadPrompt => 'Başlamak için bir ürün görseli yükleyin';
 }

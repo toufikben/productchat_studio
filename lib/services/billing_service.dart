@@ -32,7 +32,8 @@ class CreditProducts {
     ...nonConsumableIds,
   };
 
-  static bool isSubscription(String productId) => subscriptionIds.contains(productId);
+  static bool isSubscription(String productId) =>
+      subscriptionIds.contains(productId);
   static bool isNonConsumable(String productId) =>
       nonConsumableIds.contains(productId);
   static bool isEntitlement(String productId) =>
@@ -67,7 +68,8 @@ class CreditsLedger {
       ((storage.get(_processedKey) as List?)?.whereType<String>().toSet()) ??
       <String>{};
 
-  Future<void> addOnce({required String purchaseId, required int amount}) async {
+  Future<void> addOnce(
+      {required String purchaseId, required int amount}) async {
     if (amount <= 0 ||
         purchaseId.trim().isEmpty ||
         processedPurchaseIds.contains(purchaseId)) {
@@ -105,6 +107,9 @@ class BillingService extends ChangeNotifier {
   PurchaseStatus? lastPurchaseStatus;
   String? lastPurchaseProductId;
   String? lastEntitlementProductId;
+  Future<void>? _initFuture;
+
+  static const _billingTimeout = Duration(seconds: 15);
 
   int get credits => ledger.balance;
   bool canSpend(int amount) => amount <= 0 || credits >= amount;
@@ -115,8 +120,9 @@ class BillingService extends ChangeNotifier {
     return spent;
   }
 
-  Future<void> init() async {
-    if (_subscription != null) return;
+  Future<void> init() => _initFuture ??= _initialize();
+
+  Future<void> _initialize() async {
     final store = _storeOrDefault;
     _subscription = store.purchaseStream.listen(
       _handlePurchases,
@@ -126,32 +132,32 @@ class BillingService extends ChangeNotifier {
         notifyListeners();
       },
     );
-    available = await store.isAvailable();
-    if (!available) {
-      error = 'Google Play Billing is unavailable on this device.';
-      notifyListeners();
-      return;
-    }
-    final response = await store.queryProductDetails(CreditProducts.ids);
-    products = response.productDetails;
-    if (response.error != null) error = response.error!.message;
-    if (response.notFoundIDs.isNotEmpty) {
-      error = 'Products not configured: ${response.notFoundIDs.join(', ')}';
-    }
-    // Ask Google Play for owned non-consumables/subscriptions on every fresh
-    // Billing session. Restored consumables are deliberately ignored by the
-    // purchase handler and never grant Credits.
     try {
-      await store.restorePurchases();
+      available = await store.isAvailable().timeout(_billingTimeout);
+      if (!available) {
+        error = 'Google Play Billing is unavailable on this device.';
+        return;
+      }
+      final response = await store
+          .queryProductDetails(CreditProducts.ids)
+          .timeout(_billingTimeout);
+      products = response.productDetails;
+      if (response.error != null) error = response.error!.message;
+      if (response.notFoundIDs.isNotEmpty) {
+        error = 'Products not configured: ${response.notFoundIDs.join(', ')}';
+      }
+      // Restored consumables are deliberately ignored by the purchase handler.
+      await _restoreFromStore(store);
     } catch (value) {
-      // A restore failure must not erase a cached local entitlement or block
-      // the rest of the offline-first app from opening.
-      error ??= 'Google Play restore unavailable: $value';
+      available = false;
+      error = _friendlyBillingError(value);
+    } finally {
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   Future<void> buy(ProductDetails product) async {
+    await init();
     if (!available || loading) return;
     loading = true;
     error = null;
@@ -166,7 +172,7 @@ class BillingService extends ChangeNotifier {
             );
       if (!sent) error = 'Google Play did not start the purchase.';
     } catch (value) {
-      error = value.toString();
+      error = _friendlyBillingError(value);
     } finally {
       loading = false;
       notifyListeners();
@@ -174,18 +180,29 @@ class BillingService extends ChangeNotifier {
   }
 
   Future<void> restorePurchases() async {
+    await init();
     if (!available || loading) return;
     loading = true;
     error = null;
     notifyListeners();
     try {
-      await _storeOrDefault.restorePurchases();
+      await _restoreFromStore(_storeOrDefault);
     } catch (value) {
-      error = value.toString();
+      error = _friendlyBillingError(value);
     } finally {
       loading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _restoreFromStore(InAppPurchase store) =>
+      store.restorePurchases().timeout(_billingTimeout);
+
+  String _friendlyBillingError(Object value) {
+    if (value is TimeoutException) {
+      return 'Google Play did not respond. Check your connection and try again.';
+    }
+    return value.toString().replaceFirst('Exception: ', '');
   }
 
   Future<void> _handlePurchases(List<PurchaseDetails> purchases) async {
@@ -237,7 +254,11 @@ class BillingService extends ChangeNotifier {
       }
       if (purchase.pendingCompletePurchase &&
           purchase.status != PurchaseStatus.pending) {
-        await _storeOrDefault.completePurchase(purchase);
+        try {
+          await _storeOrDefault.completePurchase(purchase);
+        } catch (value) {
+          error = 'Google Play could not finalize this purchase: $value';
+        }
       }
       notifyListeners();
     }

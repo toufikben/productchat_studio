@@ -4,16 +4,16 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for ur.
-class AppLocalizationsUR extends AppLocalizations {
-  AppLocalizationsUR([String locale = 'ur']) : super(locale);
+/// The translations for Urdu (`ur`).
+class AppLocalizationsUr extends AppLocalizations {
+  AppLocalizationsUr([String locale = 'ur']) : super(locale);
 
   @override
-  String get appTitle => "پروڈکٹ چیٹ اسٹوڈیو";
+  String get appTitle => 'پروڈکٹ چیٹ اسٹوڈیو';
 
   @override
-  String get smartAnalysis => "اسمارٹ تجزیہ";
+  String get smartAnalysis => 'اسمارٹ تجزیہ';
 
   @override
-  String get uploadPrompt => "شروع کرنے کے لیے پروڈکٹ کی تصویر اپ لوڈ کریں";
+  String get uploadPrompt => 'شروع کرنے کے لیے پروڈکٹ کی تصویر اپ لوڈ کریں';
 }

@@ -4,16 +4,16 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for ko.
-class AppLocalizationsKO extends AppLocalizations {
-  AppLocalizationsKO([String locale = 'ko']) : super(locale);
+/// The translations for Korean (`ko`).
+class AppLocalizationsKo extends AppLocalizations {
+  AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
-  String get appTitle => "ProductChat Studio";
+  String get appTitle => 'ProductChat Studio';
 
   @override
-  String get smartAnalysis => "스마트 분석";
+  String get smartAnalysis => '스마트 분석';
 
   @override
-  String get uploadPrompt => "시작하려면 제품 이미지를 업로드하세요";
+  String get uploadPrompt => '시작하려면 제품 이미지를 업로드하세요';
 }
