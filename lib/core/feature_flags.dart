@@ -100,6 +100,14 @@ class FeatureFlags {
       key: 'watermark',
       tier: FeatureTier.stable,
     ),
+    'chatStudio': FeatureFlag(
+      key: 'chatStudio',
+      tier: FeatureTier.stable,
+    ),
+    'floatingNavBar': FeatureFlag(
+      key: 'floatingNavBar',
+      tier: FeatureTier.stable,
+    ),
     'floatingNavBar': FeatureFlag(
       key: 'floatingNavBar',
       tier: FeatureTier.stable,
@@ -195,6 +203,31 @@ class FeatureFlags {
   static bool isEnabled(String key) => flag(key).isEnabled;
   static bool isBeta(String key) => flag(key).isBeta;
   static bool isComingSoon(String key) => flag(key).isComingSoon;
+  static bool get backgroundRemoval => isEnabled('backgroundRemoval');
+  static bool get basicEnhance => isEnabled('basicEnhance');
+  static bool get shadowPresets => isEnabled('shadowPresets');
+  static bool get textEditor => isEnabled('textEditor');
+  static bool get layerEditor => isEnabled('layerEditor');
+  static bool get export => isEnabled('export');
+  static bool get history => isEnabled('history');
+  static bool get billing => isEnabled('billing');
+  static bool get modelCenter => isEnabled('modelCenter');
+  static bool get voiceCommands => isEnabled('voiceCommands');
+  static bool get smartAnalysis => isEnabled('smartAnalysis');
+  static bool get chatStudio => isEnabled('chatStudio');
+  static bool get miGan => isEnabled('miGan');
+  static bool get realEsrgan => isEnabled('realEsrgan');
+  static bool get relight => isEnabled('relightAdvanced');
+  static bool get conversationalEdit => isEnabled('conversationalEdit');
+  static bool get recipesAutomation => isEnabled('recipesAutomation');
+  static bool get compliance => isEnabled('compliance');
+  static bool get batchProcessing => isEnabled('batchProcessing');
+  static bool get brandIdentity => isEnabled('brandIdentity');
+  static bool get referral => isEnabled('referral');
+  static bool get useWatermark => isEnabled('watermark');
+  static bool get useQuota => true;
+  static int get freeQuota => 3;
+  static bool get floatingNavBar => isEnabled('floatingNavBar');
   static bool get batchProcessing => isEnabled('batchProcessing');
   static bool get floatingNavBar => isEnabled('floatingNavBar');
 

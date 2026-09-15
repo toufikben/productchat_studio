@@ -112,6 +112,7 @@ class VoiceService extends StateNotifier<VoiceState> {
   Stream<String> get onTranscription => _transcriptionController.stream;
 
   void _loadSettings() {
+    if (!Hive.isBoxOpen('settings')) return;
     final box = Hive.box<dynamic>('settings');
     final settings = box.getMap('voice_settings');
     if (settings.isNotEmpty) {

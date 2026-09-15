@@ -216,12 +216,12 @@ void main() {
     )..pendingCompletePurchase = true;
 
     fake.emit([purchase]);
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
     expect(billing.credits, 100);
     expect(fake.completed, 1);
 
     fake.emit([purchase]);
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
     expect(billing.credits, 100);
     expect(fake.completed, 2);
 

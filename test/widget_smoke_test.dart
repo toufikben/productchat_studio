@@ -121,16 +121,11 @@ void main() {
     final container = ProviderContainer();
     final router = container.read(routerProvider);
     router.go('/settings');
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const ProductChatApp(),
-      ),
-    );
-    await tester.pump();
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
     expect(find.text('Settings'), findsOneWidget);
 
-    routerProvider.go('/route-that-does-not-exist');
+    router.go('/route-that-does-not-exist');
     await tester.pumpAndSettle();
     expect(find.text('Page not found'), findsOneWidget);
     container.dispose();

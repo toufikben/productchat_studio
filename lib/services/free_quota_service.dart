@@ -30,7 +30,15 @@ class FreeQuotaService extends StateNotifier<QuotaState> {
     }
     final used =
         (_get(_kUsed, 0) as int).clamp(0, AppConstants.freeMonthlyQuota);
-    state = QuotaState(used: used, lastReset: DateTime.parse(raw));
+    state = QuotaState(used: used, lastReset: _parseMonth(raw));
+  }
+
+  DateTime _parseMonth(String value) {
+    final parts = value.split('-');
+    if (parts.length == 2) {
+      return DateTime(int.parse(parts[0]), int.parse(parts[1]));
+    }
+    return DateTime.parse(value);
   }
 
   bool _shouldReset(String value, DateTime now) {
