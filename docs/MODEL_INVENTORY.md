@@ -1,7 +1,7 @@
 # Model and source inventory
 
-**آخر تحقق:** 2026-09-13  
-**كود التطبيق:** `toufikben/productchat_studio`، الفرع `main`، commit `fb20f125134d381bbc655883008a4f214aebde74`  
+**آخر تحقق:** 2026-09-15
+**كود التطبيق:** `toufikben/productchat_studio`، الفرع `main`، آخر commit موثق عند التحديث
 **مستودع النماذج:** [`Toufikben/productchat-models`](https://huggingface.co/Toufikben/productchat-models)  
 **Hugging Face repository SHA:** `974c8e8607396ca79e03aefd70d354707d7192a3`  
 **Hugging Face lastModified:** `2026-09-13T20:29:08Z`
@@ -10,21 +10,15 @@
 
 | الملف | موجود في HF | الحجم بالبايت | SHA-256 | الترخيص/الإسناد | استخدام التطبيق الحالي |
 |---|---:|---:|---|---|---|
-| `lama_fp32.onnx` | نعم | 208,044,816 | `1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6` | Apache-2.0؛ بطاقة النموذج تطلب attribution لـ Places2 | `ModelManager.lama` ثم `SeikaChannel` عند `inpaint` أو مسار جودة غير fast |
-| `RealESRGAN_x4plus.pth` | نعم | 67,040,989 | `4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1` | BSD-3-Clause | غير قابل للتشغيل حاليًا بواسطة ONNX Runtime؛ `runEsrgan` يرجع `null` |
-| MI-GAN weights | لا | — | — | لا توجد موافقة واضحة لإعادة التوزيع التجاري | ممنوع إضافته حتى حسم الترخيص |
+| `migan.onnx` | نعم | 29,546,882 | `593eba0b7e04730f1b61c0a3cbca68d97d8d6a7ff5c6a44a7b9d7fcd880fc5ae` | يجب مراجعة شروط إعادة التوزيع قبل البيع التجاري | مثبت في `ModelManager`؛ runtime Android غير مثبت |
+| `lama_fp16.onnx` | نعم | 107,762,632 | `37f2e4888eb27aa08841786b506fa094156c497de3d954ebf7a297c61a7fb4ea` | تحويل FP16 موثق في بطاقة المستودع؛ يلزم التحقق من الترخيص الأصلي | `ModelManager.lama`؛ runtime Android غير مثبت |
+| `real_esrgan_x4.onnx` | نعم | 67,051,616 | `5c586662929cbc686c1a5c38d9c060dbdb4ea5863a1f7672b8c0761e6b89c033` | يجب مراجعة شروط إعادة التوزيع قبل البيع التجاري | مثبت في `ModelManager`؛ runtime Android غير مثبت |
+| `lama_fp32.onnx` و`RealESRGAN_x4plus.pth` | نعم، artifacts مرجعية | — | — | ليست الملفات التي يستخدمها المسار الحالي | لا تُخلط مع artifacts ONNX الحالية |
 | DreamLite | لا | — | — | مستبعد من المستودع | غير مستخدم |
 
 ## LaMa contract
 
-وفق بطاقة النموذج في Hugging Face:
-
-- `image`: float32، shape `[1,3,512,512]`.
-- `mask`: float32، shape `[1,1,512,512]`.
-- mask value `1` تعني المنطقة التي تُحذف، و`0` المنطقة التي تبقى.
-- output RGB float32 في نطاق `[0,255]`.
-
-`android/.../SeikaChannel.kt` يطابق shapes المذكورة، لكن التطابق runtime لم يُثبت بعد في بيئة Android.
+العقد التفصيلي للـ artifacts الثلاثة يجب أن يُثبت من graph الفعلي ومن runtime Android قبل اعتمادها. لا تُعتبر الأبعاد أو ترتيب القنوات مستنتجة من اسم الملف. وبالنسبة إلى LaMa، يظل العقد المرجعي الموثق سابقاً هو `image` من نوع float32 بالشكل `[1,3,512,512]` و`mask` بالشكل `[1,1,512,512]`، مع ضرورة تأكيده على artifact `lama_fp16.onnx` الحالي.
 
 ## Repository files observed
 
@@ -42,6 +36,7 @@
 - Flutter bridge: `lib/services/seika_service.dart`
 - Android inference: `android/app/src/main/kotlin/com/productchat/aiphotostudio/native/SeikaChannel.kt`
 - Android dependency: `android/app/build.gradle`
+- Reproducible public artifact check: `scripts/verify_model_artifacts.sh`
 
 ## Verification policy
 

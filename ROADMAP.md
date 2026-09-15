@@ -1,5 +1,7 @@
 # ProductChat Studio — خارطة الطريق التنفيذية الموحدة
 
+> **تحديث تحقق 2026-09-15:** تم التحقق من توفر artifacts الثلاثة العامة على Hugging Face ومطابقة SHA-256 عبر `scripts/verify_model_artifacts.sh`. لا يزال التحقق من inference على Android واختبار Qwen الفعلي معلقين لعدم توفر Flutter/ADB ومفتاح Qwen في بيئة التنفيذ الحالية.
+
 > **الحالة المرجعية:** Android-first. لا تُرفع أي ميزة من «موجودة في المصدر» إلى «متحققة» أو «جاهزة للإصدار» دون دليل قابل لإعادة الإنتاج.
 >
 > **آخر تحديث:** 2026-09-15 — UI Overhaul + Voice Integration
@@ -20,6 +22,16 @@
 - [x] `flutter pub get` نجح وبناء `flutter build apk --debug` نجح بعد الترحيل.
 - [ ] `flutter analyze` ما زال يفشل بسبب 412 مشكلة موجودة في ملفات أخرى؛ يلزم إصلاحها في حزمة مستقلة.
 - [ ] يجب تشغيل Qwen فعليًا بعد توفير مفتاح API صالح؛ لم يُحفظ أي مفتاح في المستودع.
+
+### نتيجة تحقق artifacts — 2026-09-15
+
+- [x] `migan.onnx`: HTTP 200، الحجم `29,546,882` بايت، وSHA-256 مطابق.
+- [x] `lama_fp16.onnx`: HTTP 200، الحجم `107,762,632` بايت، وSHA-256 مطابق.
+- [x] `real_esrgan_x4.onnx`: HTTP 200، الحجم `67,051,616` بايت، وSHA-256 مطابق.
+- [x] إضافة `scripts/verify_model_artifacts.sh` لإعادة تنفيذ التحقق دون أسرار.
+- [ ] لم يُثبت بعد تحميل ONNX أو inference على Android ARM64؛ وجود HTTP 200 وSHA-256 لا يثبت توافق tensor contract.
+- [ ] لم يُنفذ طلب Qwen فعلي؛ لا يوجد `QWEN_API_KEY` في البيئة، ولا ينبغي إضافته إلى GitHub أو Hugging Face.
+- [ ] لا يوجد تغيير مطلوب حالياً في مستودع Hugging Face؛ الخطوة التالية هناك هي توثيق عقود tensors ونتائج runtime بعد توفر جهاز Android.
 
 ## 1. قاعدة الحالة
 
