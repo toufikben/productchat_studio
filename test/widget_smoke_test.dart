@@ -81,7 +81,7 @@ void main() {
     );
 
     await tester.tap(find.text('Restore purchases'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text('No Pro or Lifetime purchase was restored.'), findsOneWidget);
     billing.dispose();

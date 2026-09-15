@@ -249,7 +249,7 @@ void main() {
   });
 }
 
-class FakePurchasePlatform extends Fake implements InAppPurchasePlatform {
+class FakePurchasePlatform extends InAppPurchasePlatform {
   final StreamController<List<PurchaseDetails>> _controller =
       StreamController<List<PurchaseDetails>>.broadcast();
   int completed = 0;
