@@ -527,3 +527,9 @@ All repair work must follow these rules:
 - [x] إضافة `app_pt.arb` و`app_ru.arb` و`app_tr.arb` بواقع 177 مفتاح ترجمة لكل ملف.
 - [x] التحقق من JSON و`git diff --check` بنجاح.
 - [ ] `flutter gen-l10n`: تعذر التنفيذ لأن Flutter SDK غير موجود في `PATH`.
+
+## سجل التحديثات — 2026-09-15 — L10N Complete Part 3 FIX #101–#103
+
+- [x] إضافة `app_zh.arb` و`app_ja.arb` و`app_ko.arb` بواقع 177 مفتاح ترجمة لكل ملف.
+- [x] التحقق من JSON و`git diff --check` بنجاح.
+- [ ] `flutter gen-l10n`: تعذر التنفيذ لأن Flutter SDK غير موجود في `PATH`.
