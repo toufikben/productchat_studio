@@ -513,3 +513,11 @@ All repair work must follow these rules:
 - [x] استبدال `.gitignore` بقواعد Flutter/Android/iOS/Web والأسرار والنماذج.
 - [x] اجتياز تحقق JSON و`git diff --check` والتحقق من PNG.
 - [ ] `flutter clean && flutter pub get && flutter analyze`: تعذر التنفيذ لأن Flutter SDK غير موجود في `PATH`.
+
+## سجل التحديثات — 2026-09-15 — L10N Complete Part 1 FIX #92–#97
+
+- [x] استبدال `app_en.arb` و`app_ar.arb` وإضافة الترجمات الفرنسية والإسبانية والألمانية والإيطالية.
+- [x] التحقق من JSON لجميع ملفات ARB الستة؛ كل ملف يحتوي على 177 مفتاح ترجمة غير وصفي.
+- [x] تصحيح escape غير صالح في القيم السعرية حتى تتوافق ملفات ARB مع JSON و`gen-l10n`.
+- [ ] `flutter gen-l10n && flutter analyze`: تعذر التنفيذ لأن Flutter SDK غير موجود في `PATH`.
+- [ ] اللغات المتبقية ستُستكمل عند وصول Parts 2–4 من حزمة L10N.
