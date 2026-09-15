@@ -156,7 +156,7 @@ real_esrgan_x4.onnx
 
 تم استبدال التنفيذ المحلي الذي كان يحاول فتح `qwen_edit_int8.onnx` بخدمة API بعيدة. الخدمة الحالية:
 
-1. تقرأ المفتاح من `String.fromEnvironment('QWEN_API_KEY')`.
+1. تقرأ مؤقتاً قيمة Base64 من `String.fromEnvironment('QWEN_API_KEY_B64')`، مع إبقاء `QWEN_API_KEY` للتوافق المحلي.
 2. ترفض التنفيذ برسالة واضحة إذا لم يكن المفتاح موجودًا.
 3. ترفع الصورة والـ prompt بصيغة multipart.
 4. ترسل الطلب إلى WaveSpeed Qwen Image Edit API.
@@ -165,11 +165,16 @@ real_esrgan_x4.onnx
 7. تنزل الصورة الناتجة إلى ملف باسم ينتهي بـ `_qwen.png`.
 8. تعيد `EditResult` متوافقًا مع بقية التطبيق.
 
-يتم تمرير المفتاح وقت البناء، مثل:
+للاختبار المحلي فقط، يمكن تمرير قيمة Base64 وقت البناء. هذا إخفاء شكلي وليس تشفيراً؛ لا تستخدمه في APK عام:
 
 ```bash
-flutter build apk --dart-define=QWEN_API_KEY=YOUR_KEY
+export QWEN_API_KEY='YOUR_KEY'
+QWEN_API_KEY_B64="$(printf '%s' "$QWEN_API_KEY" | base64 -w0)"
+flutter build apk --dart-define=QWEN_API_KEY_B64="$QWEN_API_KEY_B64"
+unset QWEN_API_KEY QWEN_API_KEY_B64
 ```
+
+لا يستطيع المستودع أو Hugging Face توفير المفتاح؛ يجب أن يضعه مالك حساب WaveSpeed محلياً أو في Secret آمن. الخطة الإنتاجية هي Supabase Edge Function، وليس تضمين المفتاح داخل التطبيق.
 
 لا يجوز وضع المفتاح في:
 

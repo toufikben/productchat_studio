@@ -1,13 +1,30 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 import '../../models/edit_request.dart';
 
 /// QwenEditService — conversational image editing through a remote API.
 ///
-/// Qwen-Image-Edit is a large server-side model. The API key is supplied at
-/// build/run time with --dart-define=QWEN_API_KEY=..., never committed here.
+/// Qwen-Image-Edit is a large server-side model.
+///
+/// The temporary client-side option accepts a Base64-encoded value through
+/// `--dart-define=QWEN_API_KEY_B64=...`. Base64 is obfuscation, not encryption:
+/// a distributed APK can still be inspected. The production option is a
+/// Supabase Edge Function, where the real key remains server-side.
 class QwenEditService {
-  static const _apiKey = String.fromEnvironment('QWEN_API_KEY');
+  static String get _apiKey {
+    const encoded = String.fromEnvironment('QWEN_API_KEY_B64');
+    if (encoded.isNotEmpty) {
+      try {
+        return utf8.decode(base64.decode(encoded));
+      } on FormatException {
+        return '';
+      }
+    }
+    // Backward-compatible local development path. Do not use in public APKs.
+    return const String.fromEnvironment('QWEN_API_KEY');
+  }
   static const _baseUrl =
       'https://api.wavespeed.ai/api/v3/wavespeed-ai/qwen-image-edit';
 
