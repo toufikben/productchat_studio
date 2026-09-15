@@ -181,6 +181,7 @@ void main() {
   });
 
   test('BillingService completes purchases and grants a consumable once', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
     final fake = FakePurchasePlatform();
     InAppPurchasePlatform.instance = fake;
     final billing = BillingService(storage: StorageService());
@@ -209,9 +210,11 @@ void main() {
     expect(fake.completed, 2);
 
     billing.dispose();
+    debugDefaultTargetPlatformOverride = null;
   });
 
   test('BillingService ignores restored consumables and records purchase errors', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
     final fake = FakePurchasePlatform();
     InAppPurchasePlatform.instance = fake;
     final billing = BillingService(storage: StorageService());
@@ -248,6 +251,7 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(billing.error, 'Purchase failed.');
     billing.dispose();
+    debugDefaultTargetPlatformOverride = null;
   });
 }
 
