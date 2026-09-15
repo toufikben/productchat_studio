@@ -295,8 +295,8 @@ class VoiceService extends StateNotifier<VoiceState> {
 
   @override
   void dispose() {
-    _stt.stop();
-    _tts.stop();
+    unawaited(_stt.stop().catchError((_) {}));
+    unawaited(_tts.stop().catchError((_) {}));
     _transcriptionController.close();
     super.dispose();
   }
