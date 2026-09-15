@@ -30,8 +30,11 @@ Future<void> main() async {
     // At this point CrashReportingService may not be initialised yet, so
     // print to the console as a last resort.
     debugPrint('[main] uncaught error: $error\n$stack');
+    _runFallbackApp();
   });
 }
+
+bool _appStarted = false;
 
 Future<void> _boot() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -146,7 +149,17 @@ Future<void> _boot() async {
   }
 
   // ── 10. Launch ───────────────────────────────────────────────────────────
+  _appStarted = true;
   runApp(const ProviderScope(child: ProductChatApp()));
+}
+
+void _runFallbackApp() {
+  if (_appStarted) return;
+  _appStarted = true;
+  runApp(const MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: Scaffold(body: Center(child: Text('ProductChat Studio'))),
+  ));
 }
 
 Future<void> _openHiveBoxSafely(String name) async {
