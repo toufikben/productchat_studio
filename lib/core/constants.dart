@@ -1,21 +1,26 @@
 class AppConstants {
   static const appName = 'ProductChat Studio';
   static const appVersion = '1.0.0';
+  static const buildNumber = 1;
 
-  // Free tier policy from Billing v2.
+  // ─── Quotas & Credits ───
   static const freeMonthlyQuota = 3;
-  static const freeHasWatermark = true;
-  static const freeUsesPatchMatchOnly = true;
-
-  // Product limits and operation economics.
-  static const maxBatchImages = 100;
-  static const creditsPerBackground = 1;
-  static const creditsPerShadow = 1;
+  static const creditsPerBackgroundFast = 1;
+  static const creditsPerBackgroundPro = 2;
+  static const creditsPerBackgroundUltra = 3;
   static const creditsPerEnhance = 2;
   static const creditsPerConversational = 3;
+  static const creditsPerShadow = 1;
+  static const creditsPerRelight = 2;
+  static const creditsPerColorize = 2;
+  static const creditsPerInpaint = 3;
   static const creditsPerCompliance = 0;
   static const creditsPerExport = 0;
+  static const freeHasWatermark = true;
+  static const freeUsesPatchMatchOnly = true;
+  static const creditsPerBackground = creditsPerBackgroundFast;
 
+  // ─── IAP Product IDs (must match Play Console exactly) ───
   static const iapProMonthly = 'pro_monthly';
   static const iapProYearly = 'pro_yearly';
   static const iapCredits100 = 'credits_100';
@@ -23,21 +28,57 @@ class AppConstants {
   static const iapCredits1200 = 'credits_1200';
   static const iapLifetime = 'lifetime';
 
-  static const creditsPerPack = <String, int>{
+  // ─── Display names ───
+  static const displayNames = {
+    iapProMonthly: 'Pro Monthly',
+    iapProYearly: 'Pro Yearly',
+    iapCredits100: '100 Credits',
+    iapCredits500: '500 Credits',
+    iapCredits1200: '1200 Credits',
+    iapLifetime: 'Lifetime Access',
+  };
+
+  // ─── Fallback prices (USD) ───
+  static const fallbackPrices = {
+    iapProMonthly: r'$4.99',
+    iapProYearly: r'$29.99',
+    iapCredits100: r'$4.99',
+    iapCredits500: r'$19.99',
+    iapCredits1200: r'$39.99',
+    iapLifetime: r'$79.99',
+  };
+
+  static const creditsPerPack = {
     iapCredits100: 100,
     iapCredits500: 500,
     iapCredits1200: 1200,
   };
 
-  // MI-GAN weights remain disabled until the upstream weight license is
-  // confirmed for commercial redistribution.
-  static const modelMiganUrl = '';
+  static const proMonthlyDays = 30;
+  static const proYearlyDays = 365;
+
+  // ─── Model URLs ───
+  static const modelMiganUrl =
+      'https://huggingface.co/Toufikben/productchat-models/resolve/main/migan.onnx';
   static const modelLamaUrl =
-      'https://huggingface.co/Toufikben/productchat-models/resolve/main/lama_fp32.onnx';
+      'https://huggingface.co/Toufikben/productchat-models/resolve/main/lama_fp16.onnx';
   static const modelRealEsrganUrl =
       'https://huggingface.co/Toufikben/productchat-models/resolve/main/real_esrgan_x4.onnx';
+  static const modelQwenEditUrl =
+      'https://huggingface.co/Toufikben/productchat-models/resolve/main/qwen_edit_int8.onnx';
+
+  // ─── SHA-256 (املأها بعد الرفع) ───
+  static const modelMiganSha256 = 'REPLACE_AFTER_UPLOAD';
+  static const modelLamaSha256 = 'REPLACE_AFTER_UPLOAD';
   static const modelRealEsrganSha256 = 'REPLACE_AFTER_UPLOAD';
-  // DreamLite is excluded from commercial builds until a commercial license
-  // is obtained. Its weights must not be distributed by the production app.
+  static const modelQwenEditSha256 = 'REPLACE_AFTER_UPLOAD';
   static const dreamLiteEnabled = false;
+
+  // ─── Limits ───
+  static const maxBatchImages = 100;
+  static const maxHistoryItems = 100;
+  static const maxReferralRewards = 50;
+  static const referralCreditsPerInvite = 20;
+  static const maxLayers = 10;
+  static const maxUndoSteps = 30;
 }

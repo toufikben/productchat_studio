@@ -52,6 +52,22 @@
 
 **نتيجة v3.0:** الملفات والميزات الجديدة مضافة ومربوطة، لكن التحليل والاختبارات والبناء يحتاجون بيئة Flutter فعلية.
 
+## سجل التحديثات — 2026-09-15 — Core Features FIX #20–#33
+
+- [x] قراءة `18_CORE_FEATURES.txt` و`18_CORE_FEATURES_PART2.txt` بالكامل.
+- [x] تنفيذ FIX #20: تحديث constants للـ quotas والـ IAP وروابط النماذج والحدود.
+- [x] تنفيذ FIX #21–#25: MI-GAN وQwen Edit وRelight وColorize وProduct Fidelity.
+- [x] تنفيذ FIX #26–#28: Watermark وCompliance/Export وRecipe Runner.
+- [x] تنفيذ FIX #29–#30: تجميع خدمات AI وتحديث ChatController مع التحليل الذكي والرصيد والتحقق من fidelity.
+- [x] تنفيذ FIX #31–#33: قنوات Android MI-GAN وQwen وتسجيلها في MainActivity الفعلي للمشروع.
+- [x] إضافة توافقات لازمة لواجهات `EditResult` و`EditRequest` و`PlatformSpec` و`StorageService` و`Recipe` حتى تتطابق الخدمات الجديدة مع الكود الحالي.
+- [x] حفظ ملفات التعليمات في `docs/ai_package/18_CORE_FEATURES.txt` و`18_CORE_FEATURES_PART2.txt`.
+- [x] اجتياز الفحوصات الساكنة و`git diff --check` وإزالة نصوص التعليمات من ملفات المصدر.
+- [ ] `flutter clean && flutter pub get`: تعذر التنفيذ لأن Flutter SDK غير موجود في `PATH`.
+- [ ] `flutter analyze`: تعذر التنفيذ لنفس سبب غياب Flutter SDK.
+
+**ملاحظة Android:** المشروع يستخدم namespace `com.productchat.aiphotostudio` فعلياً؛ لذلك أُضيف تسجيل قنوات MI-GAN وQwen إلى MainActivity الفعلي، مع الاحتفاظ بالملفات المحددة في الحزمة تحت مسار `com.productchat.studio`.
+
 ## سجل التحديثات — 2026-09-15 — Package Extensions 04–07
 
 - [x] قراءة ملفات الحزمة الثمانية بالترتيب وحفظ نسخها في `docs/ai_package/`.

@@ -58,6 +58,20 @@ class StorageService {
     }
   }
 
+  int getCredits() => (get('credits') as int?) ?? 0;
+
+  Future<void> setCredits(int value) => set('credits', value < 0 ? 0 : value);
+
+  Future<void> addCredits(int delta) => setCredits(getCredits() + delta);
+
+  Future<void> addHistory(Map<String, dynamic> entry) async {
+    final history = <String>[];
+    final raw = get('history');
+    if (raw is List) history.addAll(raw.whereType<String>());
+    history.add(jsonEncode(entry));
+    await set('history', history);
+  }
+
   Future<void> remove(String key) async {
     _memory.remove(key);
     await _preferences?.remove(key);

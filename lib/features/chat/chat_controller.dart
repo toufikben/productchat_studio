@@ -1,98 +1,319 @@
+import 'package:image_picker/image_picker.dart';
+import 'package:speech_to_text/speech_to_text.dart';
+import 'package:uuid/uuid.dart';
 import '../../models/edit_request.dart';
-import '../../models/edit_result.dart';
-import '../../services/billing_service.dart';
-import '../../services/free_watermark_service.dart';
-import '../../services/history_service.dart';
-import '../../services/seika_service.dart';
+import '../../models/platform_spec.dart';
+import '../../services/ai_service.dart';
+import '../../services/ai/migan_service.dart';
+import '../../services/ai/qwen_edit_service.dart';
+import '../../services/ai/relight_service.dart';
+import '../../services/ai/colorize_service.dart';
+import '../../services/compliance_service.dart';
+import '../../services/product_fidelity_service.dart';
+import '../../services/storage_service.dart';
+import '../../services/smart_analysis_service.dart';
+import '../../services/pro_service.dart';
+import '../../core/constants.dart';
 
-/// Dispatches chat commands to local image services.
-///
-/// Free-tier flow:
-///   1. Check quota availability.
-///   2. Run the operation.
-///   3. Apply watermark (must succeed before quota is consumed).
-///   4. Consume quota.
-///   5. Record to history.
-///
-/// This matches the EditorController Free-tier flow so both paths behave
-/// identically: watermark failure rolls back before quota is consumed.
-///
-/// DreamLite is deliberately absent from this controller.
-class ChatController {
-  final String? imagePath;
-  final String? maskPath;
-  final SeikaService _seika;
-  final BillingService _billing;
+class ChatMessage {
+  final String id, role, text;
+  final DateTime at;
+  ChatMessage({required this.role, required this.text})
+      : id = const Uuid().v4(),
+        at = DateTime.now();
+}
 
-  ChatController({
-    required this.imagePath,
-    this.maskPath,
-    SeikaService? seika,
-    BillingService? billing,
-  })  : _seika = seika ?? SeikaService(),
-        _billing = billing ?? billingService;
+class ChatState {
+  final List<ChatMessage> messages;
+  final String? imagePath, lastError;
+  final bool busy;
+  final int credits;
+  final AnalysisResult? analysisResult;
+  final FidelityResult? lastFidelity;
 
-  Future<EditResult> dispatch(EditRequest req) => _dispatch(req);
+  const ChatState({
+    this.messages = const [],
+    this.imagePath,
+    this.lastError,
+    this.busy = false,
+    this.credits = 0,
+    this.analysisResult,
+    this.lastFidelity,
+  });
 
-  Future<EditResult> _dispatch(EditRequest req) async {
-    final image = imagePath;
-    if (image == null || image.isEmpty) {
-      return const EditResult.failure('Select an image before editing.');
-    }
-
-    if (!_billing.proService.isPro) {
-      if (req.op != EditOp.removeBg) {
-        return const EditResult.failure(
-          'Free tier supports PatchMatch background removal only; '
-          'conversational edits require a mask and Pro.',
-        );
-      }
-      // 1. Check quota before doing any work.
-      if (!_billing.freeQuota.canUse()) {
-        return const EditResult.failure(
-          'Free monthly quota is exhausted. Upgrade to Pro to continue.',
-        );
-      }
-      // 2. Run the operation.
-      final result = await _seika.removeBackground(image);
-      if (!result.ok || result.outputPath == null) return result;
-      // 3. Apply watermark — must succeed before quota is consumed.
-      final watermarked = await freeWatermarkService.apply(result.outputPath!);
-      if (watermarked == null) {
-        return const EditResult.failure('Unable to apply the Free watermark.');
-      }
-      // 4. Consume quota only after a successful, watermarked output.
-      final consumed = await _billing.freeQuota.consume();
-      if (!consumed) {
-        return const EditResult.failure(
-            'Free monthly quota changed during processing.');
-      }
-      // 5. Record to history.
-      await historyService.record(path: watermarked, operation: 'removeBg');
-      return EditResult(
-        ok: true,
-        outputPath: watermarked,
-        creditsUsed: result.creditsUsed,
+  ChatState copyWith({
+    List<ChatMessage>? messages,
+    String? imagePath,
+    String? lastError,
+    bool? busy,
+    int? credits,
+    AnalysisResult? analysisResult,
+    FidelityResult? lastFidelity,
+    bool clearAnalysis = false,
+  }) =>
+      ChatState(
+        messages: messages ?? this.messages,
+        imagePath: imagePath ?? this.imagePath,
+        lastError: lastError,
+        busy: busy ?? this.busy,
+        credits: credits ?? this.credits,
+        analysisResult: clearAnalysis ? null : (analysisResult ?? this.analysisResult),
+        lastFidelity: lastFidelity ?? this.lastFidelity,
       );
+}
+
+class ChatController extends StateNotifier<ChatState> {
+  ChatController() : super(const ChatState()) {
+    _init();
+  }
+
+  // ─── All AI Services ───
+  final _border = BorderCutService();
+  final _migan = MIGanService();
+  final _seika = SeikaService(quality: 'best');
+  final _qwen = QwenEditService();
+  final _enhance = BasicEnhanceService();
+  final _upscale = UpscaleService();
+  final _shadow = ShadowService();
+  final _relight = RelightService();
+  final _colorize = ColorizeService();
+  final _fidelity = ProductFidelityService();
+  final _compliance = ComplianceService();
+  final _export = ExportService();
+  final _store = StorageService();
+  final _smart = SmartAnalysisService();
+  final _pro = ProService();
+  final _stt = SpeechToText();
+
+  Future<void> _init() async {
+    state = state.copyWith(
+      credits: _store.getCredits(),
+      messages: [
+        ChatMessage(
+          role: 'assistant',
+          text: 'Welcome! Upload a product photo and I\'ll analyze it.',
+        ),
+      ],
+    );
+  }
+
+  Future<void> pickImage() async {
+    final x = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 95,
+    );
+    if (x == null) return;
+
+    state = state.copyWith(
+      imagePath: x.path,
+      lastError: null,
+      messages: [
+        ...state.messages,
+        ChatMessage(role: 'user', text: '📎 Image uploaded'),
+      ],
+    );
+
+    final analysis = await _smart.analyze(x.path);
+    if (!mounted) return;
+    state = state.copyWith(analysisResult: analysis);
+  }
+
+  Future<void> dismissAnalysis() async {
+    state = state.copyWith(clearAnalysis: true);
+  }
+
+  Future<void> voiceInput() async {
+    if (!await _stt.initialize()) return;
+    await _stt.listen(onResult: (r) {
+      if (r.finalResult) submit(r.recognizedWords);
+    });
+  }
+
+  Future<void> submit(String text) async {
+    if (text.trim().isEmpty) return;
+    state = state.copyWith(messages: [
+      ...state.messages,
+      ChatMessage(role: 'user', text: text),
+    ]);
+
+    if (state.imagePath == null) {
+      state = state.copyWith(messages: [
+        ...state.messages,
+        ChatMessage(role: 'assistant', text: 'Upload an image first 📸'),
+      ]);
+      return;
     }
 
-    switch (req.op) {
-      case EditOp.inpaint:
-      case EditOp.relight:
-        // Conversational edits must provide a user-created or detected mask.
-        return _seika.conversationalEdit(
-          imagePath: image,
-          maskPath: req.maskPath ?? maskPath,
-          prompt: req.prompt,
+    final req = _parse(text);
+    final cost = _creditCost(req.op);
+
+    if (!_canUseFeature(req.op, cost)) {
+      state = state.copyWith(messages: [
+        ...state.messages,
+        ChatMessage(role: 'assistant', text: _gateMessage(req.op, cost)),
+      ]);
+      return;
+    }
+
+    state = state.copyWith(busy: true, lastError: null);
+
+    // Optimistic deduction
+    final balanceBefore = _store.getCredits();
+    if (!_pro.isPro) {
+      await _store.addCredits(-cost);
+      state = state.copyWith(credits: _store.getCredits());
+    }
+
+    try {
+      final before = state.imagePath!;
+      final res = await _dispatch(req);
+      if (res.ok) {
+        // Fidelity check
+        final fidelity = await _fidelity.check(
+          originalPath: before,
+          editedPath: res.outputPath!,
         );
-      case EditOp.removeBg:
-        return _seika.removeBackground(image);
-      case EditOp.enhance:
-        return _seika.upscale(image, factor: 2);
-      case EditOp.shadow:
-        return _seika.addShadow(image);
-      case EditOp.export:
-        return _seika.export(image, format: 'jpg', size: 2000);
+
+        _store.addHistory({
+          'input': before,
+          'output': res.outputPath,
+          'op': req.op.name,
+          'ts': DateTime.now().toIso8601String(),
+        });
+
+        state = state.copyWith(
+          imagePath: res.outputPath,
+          credits: _store.getCredits(),
+          lastFidelity: fidelity,
+          clearAnalysis: true,
+          messages: [
+            ...state.messages,
+            ChatMessage(
+              role: 'assistant',
+              text: '✅ Done in ${res.duration?.inMilliseconds ?? 0}ms'
+                  '${fidelity.passed ? "" : " (fidelity warning)"}',
+            ),
+          ],
+        );
+      } else {
+        if (!_pro.isPro) {
+          await _store.setCredits(balanceBefore);
+          state = state.copyWith(credits: _store.getCredits());
+        }
+        state = state.copyWith(
+          lastError: res.error,
+          messages: [
+            ...state.messages,
+            ChatMessage(role: 'assistant', text: '❌ ${res.error} (refunded)'),
+          ],
+        );
+      }
+    } catch (e) {
+      if (!_pro.isPro) {
+        await _store.setCredits(balanceBefore);
+        state = state.copyWith(credits: _store.getCredits());
+      }
+      state = state.copyWith(lastError: '$e');
+    } finally {
+      state = state.copyWith(busy: false);
     }
   }
+
+  EditRequest _parse(String t) {
+    final s = t.toLowerCase();
+    if (s.contains('background') || s.contains('bg') || s.contains('خلفية')) {
+      return const EditRequest(op: EditOp.removeBg);
+    }
+    if (s.contains('relight') || s.contains('إضاءة') || s.contains('light')) {
+      final style = s.contains('warm') ? 'warm'
+          : s.contains('cool') ? 'cool'
+          : s.contains('natural') ? 'natural'
+          : s.contains('dramatic') ? 'dramatic'
+          : 'studio';
+      return EditRequest(op: EditOp.relight, params: {'style': style});
+    }
+    if (s.contains('colorize') || s.contains('تلوين') || s.contains('color')) {
+      return const EditRequest(op: EditOp.colorize);
+    }
+    if (s.contains('enhance') || s.contains('upscale') || s.contains('تحسين') || s.contains('دقة')) {
+      return const EditRequest(op: EditOp.enhance);
+    }
+    if (s.contains('shadow') || s.contains('ظل')) {
+      return const EditRequest(op: EditOp.shadow);
+    }
+    if (s.contains('amazon') || s.contains('etsy') || s.contains('فحص')) {
+      return const EditRequest(op: EditOp.export);
+    }
+    if (s.contains('inpaint') || s.contains('إزالة عنصر')) {
+      return const EditRequest(op: EditOp.inpaint);
+    }
+    return EditRequest(op: EditOp.conversational, prompt: t);
+  }
+
+  int _creditCost(EditOp op) => switch (op) {
+        EditOp.removeBg => AppConstants.creditsPerBackgroundFast,
+        EditOp.enhance => AppConstants.creditsPerEnhance,
+        EditOp.shadow => AppConstants.creditsPerShadow,
+        EditOp.relight => AppConstants.creditsPerRelight,
+        EditOp.colorize => AppConstants.creditsPerColorize,
+        EditOp.conversational => AppConstants.creditsPerConversational,
+        EditOp.inpaint => AppConstants.creditsPerInpaint,
+        EditOp.export => 0,
+        EditOp.recipe => AppConstants.creditsPerConversational,
+        _ => 0,
+      };
+
+  bool _canUseFeature(EditOp op, int cost) {
+    if (_pro.isPro) return true;
+    const proOnly = {EditOp.conversational, EditOp.inpaint, EditOp.relight, EditOp.colorize};
+    if (proOnly.contains(op)) return false;
+    return _store.getCredits() >= cost;
+  }
+
+  String _gateMessage(EditOp op, int cost) {
+    if (!_pro.isPro && _creditCost(op) > 0) {
+      const proOnly = {EditOp.conversational, EditOp.inpaint, EditOp.relight, EditOp.colorize};
+      if (proOnly.contains(op)) {
+        return 'This feature requires Pro. Tap the pill to upgrade.';
+      }
+      return 'Need $cost credits. You have ${_store.getCredits()}.';
+    }
+    return 'Cannot perform operation.';
+  }
+
+  Future<EditResult> _dispatch(EditRequest req) async {
+    final path = state.imagePath!;
+    switch (req.op) {
+      case EditOp.removeBg:
+        return _border.removeBg(path);
+      case EditOp.enhance:
+        return _enhance.enhance(path, factor: 2);
+      case EditOp.shadow:
+        return _shadow.addShadow(path, type: req.params['type'] as String? ?? 'natural');
+      case EditOp.relight:
+        return _relight.relight(path, style: req.params['style'] as String? ?? 'studio');
+      case EditOp.colorize:
+        return _colorize.colorize(path);
+      case EditOp.export:
+        final f = await _export.export(path, format: 'jpg', size: 2000);
+        return EditResult(ok: true, outputPath: f.path, creditsUsed: 0);
+      case EditOp.inpaint:
+        return _seika.inpaint(path, path);
+      case EditOp.conversational:
+      case EditOp.recipe:
+        return _qwen.run(req, path);
+      default:
+        return EditResult(ok: false, error: 'Unsupported: ${req.op}');
+    }
+  }
+
+  @override
+  void dispose() {
+    _stt.stop();
+    super.dispose();
+  }
 }
+
+final chatProvider = StateNotifierProvider<ChatController, ChatState>(
+  (_) => ChatController(),
+);

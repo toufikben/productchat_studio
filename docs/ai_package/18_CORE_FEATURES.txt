@@ -1,0 +1,510 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 18: CORE FEATURES COMPLETION                                   ║
+║  إكمال كل الميزات الأساسية — لا جزئي ولا مفقود                        ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+أنت مساعد تنفيذي. نفّذ الإصلاحات بالترتيب. كل إصلاح يبدأ بـ:
+  🔴 REPLACE  → استبدل الملف بالكامل
+  🟡 MODIFY   → عدّل الملف
+  🟢 CREATE   → أنشئ ملفاً جديداً
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #20: 🔴 REPLACE
+📁 الملف: lib/core/constants.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+استبدل الملف بالكامل بهذا:
+
+class AppConstants {
+  static const appName = 'ProductChat Studio';
+  static const appVersion = '1.0.0';
+  static const buildNumber = 1;
+
+  // ─── Quotas & Credits ───
+  static const freeMonthlyQuota = 3;
+  static const creditsPerBackgroundFast = 1;
+  static const creditsPerBackgroundPro = 2;
+  static const creditsPerBackgroundUltra = 3;
+  static const creditsPerEnhance = 2;
+  static const creditsPerConversational = 3;
+  static const creditsPerShadow = 1;
+  static const creditsPerRelight = 2;
+  static const creditsPerColorize = 2;
+  static const creditsPerInpaint = 3;
+  static const creditsPerCompliance = 0;
+  static const creditsPerExport = 0;
+
+  // ─── IAP Product IDs (must match Play Console exactly) ───
+  static const iapProMonthly = 'pro_monthly';
+  static const iapProYearly = 'pro_yearly';
+  static const iapCredits100 = 'credits_100';
+  static const iapCredits500 = 'credits_500';
+  static const iapCredits1200 = 'credits_1200';
+  static const iapLifetime = 'lifetime';
+
+  // ─── Display names ───
+  static const displayNames = {
+    iapProMonthly: 'Pro Monthly',
+    iapProYearly: 'Pro Yearly',
+    iapCredits100: '100 Credits',
+    iapCredits500: '500 Credits',
+    iapCredits1200: '1200 Credits',
+    iapLifetime: 'Lifetime Access',
+  };
+
+  // ─── Fallback prices (USD) ───
+  static const fallbackPrices = {
+    iapProMonthly: r'$4.99',
+    iapProYearly: r'$29.99',
+    iapCredits100: r'$4.99',
+    iapCredits500: r'$19.99',
+    iapCredits1200: r'$39.99',
+    iapLifetime: r'$79.99',
+  };
+
+  static const creditsPerPack = {
+    iapCredits100: 100,
+    iapCredits500: 500,
+    iapCredits1200: 1200,
+  };
+
+  static const proMonthlyDays = 30;
+  static const proYearlyDays = 365;
+
+  // ─── Model URLs ───
+  static const modelMiganUrl =
+      'https://huggingface.co/Toufikben/productchat-models/resolve/main/migan.onnx';
+  static const modelLamaUrl =
+      'https://huggingface.co/Toufikben/productchat-models/resolve/main/lama_fp16.onnx';
+  static const modelRealEsrganUrl =
+      'https://huggingface.co/Toufikben/productchat-models/resolve/main/real_esrgan_x4.onnx';
+  static const modelQwenEditUrl =
+      'https://huggingface.co/Toufikben/productchat-models/resolve/main/qwen_edit_int8.onnx';
+
+  // ─── SHA-256 (املأها بعد الرفع) ───
+  static const modelMiganSha256 = 'REPLACE_AFTER_UPLOAD';
+  static const modelLamaSha256 = 'REPLACE_AFTER_UPLOAD';
+  static const modelRealEsrganSha256 = 'REPLACE_AFTER_UPLOAD';
+  static const modelQwenEditSha256 = 'REPLACE_AFTER_UPLOAD';
+
+  // ─── Limits ───
+  static const maxBatchImages = 100;
+  static const maxHistoryItems = 100;
+  static const maxReferralRewards = 50;
+  static const referralCreditsPerInvite = 20;
+  static const maxLayers = 10;
+  static const maxUndoSteps = 30;
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #21: 🟢 CREATE
+📁 الملف الجديد: lib/services/ai/migan_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import '../../models/edit_request.dart';
+import '../model_manager.dart';
+
+/// MIGanService — On-device MI-GAN background removal (balanced quality).
+class MIGanService {
+  static const _channel = MethodChannel('com.productchat/seika');
+
+  Future<bool> isModelReady() async {
+    final path = await _modelPath();
+    return path != null;
+  }
+
+  Future<String?> _modelPath() async {
+    try {
+      final dir = await getApplicationSupportDirectory();
+      final file = File('${dir.path}/models/migan.onnx');
+      return await file.exists() ? file.path : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> ensureLoaded() async {
+    final path = await _modelPath();
+    if (path == null) {
+      throw StateError('MI-GAN model not downloaded');
+    }
+    await _channel.invokeMethod('loadModel', {
+      'modelType': 'migan',
+      'modelPath': path,
+    });
+  }
+
+  Future<EditResult> removeBg(String inputPath) async {
+    final sw = Stopwatch()..start();
+    try {
+      await ensureLoaded();
+      final out = await _channel.invokeMapMethod<String, dynamic>('removeBg', {
+        'path': inputPath,
+        'quality': 'balanced',
+      });
+      if (out == null || out['ok'] != true) {
+        return EditResult(
+          ok: false,
+          error: out?['error']?.toString() ?? 'MI-GAN failed',
+        );
+      }
+      return EditResult(
+        ok: true,
+        outputPath: out['outputPath'] as String,
+        creditsUsed: 2,
+        duration: sw.elapsed,
+      );
+    } on PlatformException catch (e) {
+      return EditResult(ok: false, error: '${e.code}: ${e.message}');
+    } catch (e) {
+      return EditResult(ok: false, error: '$e');
+    }
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #22: 🟢 CREATE
+📁 الملف الجديد: lib/services/ai/qwen_edit_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/services.dart';
+import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
+import '../../models/edit_request.dart';
+
+/// QwenEditService — On-device conversational AI editing via MethodChannel.
+/// Replaces DreamLite (which has non-commercial CC BY-NC license).
+///
+/// Qwen-Image-Edit is Apache 2.0 — fully commercial.
+class QwenEditService {
+  static const _channel = MethodChannel('com.productchat/qwen_edit');
+
+  Future<void> ensureLoaded() async {
+    final dir = await getApplicationSupportDirectory();
+    final modelPath = '${dir.path}/models/qwen_edit_int8.onnx';
+    if (!await File(modelPath).exists()) {
+      throw StateError('Qwen-Image-Edit model not downloaded');
+    }
+    await _channel.invokeMethod('loadModel', {'modelPath': modelPath});
+  }
+
+  Future<EditResult> run(EditRequest req, String inputPath) async {
+    final sw = Stopwatch()..start();
+    try {
+      await ensureLoaded();
+      final out = await _channel.invokeMapMethod<String, dynamic>('edit', {
+        'imagePath': inputPath,
+        'prompt': req.prompt ?? '',
+        'operation': req.op.name,
+      });
+      if (out == null || out['ok'] != true) {
+        return EditResult(ok: false, error: out?['error']?.toString() ?? 'Failed');
+      }
+      return EditResult(
+        ok: true,
+        outputPath: out['outputPath'] as String,
+        creditsUsed: 3,
+        duration: sw.elapsed,
+      );
+    } on PlatformException catch (e) {
+      return EditResult(ok: false, error: e.message);
+    } catch (e) {
+      return EditResult(ok: false, error: '$e');
+    }
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #23: 🟢 CREATE
+📁 الملف الجديد: lib/services/ai/relight_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:io';
+import 'dart:math' as math;
+import 'package:image/image.dart' as img;
+import '../../models/edit_request.dart';
+
+/// RelightService — Adjust image lighting with preset styles.
+/// Pure Dart implementation — no model needed.
+class RelightService {
+  /// أنماط الإضاءة المتاحة.
+  /// - studio: إضاءة استوديو محترفة (ساطعة، محايدة)
+  /// - warm: إضاءة دافئة (نغمة صفراء)
+  /// - cool: إضاءة باردة (نغمة زرقاء)
+  /// - natural: إضاءة طبيعية (متوازنة)
+  /// - dramatic: إضاءة درامية (تباين عالٍ)
+  Future<EditResult> relight(
+    String inputPath, {
+    String style = 'studio',
+    double intensity = 1.0,
+  }) async {
+    final sw = Stopwatch()..start();
+    try {
+      final bytes = await File(inputPath).readAsBytes();
+      final src = img.decodeImage(bytes);
+      if (src == null) return const EditResult(ok: false, error: 'Decode failed');
+
+      final out = img.Image(width: src.width, height: src.height, numChannels: 3);
+
+      final (rMul, gMul, bMul, contrast) = switch (style) {
+        'warm' => (1.10, 1.02, 0.92, 1.05),
+        'cool' => (0.92, 1.00, 1.12, 1.05),
+        'natural' => (1.02, 1.02, 1.00, 1.00),
+        'dramatic' => (1.00, 1.00, 1.00, 1.35),
+        _ => (1.05, 1.05, 1.05, 1.10), // studio
+      };
+
+      for (var y = 0; y < src.height; y++) {
+        for (var x = 0; x < src.width; x++) {
+          final p = src.getPixel(x, y);
+          double r = p.r.toDouble() * rMul;
+          double g = p.g.toDouble() * gMul;
+          double b = p.b.toDouble() * bMul;
+
+          // Contrast adjustment
+          r = (r - 128) * contrast + 128;
+          g = (g - 128) * contrast + 128;
+          b = (b - 128) * contrast + 128;
+
+          // Brightness by intensity
+          r *= intensity;
+          g *= intensity;
+          b *= intensity;
+
+          out.setPixelRgb(
+            x, y,
+            r.round().clamp(0, 255),
+            g.round().clamp(0, 255),
+            b.round().clamp(0, 255),
+          );
+        }
+      }
+
+      final path = inputPath.replaceAll(RegExp(r'\.[^.]+$'), '_relight.png');
+      await File(path).writeAsBytes(img.encodePng(out));
+      return EditResult(
+        ok: true,
+        outputPath: path,
+        creditsUsed: 2,
+        duration: sw.elapsed,
+      );
+    } catch (e) {
+      return EditResult(ok: false, error: '$e');
+    }
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #24: 🟢 CREATE
+📁 الملف الجديد: lib/services/ai/colorize_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:io';
+import 'package:image/image.dart' as img;
+import '../../models/edit_request.dart';
+
+/// ColorizeService — Adds color to grayscale/B&W images.
+/// Uses local luminance-to-color mapping (no model needed).
+class ColorizeService {
+  Future<EditResult> colorize(String inputPath) async {
+    final sw = Stopwatch()..start();
+    try {
+      final bytes = await File(inputPath).readAsBytes();
+      final src = img.decodeImage(bytes);
+      if (src == null) return const EditResult(ok: false, error: 'Decode failed');
+
+      final out = img.Image(width: src.width, height: src.height, numChannels: 3);
+
+      for (var y = 0; y < src.height; y++) {
+        for (var x = 0; x < src.width; x++) {
+          final p = src.getPixel(x, y);
+          final lum = (0.299 * p.r + 0.587 * p.g + 0.114 * p.b).round();
+
+          // Luminance-to-warm-color mapping
+          final (r, g, b) = _luminanceToColor(lum);
+          out.setPixelRgb(x, y, r, g, b);
+        }
+      }
+
+      final path = inputPath.replaceAll(RegExp(r'\.[^.]+$'), '_colorized.png');
+      await File(path).writeAsBytes(img.encodePng(out));
+      return EditResult(
+        ok: true,
+        outputPath: path,
+        creditsUsed: 2,
+        duration: sw.elapsed,
+      );
+    } catch (e) {
+      return EditResult(ok: false, error: '$e');
+    }
+  }
+
+  (int, int, int) _luminanceToColor(int lum) {
+    if (lum < 40) return (30, 25, 20);           // dark brown
+    if (lum < 80) return (90, 70, 55);           // brown
+    if (lum < 130) return (160, 130, 100);       // tan
+    if (lum < 180) return (210, 180, 150);       // beige
+    if (lum < 220) return (240, 220, 200);       // cream
+    return (250, 245, 240);                       // warm white
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #25: 🟢 CREATE
+📁 الملف الجديد: lib/services/product_fidelity_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:io';
+import 'dart:math' as math;
+import 'package:image/image.dart' as img;
+
+/// ProductFidelityService — Compares before/after images to detect
+/// color/shape deviations in the product (fidelity check).
+class ProductFidelityService {
+  Future<FidelityResult> check({
+    required String originalPath,
+    required String editedPath,
+    double threshold = 0.15,
+  }) async {
+    try {
+      final origBytes = await File(originalPath).readAsBytes();
+      final editBytes = await File(editedPath).readAsBytes();
+      final orig = img.decodeImage(origBytes);
+      final edit = img.decodeImage(editBytes);
+      if (orig == null || edit == null) {
+        return const FidelityResult(passed: false, score: 0.0, deviations: []);
+      }
+
+      // ─── Analyze color histogram ───
+      final origColor = _avgColor(orig);
+      final editColor = _avgColor(edit);
+
+      final colorDelta = _colorDistance(origColor, editColor) / 255.0;
+
+      // ─── Analyze shape (product coverage) ───
+      final origCoverage = _coverage(orig);
+      final editCoverage = _coverage(edit);
+      final coverageDelta = (origCoverage - editCoverage).abs();
+
+      // ─── Analyze luminance ───
+      final origLum = _avgLuminance(orig);
+      final editLum = _avgLuminance(edit);
+      final lumDelta = (origLum - editLum).abs() / 255.0;
+
+      // ─── Score ───
+      final score = 1.0 - ((colorDelta + coverageDelta + lumDelta) / 3.0);
+      final deviations = <FidelityDeviation>[];
+
+      if (colorDelta > threshold) {
+        deviations.add(FidelityDeviation(
+          type: 'color',
+          message: 'Color shift detected: ${(colorDelta * 100).toStringAsFixed(0)}%',
+          severity: colorDelta > 0.3 ? 'high' : 'medium',
+        ));
+      }
+      if (coverageDelta > threshold) {
+        deviations.add(FidelityDeviation(
+          type: 'shape',
+          message: 'Product shape changed: ${(coverageDelta * 100).toStringAsFixed(0)}%',
+          severity: coverageDelta > 0.3 ? 'high' : 'medium',
+        ));
+      }
+      if (lumDelta > threshold) {
+        deviations.add(FidelityDeviation(
+          type: 'lighting',
+          message: 'Lighting shift: ${(lumDelta * 100).toStringAsFixed(0)}%',
+          severity: lumDelta > 0.3 ? 'high' : 'medium',
+        ));
+      }
+
+      return FidelityResult(
+        passed: score > 0.7,
+        score: score,
+        deviations: deviations,
+      );
+    } catch (e) {
+      return FidelityResult(passed: false, score: 0.0, deviations: []);
+    }
+  }
+
+  List<int> _avgColor(img.Image im) {
+    var r = 0, g = 0, b = 0, count = 0;
+    final step = math.max(1, (im.width * im.height) ~/ 1000);
+    for (var y = 0; y < im.height; y += step) {
+      for (var x = 0; x < im.width; x += step) {
+        final p = im.getPixel(x, y);
+        r += p.r.toInt(); g += p.g.toInt(); b += p.b.toInt();
+        count++;
+      }
+    }
+    return [r ~/ count, g ~/ count, b ~/ count];
+  }
+
+  double _colorDistance(List<int> a, List<int> b) {
+    final dr = a[0] - b[0], dg = a[1] - b[1], db = a[2] - b[2];
+    return math.sqrt((dr * dr + dg * dg + db * db).toDouble());
+  }
+
+  double _coverage(img.Image im) {
+    final corner = im.getPixel(5, 5);
+    var productPixels = 0, total = 0;
+    final step = math.max(1, im.width ~/ 50);
+    for (var y = 0; y < im.height; y += step) {
+      for (var x = 0; x < im.width; x += step) {
+        final p = im.getPixel(x, y);
+        final d = math.sqrt(
+          math.pow(p.r - corner.r, 2) +
+          math.pow(p.g - corner.g, 2) +
+          math.pow(p.b - corner.b, 2),
+        );
+        if (d > 60) productPixels++;
+        total++;
+      }
+    }
+    return total > 0 ? productPixels / total : 0.0;
+  }
+
+  double _avgLuminance(img.Image im) {
+    var sum = 0.0, count = 0;
+    final step = math.max(1, (im.width * im.height) ~/ 1000);
+    for (var y = 0; y < im.height; y += step) {
+      for (var x = 0; x < im.width; x += step) {
+        final p = im.getPixel(x, y);
+        sum += 0.299 * p.r + 0.587 * p.g + 0.114 * p.b;
+        count++;
+      }
+    }
+    return count > 0 ? sum / count : 0.0;
+  }
+}
+
+class FidelityResult {
+  final bool passed;
+  final double score;
+  final List<FidelityDeviation> deviations;
+  const FidelityResult({
+    required this.passed,
+    required this.score,
+    required this.deviations,
+  });
+}
+
+class FidelityDeviation {
+  final String type;
+  final String message;
+  final String severity;
+  const FidelityDeviation({
+    required this.type,
+    required this.message,
+    required this.severity,
+  });
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الملف 18_CORE_FEATURES.txt — الجزء الأول
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
