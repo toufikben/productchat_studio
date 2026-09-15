@@ -11,6 +11,8 @@ import '../features/chat/chat_history_screen.dart';
 import '../features/editor/editor_screen.dart';
 import '../features/editor/mask_painter_screen.dart';
 import '../features/editor/presets_screen.dart';
+import '../features/editor/filters_screen.dart';
+import '../features/editor/compare_screen.dart';
 import '../features/recipes/recipes_screen.dart';
 import '../features/compliance/compliance_screen.dart';
 import '../features/settings/settings_screen.dart';
@@ -66,6 +68,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, s) => MaskPainterScreen(imagePath: s.extra as String),
       ),
       GoRoute(path: '/presets', builder: (_, __) => const PresetsScreen()),
+      GoRoute(
+        path: '/filters',
+        builder: (_, s) => FiltersScreen(imagePath: s.extra as String),
+      ),
+      GoRoute(
+        path: '/compare',
+        builder: (_, s) {
+          final args = s.extra as Map<String, String>;
+          return CompareScreen(
+            beforePath: args['before']!,
+            afterPath: args['after']!,
+          );
+        },
+      ),
 
       // ─── Advanced ───
       GoRoute(

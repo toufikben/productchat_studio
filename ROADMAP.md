@@ -550,3 +550,17 @@ All repair work must follow these rules:
 - [x] workflows تدعم fallback للبناء غير الموقّع عند غياب secrets.
 - [ ] يجب إضافة GitHub Secrets عند الحاجة للبناء/النشر الموقّع: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_PASSWORD`, `KEY_ALIAS`, `VERCEL_TOKEN`, وبيانات توقيع iOS.
 - [ ] لم يُشغّل Flutter محلياً لأن Flutter SDK غير موجود في `PATH`؛ التنفيذ الفعلي سيتم عبر GitHub Actions بعد الرفع.
+
+## سجل التحديثات — 2026-09-15 — New Features Part 1 FIX #123–#133
+- [x] إضافة `CropRotateService` للقص والتدوير والقلب والتحجيم والقص المربع.
+- [x] إضافة `FiltersService` مع 15 مرشحاً ودعم شدة التأثير.
+- [x] إضافة `BackgroundBlurService` لطمس الخلفية مع قناع مركزي متدرج.
+- [x] إضافة `ZipExportService` لتجميع الصور في ZIP وإعادة التسمية الدفعية.
+- [x] إضافة `AutoSaveService` لحفظ واسترجاع ومسح المسودات عبر Hive.
+- [x] إضافة `EnhancementPresetsService` لإدارة presets التحسين وحفظها.
+- [x] إنشاء `FiltersScreen` و`CompareScreen` وربطهما بمساري `/filters` و`/compare`.
+- [x] إضافة اعتماد `archive: ^3.6.1` وفتح Hive box باسم `drafts` عند بدء التطبيق.
+- [x] حفظ نسخة تعليمات الحزمة في `docs/ai_package/27_NEW_FEATURES_PART1.txt`.
+- [x] اجتياز `git diff --check` والتحقق من وجود جميع الملفات الجديدة.
+- [ ] تعذر تنفيذ `flutter pub get` و`flutter analyze` محلياً لأن Flutter SDK غير موجود في `PATH` (exit code 127)؛ سيجري التحقق عبر GitHub Actions بعد الرفع.
+- [x] تصحيح تحويل قيم `clamp` إلى `int` في القص، وإزالة imports غير مستخدمة، وفصل أسماء متغيرات حالات presets لتفادي تعارض النطاق في Dart.
