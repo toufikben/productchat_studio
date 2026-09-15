@@ -91,7 +91,7 @@ class SeikaService {
   }
 
   /// Compatibility API for older controllers that expose upscale through Seika.
-  bool get isUpscaleReady => false;
+  bool isUpscaleReady() => false;
 
   Future<EditResult> upscale(String inputPath, {int factor = 2}) async {
     return const EditResult(
