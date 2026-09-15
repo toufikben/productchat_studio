@@ -23,6 +23,7 @@ Future<void> main() async {
     'feedback',
     'payments',
     'promos',
+    'tickets',
   ]) {
     if (!Hive.isBoxOpen(name)) await Hive.openBox(name);
   }
