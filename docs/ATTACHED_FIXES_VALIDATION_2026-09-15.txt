@@ -1,0 +1,51 @@
+Attached beta-system fixes validation
+Repository: toufikben/productchat_studio
+Commit before changes: ab6f2ff
+Date: 2026-09-15T14:25:46+00:00
+
+=== Changed files ===
+ M lib/core/feature_flags.dart
+ M lib/features/chat/chat_screen.dart
+ M lib/features/compliance/compliance_screen.dart
+ M lib/features/settings/about_screen.dart
+ M lib/features/settings/settings_screen.dart
+ M lib/main.dart
+?? docs/ATTACHED_FIXES_VALIDATION_2026-09-15.txt
+?? docs/MODEL_LICENSES.md
+?? docs/QWEN_API_AND_BUILD_VALIDATION_2026-09-15.md
+?? lib/services/remote_config_service.dart
+?? lib/widgets/beta_badge.dart
+
+=== flutter clean ===
+bash: flutter: command not found
+EXIT=127
+
+=== flutter pub get ===
+bash: flutter: command not found
+EXIT=127
+
+=== flutter gen-l10n ===
+bash: flutter: command not found
+EXIT=127
+
+=== flutter analyze ===
+bash: flutter: command not found
+EXIT=127
+
+=== flutter build apk ===
+bash: flutter: command not found
+EXIT=127
+
+=== Static checks available without Flutter ===
+OK lib/core/feature_flags.dart
+OK lib/widgets/beta_badge.dart
+OK lib/services/remote_config_service.dart
+OK lib/main.dart
+OK lib/features/settings/settings_screen.dart
+OK lib/features/chat/chat_screen.dart
+OK lib/features/compliance/compliance_screen.dart
+OK lib/features/settings/about_screen.dart
+OK docs/MODEL_LICENSES.md
+
+=== Diff check ===
+EXIT=0

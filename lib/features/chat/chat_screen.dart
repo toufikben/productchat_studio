@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/constants.dart';
+import '../../core/feature_flags.dart';
+import '../../widgets/beta_badge.dart';
 import '../../models/edit_request.dart';
 import '../../services/billing_service.dart';
 import '../../services/permission_service.dart';
@@ -207,6 +209,21 @@ class _ChatScreenState extends State<ChatScreen> {
                     label: const Text('Remove background (PatchMatch)'),
                   ),
                 ),
+                if (FeatureFlags.isBeta('recipesAutomation'))
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton.icon(
+                          onPressed: () => context.push('/recipes'),
+                          icon: const Icon(Icons.restaurant_menu),
+                          label: const Text('Recipes'),
+                        ),
+                        BetaBadge(message: FeatureFlags.flag('recipesAutomation').betaMessage),
+                      ],
+                    ),
+                  ),
                 const SizedBox(height: 12),
                 Semantics(
                   button: true,

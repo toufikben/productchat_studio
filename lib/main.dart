@@ -10,6 +10,7 @@ import 'services/platform/locale_service.dart';
 import 'services/platform/theme_service.dart';
 import 'services/quick_actions_service.dart';
 import 'services/rating_prompt_service.dart';
+import 'services/remote_config_service.dart';
 import 'services/shortcut_handler_service.dart';
 import 'services/storage_service.dart';
 
@@ -28,6 +29,7 @@ Future<void> main() async {
   await storageService.init();
   await localeController.init();
   await themeModeController.init();
+  await RemoteConfigService().initialize();
   await billingService.init();
 
   await QuickActionsService.init(onAction: ShortcutHandlerService.handle);
