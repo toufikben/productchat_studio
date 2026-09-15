@@ -5,13 +5,17 @@ import '../../services/billing_service.dart';
 import '../../services/platform/locale_service.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, this.billing});
+
+  final BillingService? billing;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  BillingService get _billing => widget.billing ?? billingService;
+
   bool _restoring = false;
   String? _message;
 
@@ -20,12 +24,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _restoring = true;
       _message = null;
     });
-    await billingService.restorePurchases();
+    await _billing.restorePurchases();
     if (!mounted) return;
     setState(() {
       _restoring = false;
-      _message = billingService.error ??
-          (billingService.proService.isPro
+      _message = _billing.error ??
+          (_billing.proService.isPro
               ? 'Entitlement restored from Google Play.'
               : 'No Pro or Lifetime purchase was restored.');
     });
@@ -33,9 +37,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isPro = billingService.proService.isPro;
-    final isLifetime = billingService.proService.isLifetime;
-    final expiry = billingService.proService.expiry;
+    final isPro = _billing.proService.isPro;
+    final isLifetime = _billing.proService.isLifetime;
+    final expiry = _billing.proService.expiry;
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(

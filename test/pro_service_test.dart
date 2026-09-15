@@ -18,8 +18,21 @@ void main() {
 
     expect(service.isPro, isTrue);
     expect(service.isLifetime, isFalse);
+    expect(service.productId, 'pro_monthly');
     expect(service.daysRemaining, inInclusiveRange(29, 30));
     expect(service.purchaseFingerprint, hasLength(64));
+  });
+
+  test('yearly entitlement expires after 365 days', () async {
+    final service = ProService(storage: StorageService());
+
+    await service.activateYearly(verificationData: 'play-yearly-1');
+
+    expect(service.isPro, isTrue);
+    expect(service.isLifetime, isFalse);
+    expect(service.productId, 'pro_yearly');
+    expect(service.daysRemaining, inInclusiveRange(364, 365));
+    expect(service.expiry, isNotNull);
   });
 
   test('lifetime entitlement never has an expiry', () async {
@@ -45,6 +58,51 @@ void main() {
 
     expect(service.isPro, isFalse);
     expect(service.isLifetime, isFalse);
+  });
+
+  test('restore accepts a valid monthly entitlement and persists it', () async {
+    final storage = StorageService();
+    final service = ProService(storage: storage);
+    final expiry = DateTime.now().add(const Duration(days: 12));
+
+    await service.restoreFromPurchase(
+      productId: 'pro_monthly',
+      verificationData: 'play-restore-monthly-1',
+      expiry: expiry,
+    );
+
+    expect(service.isPro, isTrue);
+    expect(service.productId, 'pro_monthly');
+    expect(service.expiry, isNotNull);
+    expect(
+      service.verifyLocalPurchase(
+        productId: 'pro_monthly',
+        verificationData: 'play-restore-monthly-1',
+      ),
+      isTrue,
+    );
+
+    final reloaded = ProService(storage: storage);
+    expect(reloaded.isPro, isTrue);
+    expect(reloaded.productId, 'pro_monthly');
+  });
+
+  test('restore accepts Lifetime and persists permanent entitlement', () async {
+    final storage = StorageService();
+    final service = ProService(storage: storage);
+
+    await service.restoreFromPurchase(
+      productId: 'lifetime',
+      verificationData: 'play-restore-lifetime-1',
+    );
+
+    expect(service.isPro, isTrue);
+    expect(service.isLifetime, isTrue);
+    expect(service.expiry, isNull);
+
+    final reloaded = ProService(storage: storage);
+    expect(reloaded.isLifetime, isTrue);
+    expect(reloaded.daysRemaining, -1);
   });
 
   test('deactivate clears subscription and lifetime state', () async {

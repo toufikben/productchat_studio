@@ -243,19 +243,19 @@
 **الحالة:** قيد التنفيذ على مستوى البروتوكول.
 
 - [ ] تشغيل `integration_test/` الفعلي، إذ إن الخطة موجودة والمجلد غير مثبت حاليًا.
-- [ ] اختبارات ProService: البداية، 30 يومًا، 365 يومًا، Lifetime، auto-expiry، restore.
+- [x] اختبارات ProService: البداية، 30 يومًا، 365 يومًا، Lifetime، auto-expiry، restore، وإعادة التحميل من التخزين.
 - [x] اختبارات Billing الأساسية والموسعة: المنتجات الستة، تصنيف consumable/entitlement، purchase statuses، رفض المعاملات الفارغة، duplicate grant، restored consumables، `canSpend`، ومنع الرصيد السالب.
 - [ ] اختبارات Credits: 100/500/1200، stacking، refund، وعدم النزول تحت الصفر.
-- [x] اختبارات service لـBatch/History/Brand/Storage؛ widget tests لـPaywall وSettings وBatch وHistory والراوتر ما زالت مطلوبة.
+- [x] اختبارات service لـBatch/History/Brand/Storage، وwidget smoke tests لـPaywall وSettings وBatch وHistory؛ اختبارات الراوتر المتقدمة ما زالت اختيارية.
 - [ ] Fixtures للصور والأقنعة دون تخزين النموذج داخل Git.
 - [ ] benchmark cold/warm، cancellation، timeout، memory، CPU/NNAPI، 30–100 inference.
 - [x] CI للتحليل والاختبار والبناء وفحص الأسرار؛ فحوص Flutter وبناء Release APK/AAB نجحت على commit `6238db0` في التشغيل [34911550832](https://github.com/toufikben/productchat_studio/actions/runs/34911550832)، وتم رفع artifact للـAAB وartifact للـAPK.
 
-### المرحلة 9 — Internal Testing والإصدار
+### المرحلة 9 — Internal Testing والإصدار — مؤجلة
 
-**الحالة:** غير مغلقة.
+**الحالة:** مؤجلة بقرار المنتج؛ لا يوجد رفع إلى Play Console أو تحقق على جهاز/Emulator ضمن النطاق الحالي. يظل APK/AAB مبنيًا ومتحققًا عبر CI فقط، ولا يُعلن جاهزًا للنشر أو متحققًا على Android runtime.
 
-#### إجراءات Play Console البشرية المطلوبة
+#### إجراءات Play Console البشرية المطلوبة — مؤجلة
 
 - [ ] إنشاء one-time product باسم `lifetime`، وصف Lifetime Access، السعر المرجعي `$79.99` أو السعر الإقليمي المعتمد، ثم تفعيله.
 - [ ] إضافة حساب المالك إلى License Testing وانتظار propagation وفق تعليمات Play Console.

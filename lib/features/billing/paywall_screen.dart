@@ -5,23 +5,32 @@ import '../../core/constants.dart';
 import '../../services/billing_service.dart';
 
 class PaywallScreen extends StatefulWidget {
-  const PaywallScreen({super.key});
+  const PaywallScreen({
+    super.key,
+    this.billing,
+    this.initializeBilling = true,
+  });
+
+  final BillingService? billing;
+  final bool initializeBilling;
 
   @override
   State<PaywallScreen> createState() => _PaywallScreenState();
 }
 
 class _PaywallScreenState extends State<PaywallScreen> {
+  BillingService get _billing => widget.billing ?? billingService;
+
   @override
   void initState() {
     super.initState();
-    billingService.init();
-    billingService.addListener(_refresh);
+    if (widget.initializeBilling) _billing.init();
+    _billing.addListener(_refresh);
   }
 
   @override
   void dispose() {
-    billingService.removeListener(_refresh);
+    _billing.removeListener(_refresh);
     super.dispose();
   }
 
@@ -33,7 +42,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(title: const Text('Unlock ProductChat Studio')),
         body: RefreshIndicator(
-          onRefresh: billingService.restorePurchases,
+          onRefresh: _billing.restorePurchases,
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
@@ -42,7 +51,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   leading: const Icon(Icons.bolt),
                   title: const Text('Available credits'),
                   trailing: Text(
-                    '${billingService.credits}',
+                    '${_billing.credits}',
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -50,7 +59,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   ),
                 ),
               ),
-              if (!billingService.proService.isPro) ...[
+              if (!_billing.proService.isPro) ...[
                 const SizedBox(height: 8),
                 Card(
                   child: ListTile(
@@ -60,7 +69,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       'PatchMatch-only tier with watermark',
                     ),
                     trailing: Text(
-                      '${billingService.freeQuota.remaining}/${AppConstants.freeMonthlyQuota}',
+                      '${_billing.freeQuota.remaining}/${AppConstants.freeMonthlyQuota}',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -81,24 +90,24 @@ class _PaywallScreenState extends State<PaywallScreen> {
               _productSection(CreditProducts.starter),
               _productSection(CreditProducts.standard),
               _productSection(CreditProducts.largePack),
-              if (!billingService.available && billingService.error != null)
+              if (!_billing.available && _billing.error != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child: Text(
-                    billingService.error!,
+                    _billing.error!,
                     style: TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                 ),
-              if (billingService.loading) const LinearProgressIndicator(),
-              if (billingService.available && billingService.products.isEmpty)
+              if (_billing.loading) const LinearProgressIndicator(),
+              if (_billing.available && _billing.products.isEmpty)
                 const Padding(
                   padding: EdgeInsets.only(top: 12),
                   child: Text('Products are not configured in Google Play yet.'),
                 ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
-                onPressed: billingService.available
-                    ? billingService.restorePurchases
+                onPressed: _billing.available
+                    ? _billing.restorePurchases
                     : null,
                 icon: const Icon(Icons.restore),
                 label: const Text('Restore purchases'),
@@ -113,7 +122,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
       );
 
   Widget _productSection(String productId) {
-    final matches = billingService.products.where((p) => p.id == productId);
+    final matches = _billing.products.where((p) => p.id == productId);
     if (matches.isEmpty) return const SizedBox.shrink();
     return _productTile(matches.first);
   }
@@ -123,9 +132,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
           title: Text(_titleFor(product)),
           subtitle: Text(_subtitleFor(product)),
           trailing: FilledButton(
-            onPressed: billingService.loading
+            onPressed: _billing.loading
                 ? null
-                : () => billingService.buy(product),
+                : () => _billing.buy(product),
             child: Text(product.price),
           ),
         ),
