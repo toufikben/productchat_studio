@@ -68,6 +68,16 @@
 
 **ملاحظة Android:** المشروع يستخدم namespace `com.productchat.aiphotostudio` فعلياً؛ لذلك أُضيف تسجيل قنوات MI-GAN وQwen إلى MainActivity الفعلي، مع الاحتفاظ بالملفات المحددة في الحزمة تحت مسار `com.productchat.studio`.
 
+## سجل التحديثات — 2026-09-15 — UI Screens FIX #34–#44
+
+- [x] إنشاء Developer, Marketplace, About, Feedback, Update, Chat History, Presets, وFavorites screens.
+- [x] استبدال `lib/core/router.dart` وربط كل المسارات الجديدة.
+- [x] إضافة روابط الشاشات الجديدة إلى Settings.
+- [x] التحقق من اعتماديات `package_info_plus` و`url_launcher` و`uuid` الموجودة مسبقاً في `pubspec.yaml`.
+- [x] حفظ `19_UI_SCREENS.txt` داخل `docs/ai_package/`.
+- [x] اجتياز `git diff --check` والتحقق من اكتمال الملفات والمسارات.
+- [ ] `flutter clean && flutter pub get && flutter analyze`: تعذر التنفيذ لأن Flutter SDK غير موجود في `PATH`.
+
 ## سجل التحديثات — 2026-09-15 — Package Extensions 04–07
 
 - [x] قراءة ملفات الحزمة الثمانية بالترتيب وحفظ نسخها في `docs/ai_package/`.

@@ -1,0 +1,1355 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 19: UI SCREENS COMPLETION                                      ║
+║  إكمال كل شاشات UI — 8 عناصر (2 جزئي + 6 مفقود)                      ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #34: 🟢 CREATE
+📁 الملف الجديد: lib/features/settings/developer_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import '../../core/theme.dart';
+import '../../core/constants.dart';
+import '../../services/model_manager.dart';
+import '../../widgets/app_widgets.dart';
+
+class DeveloperScreen extends ConsumerStatefulWidget {
+  const DeveloperScreen({super.key});
+  @override
+  ConsumerState<DeveloperScreen> createState() => _DeveloperScreenState();
+}
+
+class _DeveloperScreenState extends ConsumerState<DeveloperScreen> {
+  String _info = 'Loading...';
+  bool _verboseLogging = false;
+  String _quality = 'balanced';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInfo();
+    _verboseLogging = Hive.box('settings').get('verboseLog', defaultValue: false) as bool;
+    _quality = Hive.box('settings').get('quality', defaultValue: 'balanced') as String;
+  }
+
+  Future<void> _loadInfo() async {
+    final info = await PackageInfo.fromPlatform();
+    final dir = await getApplicationSupportDirectory();
+    final models = Directory('${dir.path}/models');
+    var count = 0;
+    var size = 0;
+    if (await models.exists()) {
+      await for (final e in models.list()) {
+        if (e is File) { count++; size += await e.length(); }
+      }
+    }
+    if (mounted) {
+      setState(() {
+        _info = '''
+App: ${info.appName}
+Version: ${info.version} (${info.buildNumber})
+Package: ${info.packageName}
+Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}
+Dart: ${Platform.version.split(' ').first}
+App dir: ${dir.path}
+Models: $count (${(size / 1024 / 1024).toStringAsFixed(1)} MB)
+''';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Developer Options')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _card('System Info', Icons.info_outline, [
+            SelectableText(_info, style: const TextStyle(
+              color: AppColors.textSecondary, fontSize: 12,
+              height: 1.6, fontFamily: 'monospace',
+            )),
+          ]),
+          _card('Performance', Icons.speed, [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Processing Quality', style: TextStyle(fontSize: 13)),
+              trailing: DropdownButton<String>(
+                value: _quality,
+                dropdownColor: AppColors.surfaceAlt,
+                underline: const SizedBox(),
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                items: ['fast', 'balanced', 'best'].map((e) =>
+                  DropdownMenuItem(value: e, child: Text(e))).toList(),
+                onChanged: (v) {
+                  setState(() => _quality = v!);
+                  Hive.box('settings').put('quality', v);
+                },
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Verbose Logging', style: TextStyle(fontSize: 13)),
+              value: _verboseLogging,
+              onChanged: (v) {
+                setState(() => _verboseLogging = v);
+                Hive.box('settings').put('verboseLog', v);
+              },
+            ),
+          ]),
+          _card('Testing Tools', Icons.bug_report, [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Add 100 credits'),
+              onTap: () {
+                final box = Hive.box('credits');
+                box.put('balance', (box.get('balance', defaultValue: 0) as int) + 100);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('+100 credits')));
+              },
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Activate Pro (test)'),
+              onTap: () {
+                Hive.box('settings').put('isPro', true);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Pro activated')));
+              },
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Deactivate Pro'),
+              onTap: () {
+                Hive.box('settings').put('isPro', false);
+                Hive.box('settings').put('isLifetime', false);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Pro deactivated')));
+              },
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Clear all data'),
+              trailing: const Icon(Icons.warning_amber, color: AppColors.danger),
+              onTap: () async {
+                final ok = await showConfirmDialog(context,
+                  title: 'Clear all data?',
+                  message: 'This cannot be undone.',
+                  confirmLabel: 'Clear',
+                  destructive: true,
+                );
+                if (ok) {
+                  await Hive.box('settings').clear();
+                  await Hive.box('history').clear();
+                  await Hive.box('credits').clear();
+                  await Hive.box('analytics').clear();
+                  await ModelManager().clearAll();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Cleared')));
+                  }
+                }
+              },
+            ),
+          ]),
+          const SizedBox(height: 32),
+          Text('v${AppConstants.appVersion} (${AppConstants.buildNumber})',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.textTertiary, fontSize: 11)),
+        ],
+      ),
+    );
+  }
+
+  Widget _card(String title, IconData icon, List<Widget> children) => Container(
+    margin: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(children: [
+          Icon(icon, size: 18, color: AppColors.primary),
+          const SizedBox(width: 10),
+          Text(title, style: const TextStyle(
+            color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+        ]),
+        const Divider(height: 24),
+        ...children,
+      ],
+    ),
+  );
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #35: 🟢 CREATE
+📁 الملف الجديد: lib/features/settings/marketplace_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:convert';
+import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../../core/theme.dart';
+import '../../widgets/app_widgets.dart';
+
+class MarketplaceScreen extends ConsumerStatefulWidget {
+  const MarketplaceScreen({super.key});
+  @override
+  ConsumerState<MarketplaceScreen> createState() => _MarketplaceScreenState();
+}
+
+class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
+  final _shopifyShop = TextEditingController();
+  final _shopifyToken = TextEditingController();
+  final _wooUrl = TextEditingController();
+  final _wooKey = TextEditingController();
+  final _wooSecret = TextEditingController();
+
+  bool get _shopifyConnected =>
+      Hive.box('settings').get('shopify_creds') != null;
+
+  bool get _wooConnected =>
+      Hive.box('settings').get('woo_creds') != null;
+
+  Future<void> _saveShopify() async {
+    if (_shopifyShop.text.isEmpty || _shopifyToken.text.isEmpty) return;
+    await Hive.box('settings').put('shopify_creds', {
+      'shop': _shopifyShop.text,
+      'token': _shopifyToken.text,
+    });
+    if (mounted) {
+      showSuccessSnack(context, 'Shopify connected');
+      setState(() {});
+    }
+  }
+
+  Future<void> _saveWoo() async {
+    if (_wooUrl.text.isEmpty || _wooKey.text.isEmpty || _wooSecret.text.isEmpty) return;
+    await Hive.box('settings').put('woo_creds', {
+      'url': _wooUrl.text,
+      'key': _wooKey.text,
+      'secret': _wooSecret.text,
+    });
+    if (mounted) {
+      showSuccessSnack(context, 'WooCommerce connected');
+      setState(() {});
+    }
+  }
+
+  Future<void> _disconnect(String which) async {
+    await Hive.box('settings').delete(which == 'shopify' ? 'shopify_creds' : 'woo_creds');
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Marketplace Integration')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _platformCard(
+            name: 'Shopify',
+            icon: Icons.shopping_bag,
+            brandColor: const Color(0xFF96BF48),
+            connected: _shopifyConnected,
+            fields: [
+              _Field(controller: _shopifyShop, label: 'Store URL', hint: 'mystore.myshopify.com'),
+              _Field(controller: _shopifyToken, label: 'Access Token', hint: 'shpat_...', obscure: true),
+            ],
+            onSave: _saveShopify,
+            onDisconnect: () => _disconnect('shopify'),
+          ),
+          const SizedBox(height: 16),
+          _platformCard(
+            name: 'WooCommerce',
+            icon: Icons.storefront,
+            brandColor: const Color(0xFF7F54B3),
+            connected: _wooConnected,
+            fields: [
+              _Field(controller: _wooUrl, label: 'Store URL', hint: 'https://mystore.com'),
+              _Field(controller: _wooKey, label: 'Consumer Key', hint: 'ck_...', obscure: true),
+              _Field(controller: _wooSecret, label: 'Consumer Secret', hint: 'cs_...', obscure: true),
+            ],
+            onSave: _saveWoo,
+            onDisconnect: () => _disconnect('woo'),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Note', style: TextStyle(
+                  color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 13)),
+                SizedBox(height: 8),
+                Text('After connecting, you can upload images directly from the editor. '
+                    'All credentials are stored locally on your device only.',
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12, height: 1.6)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _platformCard({
+    required String name,
+    required IconData icon,
+    required Color brandColor,
+    required bool connected,
+    required List<_Field> fields,
+    required VoidCallback onSave,
+    required VoidCallback onDisconnect,
+  }) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: connected ? brandColor.withValues(alpha: 0.5) : AppColors.border,
+        width: connected ? 1.5 : 1,
+      ),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(children: [
+          AppIcons.outline(icon, size: 48, color: brandColor),
+          const SizedBox(width: 14),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 2),
+              Text(connected ? '✓ Connected' : 'Not connected',
+                style: TextStyle(
+                  color: connected ? AppColors.success : AppColors.textTertiary,
+                  fontSize: 12, fontWeight: FontWeight.w600)),
+            ],
+          )),
+          if (connected)
+            TextButton(
+              onPressed: onDisconnect,
+              child: const Text('Disconnect',
+                style: TextStyle(color: AppColors.danger, fontSize: 12)),
+            ),
+        ]),
+        if (!connected) ...[
+          const Divider(height: 24),
+          ...fields.map((f) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: TextField(
+              controller: f.controller,
+              obscureText: f.obscure,
+              decoration: InputDecoration(
+                labelText: f.label,
+                hintText: f.hint,
+              ),
+            ),
+          )),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: onSave,
+              child: const Text('Save'),
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
+class _Field {
+  final TextEditingController controller;
+  final String label, hint;
+  final bool obscure;
+  const _Field({
+    required this.controller,
+    required this.label,
+    required this.hint,
+    this.obscure = false,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Marketplace Service (Upload helper)
+// ═══════════════════════════════════════════════════════════════
+class MarketplaceService {
+  static Future<UploadResult> uploadToShopify(String imagePath) async {
+    final creds = Hive.box('settings').get('shopify_creds') as Map?;
+    if (creds == null) return UploadResult.error('Not connected');
+    try {
+      final bytes = await File(imagePath).readAsBytes();
+      final b64 = base64Encode(bytes);
+      final dio = Dio(BaseOptions(
+        baseUrl: 'https://${creds['shop']}/admin/api/2025-01',
+        headers: {
+          'X-Shopify-Access-Token': creds['token'],
+          'Content-Type': 'application/json',
+        },
+      ));
+      final res = await dio.post('/images.json', data: {
+        'image': {'attachment': b64, 'filename': imagePath.split('/').last},
+      });
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        return UploadResult.success('${res.data['image']?['id']}');
+      }
+      return UploadResult.error('Status: ${res.statusCode}');
+    } catch (e) {
+      return UploadResult.error('$e');
+    }
+  }
+
+  static Future<UploadResult> uploadToWoo(String imagePath) async {
+    final creds = Hive.box('settings').get('woo_creds') as Map?;
+    if (creds == null) return UploadResult.error('Not connected');
+    try {
+      final dio = Dio(BaseOptions(
+        baseUrl: '${creds['url']}/wp-json/wp/v2',
+        headers: {
+          'Authorization': 'Basic ${base64Encode(utf8.encode('${creds['key']}:${creds['secret']}'))}',
+        },
+      ));
+      final bytes = await File(imagePath).readAsBytes();
+      final res = await dio.post('/media',
+        data: bytes,
+        options: Options(headers: {
+          'Content-Disposition': 'attachment; filename="${imagePath.split('/').last}"',
+          'Content-Type': 'image/png',
+        }));
+      if (res.statusCode == 201) return UploadResult.success('${res.data['id']}');
+      return UploadResult.error('Status: ${res.statusCode}');
+    } catch (e) {
+      return UploadResult.error('$e');
+    }
+  }
+}
+
+class UploadResult {
+  final bool ok;
+  final String? id;
+  final String? error;
+  const UploadResult({required this.ok, this.id, this.error});
+  factory UploadResult.success(String id) => UploadResult(ok: true, id: id);
+  factory UploadResult.error(String e) => UploadResult(ok: false, error: e);
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #36: 🟢 CREATE
+📁 الملف الجديد: lib/features/settings/about_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../core/theme.dart';
+import '../../core/constants.dart';
+import '../../widgets/app_widgets.dart';
+
+class AboutScreen extends StatelessWidget {
+  const AboutScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('About')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Center(
+            child: Column(
+              children: [
+                AppIcons.gradient(Icons.auto_awesome, size: 100, iconSize: 50),
+                const SizedBox(height: 16),
+                Text('ProductChat Studio',
+                  style: Theme.of(context).textTheme.displayLarge),
+                const SizedBox(height: 6),
+                Text('v${AppConstants.appVersion} (${AppConstants.buildNumber})',
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                const SizedBox(height: 6),
+                const Text('Conversational AI for Product Photos',
+                  style: TextStyle(color: AppColors.textTertiary, fontSize: 12)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+          _tile(context, Icons.language, 'Website',
+            'productchat.app', 'https://productchat.app'),
+          _tile(context, Icons.email, 'Contact',
+            'support@productchat.app', 'mailto:support@productchat.app'),
+          _tile(context, Icons.privacy_tip, 'Privacy Policy',
+            'View', 'https://productchat.app/privacy'),
+          _tile(context, Icons.gavel, 'Terms of Service',
+            'View', 'https://productchat.app/terms'),
+          _tile(context, Icons.code, 'Open Source',
+            'github.com/Toufikben/productchat_studio',
+            'https://github.com/Toufikben/productchat_studio'),
+          const SizedBox(height: 24),
+          const Center(
+            child: Text('Made with ❤️ by ProductChat Team',
+              style: TextStyle(color: AppColors.textTertiary, fontSize: 11)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tile(BuildContext context, IconData icon, String title, String subtitle, String url) =>
+    Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: AppIcons.outline(icon, size: 40),
+        title: Text(title),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.open_in_new, size: 18),
+        onTap: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+      ),
+    );
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #37: 🟢 CREATE
+📁 الملف الجديد: lib/features/settings/feedback_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:uuid/uuid.dart';
+import '../../core/theme.dart';
+import '../../widgets/app_widgets.dart';
+
+class FeedbackScreen extends StatefulWidget {
+  const FeedbackScreen({super.key});
+  @override
+  State<FeedbackScreen> createState() => _FeedbackScreenState();
+}
+
+class _FeedbackScreenState extends State<FeedbackScreen> {
+  final _messageCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  String _category = 'suggestion';
+  int _rating = 0;
+
+  static const _categories = {
+    'bug': 'Bug Report',
+    'suggestion': 'Feature Suggestion',
+    'ui': 'UI/UX Feedback',
+    'performance': 'Performance Issue',
+    'other': 'Other',
+  };
+
+  Future<void> _submit() async {
+    if (_messageCtrl.text.trim().isEmpty) {
+      showErrorSnack(context, 'Please enter your feedback');
+      return;
+    }
+    final ticket = {
+      'id': const Uuid().v4(),
+      'category': _category,
+      'rating': _rating,
+      'message': _messageCtrl.text,
+      'email': _emailCtrl.text,
+      'ts': DateTime.now().toIso8601String(),
+    };
+    final box = Hive.box('feedback');
+    await box.add(ticket);
+
+    if (!mounted) return;
+    showSuccessSnack(context, 'Thank you for your feedback!');
+
+    // Also offer to send via email
+    final emailUri = Uri.parse(
+      'mailto:support@productchat.app?subject=Feedback: ${_categories[_category]}&body=${Uri.encodeComponent(_messageCtrl.text)}',
+    );
+    if (await canLaunchUrl(emailUri)) {
+      // Ask user if they want to send via email too
+    }
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Send Feedback')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text('Your feedback helps us improve',
+            style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 20),
+          const Text('Category', style: TextStyle(
+            color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: _category,
+            dropdownColor: AppColors.surfaceAlt,
+            decoration: const InputDecoration(),
+            items: _categories.entries.map((e) => DropdownMenuItem(
+              value: e.key, child: Text(e.value))).toList(),
+            onChanged: (v) => setState(() => _category = v!),
+          ),
+          const SizedBox(height: 20),
+          const Text('Rate your experience', style: TextStyle(
+            color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (i) => IconButton(
+              icon: Icon(
+                i < _rating ? Icons.star : Icons.star_border,
+                color: AppColors.warning,
+                size: 32,
+              ),
+              onPressed: () => setState(() => _rating = i + 1),
+            )),
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _messageCtrl,
+            maxLines: 6,
+            decoration: const InputDecoration(
+              labelText: 'Your message',
+              hintText: 'Describe your feedback in detail...',
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _emailCtrl,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(
+              labelText: 'Email (optional)',
+              hintText: 'you@example.com',
+            ),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _submit,
+              icon: const Icon(Icons.send),
+              label: const Text('Submit'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #38: 🟢 CREATE
+📁 الملف الجديد: lib/features/settings/update_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import '../../core/theme.dart';
+import '../../widgets/app_widgets.dart';
+
+class UpdateScreen extends StatefulWidget {
+  const UpdateScreen({super.key});
+  @override
+  State<UpdateScreen> createState() => _UpdateScreenState();
+}
+
+class _UpdateScreenState extends State<UpdateScreen> {
+  String _currentVersion = '';
+  bool _checking = false;
+  String? _latestVersion;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    if (mounted) setState(() => _currentVersion = info.version);
+  }
+
+  Future<void> _checkForUpdates() async {
+    setState(() => _checking = true);
+    await Future.delayed(const Duration(seconds: 2));
+    // In production: fetch from server or store
+    // For now: simulate up-to-date
+    if (mounted) {
+      setState(() {
+        _checking = false;
+        _latestVersion = _currentVersion;
+      });
+    }
+  }
+
+  bool get _hasUpdate =>
+      _latestVersion != null && _latestVersion != _currentVersion;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Check for Updates')),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            const Spacer(),
+            AppIcons.circle(Icons.system_update, size: 100),
+            const SizedBox(height: 24),
+            Text(
+              _checking
+                  ? 'Checking for updates...'
+                  : _hasUpdate
+                      ? 'Update Available!'
+                      : 'You are up to date',
+              style: Theme.of(context).textTheme.headlineMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _checking
+                  ? ''
+                  : _hasUpdate
+                      ? 'Version $_latestVersion is available. Current: $_currentVersion'
+                      : 'Current version: $_currentVersion',
+              style: const TextStyle(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            if (_checking)
+              const CircularProgressIndicator(color: AppColors.primary)
+            else if (_hasUpdate)
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () async {
+                    final url = Uri.parse('market://details?id=com.productchat.studio');
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                    }
+                  },
+                  icon: const Icon(Icons.download),
+                  label: const Text('Update Now'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _checkForUpdates,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Check Again'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ),
+            const Spacer(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #39: 🟢 CREATE
+📁 الملف الجديد: lib/features/chat/chat_history_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../core/theme.dart';
+import '../../services/storage_service.dart';
+import '../../widgets/app_widgets.dart';
+
+class ChatHistoryScreen extends ConsumerWidget {
+  const ChatHistoryScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final store = StorageService();
+    final items = store.getHistory();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Chat History'),
+        actions: [
+          if (items.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.delete_sweep_outlined),
+              onPressed: () async {
+                final ok = await showConfirmDialog(context,
+                  title: 'Clear history?',
+                  message: 'Cannot be undone',
+                  destructive: true);
+                if (ok) {
+                  await store.clearHistory();
+                  (context as Element).markNeedsBuild();
+                }
+              },
+            ),
+        ],
+      ),
+      body: items.isEmpty
+          ? const EmptyState(
+              icon: Icons.history,
+              title: 'No history yet',
+              subtitle: 'Your edits will appear here',
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: items.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (_, i) => _HistoryCard(item: items[i]),
+            ),
+    );
+  }
+}
+
+class _HistoryCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  const _HistoryCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final output = item['output'] as String?;
+    final input = item['input'] as String?;
+    final op = item['op'] as String? ?? 'unknown';
+    final ts = item['ts'] as String? ?? '';
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox(
+              width: 60, height: 60,
+              child: output != null && File(output).existsSync()
+                  ? Image.file(File(output), fit: BoxFit.cover)
+                  : Container(color: AppColors.surfaceAlt,
+                      child: const Icon(Icons.image, color: AppColors.textTertiary)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(_labelFor(op), style: const TextStyle(
+                color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 4),
+              Text(_formatDate(ts),
+                style: const TextStyle(color: AppColors.textTertiary, fontSize: 11)),
+            ],
+          )),
+          if (output != null && File(output).existsSync())
+            IconButton(
+              icon: const Icon(Icons.share, size: 20),
+              onPressed: () => Share.shareXFiles([XFile(output)]),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _labelFor(String op) => switch (op) {
+    'removeBg' => 'Background Removed',
+    'enhance' => 'Enhanced',
+    'shadow' => 'Shadow Added',
+    'relight' => 'Relit',
+    'colorize' => 'Colorized',
+    'inpaint' => 'Object Removed',
+    'conversational' => 'AI Edit',
+    _ => op,
+  };
+
+  String _formatDate(String iso) {
+    try {
+      final dt = DateTime.parse(iso);
+      final diff = DateTime.now().difference(dt);
+      if (diff.inMinutes < 1) return 'Just now';
+      if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+      if (diff.inDays < 1) return '${diff.inHours}h ago';
+      if (diff.inDays < 7) return '${diff.inDays}d ago';
+      return '${dt.day}/${dt.month}/${dt.year}';
+    } catch (_) {
+      return iso;
+    }
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #40: 🟢 CREATE
+📁 الملف الجديد: lib/features/editor/presets_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:uuid/uuid.dart';
+import '../../core/theme.dart';
+import '../../widgets/app_widgets.dart';
+
+class EditorPreset {
+  final String id;
+  final String name;
+  final Map<String, dynamic> operations;
+  final DateTime createdAt;
+
+  EditorPreset({
+    required this.id,
+    required this.name,
+    required this.operations,
+    required this.createdAt,
+  });
+
+  Map<String, dynamic> toMap() => {
+    'id': id, 'name': name, 'operations': operations,
+    'createdAt': createdAt.toIso8601String(),
+  };
+
+  factory EditorPreset.fromMap(Map m) => EditorPreset(
+    id: m['id'],
+    name: m['name'],
+    operations: Map<String, dynamic>.from(m['operations']),
+    createdAt: DateTime.parse(m['createdAt']),
+  );
+}
+
+final presetsProvider = StateNotifierProvider<PresetsNotifier, List<EditorPreset>>(
+  (_) => PresetsNotifier());
+
+class PresetsNotifier extends StateNotifier<List<EditorPreset>> {
+  PresetsNotifier() : super([]) { _load(); }
+
+  void _load() {
+    final box = Hive.box('presets');
+    state = box.values.map((e) => EditorPreset.fromMap(Map.from(e))).toList();
+  }
+
+  Future<void> add(String name, Map<String, dynamic> operations) async {
+    final preset = EditorPreset(
+      id: const Uuid().v4(),
+      name: name,
+      operations: operations,
+      createdAt: DateTime.now(),
+    );
+    await Hive.box('presets').add(preset.toMap());
+    _load();
+  }
+
+  Future<void> remove(String id) async {
+    final box = Hive.box('presets');
+    final keys = box.keys.where((k) {
+      final m = Map.from(box.get(k));
+      return m['id'] == id;
+    }).toList();
+    for (final k in keys) await box.delete(k);
+    _load();
+  }
+}
+
+class PresetsScreen extends ConsumerStatefulWidget {
+  const PresetsScreen({super.key});
+  @override
+  ConsumerState<PresetsScreen> createState() => _PresetsScreenState();
+}
+
+class _PresetsScreenState extends ConsumerState<PresetsScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final presets = ref.watch(presetsProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Editor Presets'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => _showAddDialog(context, ref),
+          ),
+        ],
+      ),
+      body: presets.isEmpty
+          ? const EmptyState(
+              icon: Icons.tune,
+              title: 'No presets yet',
+              subtitle: 'Save your favorite combinations of operations',
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: presets.length,
+              itemBuilder: (_, i) => Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: AppIcons.outline(Icons.tune, size: 40),
+                  title: Text(presets[i].name),
+                  subtitle: Text('${presets[i].operations.length} operations'),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+                    onPressed: () => ref.read(presetsProvider.notifier).remove(presets[i].id),
+                  ),
+                  onTap: () => Navigator.pop(context, presets[i]),
+                ),
+              ),
+            ),
+    );
+  }
+
+  Future<void> _showAddDialog(BuildContext context, WidgetRef ref) async {
+    final ctrl = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('New Preset'),
+        content: TextField(
+          controller: ctrl,
+          decoration: const InputDecoration(hintText: 'Preset name'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(c, ctrl.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (name != null && name.isNotEmpty) {
+      await ref.read(presetsProvider.notifier).add(name, {'sample': true});
+      if (context.mounted) showSuccessSnack(context, 'Preset saved');
+    }
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #41: 🟢 CREATE
+📁 الملف الجديد: lib/features/settings/favorites_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../core/theme.dart';
+import '../../widgets/app_widgets.dart';
+
+final favoritesProvider = StateNotifierProvider<FavoritesNotifier, List<String>>(
+  (_) => FavoritesNotifier());
+
+class FavoritesNotifier extends StateNotifier<List<String>> {
+  FavoritesNotifier() : super([]) { _load(); }
+
+  void _load() {
+    final box = Hive.box('favorites');
+    state = box.values.cast<String>().toList();
+  }
+
+  Future<void> add(String imagePath) async {
+    await Hive.box('favorites').add(imagePath);
+    _load();
+  }
+
+  Future<void> remove(String imagePath) async {
+    final box = Hive.box('favorites');
+    final keys = box.keys.where((k) => box.get(k) == imagePath).toList();
+    for (final k in keys) await box.delete(k);
+    _load();
+  }
+}
+
+class FavoritesScreen extends ConsumerWidget {
+  const FavoritesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favorites = ref.watch(favoritesProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Favorites')),
+      body: favorites.isEmpty
+          ? const EmptyState(
+              icon: Icons.favorite_border,
+              title: 'No favorites yet',
+              subtitle: 'Tap the heart icon to save your best images',
+            )
+          : GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
+              itemCount: favorites.length,
+              itemBuilder: (_, i) {
+                final path = favorites[i];
+                return GestureDetector(
+                  onLongPress: () {
+                    ref.read(favoritesProvider.notifier).remove(path);
+                  },
+                  onTap: () {
+                    Share.shareXFiles([XFile(path)]);
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: File(path).existsSync()
+                        ? Image.file(File(path), fit: BoxFit.cover)
+                        : Container(color: AppColors.surfaceAlt),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #42: 🔴 REPLACE
+📁 الملف: lib/core/router.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+استبدل الملف بالكامل بهذا:
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'theme.dart';
+import '../features/splash/splash_screen.dart';
+import '../features/onboarding/onboarding_screen.dart';
+import '../features/home/home_screen.dart';
+import '../features/chat/chat_screen.dart';
+import '../features/chat/chat_studio_screen.dart';
+import '../features/chat/chat_history_screen.dart';
+import '../features/editor/editor_screen.dart';
+import '../features/editor/mask_painter_screen.dart';
+import '../features/editor/presets_screen.dart';
+import '../features/recipes/recipes_screen.dart';
+import '../features/compliance/compliance_screen.dart';
+import '../features/settings/settings_screen.dart';
+import '../features/settings/faq_screen.dart';
+import '../features/settings/support_screen.dart';
+import '../features/settings/legal_screen.dart';
+import '../features/settings/models_screen.dart';
+import '../features/settings/brand_screen.dart';
+import '../features/settings/developer_screen.dart';
+import '../features/settings/marketplace_screen.dart';
+import '../features/settings/about_screen.dart';
+import '../features/settings/feedback_screen.dart';
+import '../features/settings/update_screen.dart';
+import '../features/settings/favorites_screen.dart';
+import '../features/settings/referral_screen.dart';
+import '../features/settings/analytics_screen.dart';
+import '../features/settings/roadmap_screen.dart';
+import '../features/billing/paywall_screen.dart';
+import '../features/history/history_screen.dart';
+import '../features/batch/batch_screen.dart';
+import '../features/advanced/ai_description_screen.dart';
+
+final routerProvider = Provider<GoRouter>((ref) {
+  return GoRouter(
+    initialLocation: '/splash',
+    routes: [
+      // ─── Splash & Onboarding ───
+      GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
+      GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
+
+      // ─── Home (with Floating Nav) ───
+      GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
+      GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
+
+      // ─── Chat ───
+      GoRoute(path: '/chat', builder: (_, __) => const ChatScreen()),
+      GoRoute(path: '/chat-studio', builder: (_, __) => const ChatStudioScreen()),
+      GoRoute(path: '/chat-history', builder: (_, __) => const ChatHistoryScreen()),
+
+      // ─── Editor ───
+      GoRoute(
+        path: '/editor',
+        builder: (_, s) => EditorScreen(imagePath: s.extra as String?),
+      ),
+      GoRoute(
+        path: '/mask-painter',
+        builder: (_, s) => MaskPainterScreen(imagePath: s.extra as String),
+      ),
+      GoRoute(path: '/presets', builder: (_, __) => const PresetsScreen()),
+
+      // ─── Advanced ───
+      GoRoute(
+        path: '/ai-description',
+        builder: (_, s) => AIDescriptionScreen(imagePath: s.extra as String),
+      ),
+
+      // ─── Features ───
+      GoRoute(path: '/recipes', builder: (_, __) => const RecipesScreen()),
+      GoRoute(path: '/compliance', builder: (_, __) => const ComplianceScreen()),
+      GoRoute(path: '/batch', builder: (_, __) => const BatchScreen()),
+      GoRoute(path: '/history', builder: (_, __) => const HistoryScreen()),
+
+      // ─── Billing ───
+      GoRoute(path: '/paywall', builder: (_, __) => const PaywallScreen()),
+
+      // ─── Settings ───
+      GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+      GoRoute(path: '/models', builder: (_, __) => const ModelsScreen()),
+      GoRoute(path: '/brand', builder: (_, __) => const BrandScreen()),
+      GoRoute(path: '/developer', builder: (_, __) => const DeveloperScreen()),
+      GoRoute(path: '/marketplace', builder: (_, __) => const MarketplaceScreen()),
+      GoRoute(path: '/about', builder: (_, __) => const AboutScreen()),
+      GoRoute(path: '/feedback', builder: (_, __) => const FeedbackScreen()),
+      GoRoute(path: '/update', builder: (_, __) => const UpdateScreen()),
+      GoRoute(path: '/favorites', builder: (_, __) => const FavoritesScreen()),
+      GoRoute(path: '/referral', builder: (_, __) => const ReferralScreen()),
+      GoRoute(path: '/analytics', builder: (_, __) => const AnalyticsScreen()),
+      GoRoute(path: '/roadmap', builder: (_, __) => const RoadmapScreen()),
+
+      // ─── Support ───
+      GoRoute(path: '/faq', builder: (_, __) => const FAQScreen()),
+      GoRoute(path: '/support', builder: (_, __) => const SupportScreen()),
+
+      // ─── Legal ───
+      GoRoute(
+        path: '/privacy',
+        builder: (_, __) => const LegalScreen(type: 'privacy'),
+      ),
+      GoRoute(
+        path: '/terms',
+        builder: (_, __) => const LegalScreen(type: 'terms'),
+      ),
+    ],
+    errorBuilder: (c, s) => Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: AppColors.danger),
+            const SizedBox(height: 16),
+            Text('Page not found', style: Theme.of(c).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: () => c.go('/home'),
+              child: const Text('Go Home'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+});
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #43: 🟡 MODIFY
+📁 الملف: lib/features/settings/settings_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة: ابحث عن قسم "About" (قسم حول التطبيق)، واستبدله بهذا:
+
+          _Section('About'),
+          _Tile(
+            icon: Icons.info_outline,
+            title: 'About',
+            subtitle: 'Version, links, credits',
+            onTap: () => context.push('/about'),
+          ),
+          _Tile(
+            icon: Icons.system_update,
+            title: 'Check for Updates',
+            subtitle: 'Get the latest version',
+            onTap: () => context.push('/update'),
+          ),
+          _Tile(
+            icon: Icons.favorite_border,
+            title: 'Favorites',
+            subtitle: 'Your saved images',
+            onTap: () => context.push('/favorites'),
+          ),
+          _Tile(
+            icon: Icons.share_outlined,
+            title: 'Send Feedback',
+            subtitle: 'Help us improve',
+            onTap: () => context.push('/feedback'),
+          ),
+          _Tile(
+            icon: Icons.tune,
+            title: 'Editor Presets',
+            subtitle: 'Save operation combinations',
+            onTap: () => context.push('/presets'),
+          ),
+          _Tile(
+            icon: Icons.store,
+            title: 'Marketplace Integration',
+            subtitle: 'Shopify, WooCommerce',
+            onTap: () => context.push('/marketplace'),
+          ),
+
+الخطوة 2: أضف هذا في قسم Support:
+
+          _Tile(
+            icon: Icons.analytics_outlined,
+            title: 'Analytics',
+            subtitle: 'Usage statistics',
+            onTap: () => context.push('/analytics'),
+          ),
+          _Tile(
+            icon: Icons.rocket_launch_outlined,
+            title: 'Roadmap',
+            subtitle: 'Coming soon features',
+            onTap: () => context.push('/roadmap'),
+          ),
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #44: 🟡 MODIFY
+📁 الملف: pubspec.yaml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة: أضف في dependencies:
+
+  package_info_plus: ^8.1.1
+  url_launcher: ^6.3.1
+  uuid: ^4.5.1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الملف 19_UI_SCREENS.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

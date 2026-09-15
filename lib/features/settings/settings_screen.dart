@@ -164,6 +164,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: const Text('Getting started'),
               onTap: () => context.push('/onboarding'),
             ),
+            const Divider(height: 28),
+            ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: const Text('About'),
+              subtitle: const Text('Version, links, credits'),
+              onTap: () => context.push('/about'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.system_update),
+              title: const Text('Check for Updates'),
+              subtitle: const Text('Get the latest version'),
+              onTap: () => context.push('/update'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.favorite_border),
+              title: const Text('Favorites'),
+              subtitle: const Text('Your saved images'),
+              onTap: () => context.push('/favorites'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.share_outlined),
+              title: const Text('Send Feedback'),
+              subtitle: const Text('Help us improve'),
+              onTap: () => context.push('/feedback'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.tune),
+              title: const Text('Editor Presets'),
+              subtitle: const Text('Save operation combinations'),
+              onTap: () => context.push('/presets'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.store),
+              title: const Text('Marketplace Integration'),
+              subtitle: const Text('Shopify, WooCommerce'),
+              onTap: () => context.push('/marketplace'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.developer_mode),
+              title: const Text('Developer Options'),
+              onTap: () => context.push('/developer'),
+            ),
             if (_message != null)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
