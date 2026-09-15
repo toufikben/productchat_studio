@@ -12,7 +12,7 @@ class AnalyticsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Analytics')),
       body: ValueListenableBuilder(
-        valueListenable: Hive.box('analytics').listenable(),
+        valueListenable: Hive.box<dynamic>('analytics').listenable(),
         builder: (context, Box box, _) {
           final events = box.values
               .map((e) => Map<String, dynamic>.from(e as Map))

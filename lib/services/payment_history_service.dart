@@ -28,14 +28,14 @@ class PaymentRecord {
     'date': date.toIso8601String(),
   };
 
-  factory PaymentRecord.fromMap(Map m) => PaymentRecord(
-    id: m['id'] ?? '',
-    productId: m['productId'] ?? '',
-    productName: m['productName'] ?? '',
-    amount: (m['amount'] ?? 0).toDouble(),
-    currency: m['currency'] ?? 'USD',
-    status: m['status'] ?? 'completed',
-    date: DateTime.tryParse(m['date'] ?? '') ?? DateTime.now(),
+  factory PaymentRecord.fromMap(Map<String, dynamic> m) => PaymentRecord(
+    id: m['id'] as String? ?? '',
+    productId: m['productId'] as String? ?? '',
+    productName: m['productName'] as String? ?? '',
+    amount: (m['amount'] as num?)?.toDouble() ?? 0.0,
+    currency: m['currency'] as String? ?? 'USD',
+    status: m['status'] as String? ?? 'completed',
+    date: DateTime.tryParse(m['date'] as String? ?? '') ?? DateTime.now(),
   );
 }
 
@@ -44,12 +44,12 @@ class PaymentHistoryService {
   static const _box = 'payments';
 
   Future<void> add(PaymentRecord record) async {
-    await Hive.box(_box).add(record.toMap());
+    await Hive.box<dynamic>(_box).add(record.toMap());
   }
 
   List<PaymentRecord> getAll() {
-    return Hive.box(_box).values
-        .map((e) => PaymentRecord.fromMap(Map.from(e as Map)))
+    return Hive.box<dynamic>(_box).values
+        .map((e) => PaymentRecord.fromMap(Map<String, dynamic>.from(e as Map)))
         .toList()
       ..sort((a, b) => b.date.compareTo(a.date));
   }
@@ -58,5 +58,5 @@ class PaymentHistoryService {
       .where((r) => r.status == 'completed')
       .fold(0.0, (sum, r) => sum + r.amount);
 
-  Future<void> clear() => Hive.box(_box).clear();
+  Future<void> clear() => Hive.box<dynamic>(_box).clear();
 }

@@ -29,7 +29,7 @@ class BrandProfile {
         'showWatermark': showWatermark,
       };
 
-  factory BrandProfile.fromMap(Map map) => BrandProfile(
+  factory BrandProfile.fromMap(Map<String, dynamic> map) => BrandProfile(
         logoPath: map['logoPath'] as String?,
         primaryColor: map['primaryColor'] as String? ?? '#6C5CE7',
         secondaryColor: map['secondaryColor'] as String? ?? '#00D2A8',
@@ -61,7 +61,7 @@ class BrandService {
   static const _key = 'brand_profile';
 
   BrandProfile load() {
-    final box = Hive.box('settings');
+    final box = Hive.box<dynamic>('settings');
     final data = box.get(_key);
     if (data == null) return const BrandProfile();
     try {
@@ -72,12 +72,12 @@ class BrandService {
   }
 
   Future<void> save(BrandProfile profile) async {
-    final box = Hive.box('settings');
+    final box = Hive.box<dynamic>('settings');
     await box.put(_key, jsonEncode(profile.toMap()));
   }
 
   Future<void> clear() async {
-    final box = Hive.box('settings');
+    final box = Hive.box<dynamic>('settings');
     await box.delete(_key);
   }
 

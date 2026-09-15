@@ -39,7 +39,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       'email': _emailCtrl.text,
       'ts': DateTime.now().toIso8601String(),
     };
-    final box = Hive.box('feedback');
+    final box = Hive.box<dynamic>('feedback');
     await box.add(ticket);
 
     if (!mounted) return;

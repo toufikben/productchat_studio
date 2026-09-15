@@ -12,7 +12,7 @@ class PriceABTestService {
   };
 
   String getGroup() {
-    final box = Hive.box('settings');
+    final box = Hive.box<dynamic>('settings');
     var g = box.get(_key) as String?;
     if (g == null) {
       g = _variants[Random().nextInt(_variants.length)];
@@ -27,7 +27,7 @@ class PriceABTestService {
   }
 
   Future<void> logPurchase(String productId) async {
-    final box = Hive.box('analytics');
+    final box = Hive.box<dynamic>('analytics');
     await box.add({
       'event': 'purchase',
       'params': {'group': getGroup(), 'product': productId},
@@ -36,7 +36,7 @@ class PriceABTestService {
   }
 
   Map<String, int> report() {
-    final box = Hive.box('analytics');
+    final box = Hive.box<dynamic>('analytics');
     final counts = {'A': 0, 'B': 0, 'C': 0};
     for (final e in box.values) {
       final m = Map<String, dynamic>.from(e as Map);

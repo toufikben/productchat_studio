@@ -11,7 +11,7 @@ class AutoSaveService {
     required String imagePath,
     required Map<String, dynamic> state,
   }) async {
-    final box = Hive.box(_boxName);
+    final box = Hive.box<dynamic>(_boxName);
     final draft = {
       'id': id,
       'imagePath': imagePath,
@@ -22,7 +22,7 @@ class AutoSaveService {
     // Remove existing draft with same id
     final keysToRemove = <dynamic>[];
     for (final key in box.keys) {
-      final existing = Map<String, dynamic>.from(box.get(key));
+      final existing = Map<String, dynamic>.from(box.get(key) as Map);
       if (existing['id'] == id) keysToRemove.add(key);
     }
     for (final key in keysToRemove) await box.delete(key);
@@ -33,8 +33,8 @@ class AutoSaveService {
     if (box.length > _maxDrafts) {
       final sorted = box.keys.toList()
         ..sort((a, b) {
-          final ta = Map.from(box.get(a))['ts'] as String;
-          final tb = Map.from(box.get(b))['ts'] as String;
+          final ta = Map<String, dynamic>.from(box.get(a) as Map)['ts'] as String;
+          final tb = Map<String, dynamic>.from(box.get(b) as Map)['ts'] as String;
           return ta.compareTo(tb);
         });
       final toRemove = sorted.take(box.length - _maxDrafts);
@@ -43,16 +43,16 @@ class AutoSaveService {
   }
 
   List<DraftEntry> getAll() {
-    final box = Hive.box(_boxName);
+    final box = Hive.box<dynamic>(_boxName);
     final drafts = box.values.map((e) {
       final m = Map<String, dynamic>.from(e as Map);
       return DraftEntry(
-        id: m['id'] ?? '',
-        imagePath: m['imagePath'] ?? '',
+        id: m['id'] as String? ?? '',
+        imagePath: m['imagePath'] as String? ?? '',
         state: Map<String, dynamic>.from(
           jsonDecode(m['state'] as String? ?? '{}'),
         ),
-        savedAt: DateTime.tryParse(m['ts'] ?? '') ?? DateTime.now(),
+        savedAt: DateTime.tryParse(m['ts'] as String? ?? '') ?? DateTime.now(),
       );
     }).toList()
       ..sort((a, b) => b.savedAt.compareTo(a.savedAt));
@@ -60,16 +60,16 @@ class AutoSaveService {
   }
 
   Future<void> deleteDraft(String id) async {
-    final box = Hive.box(_boxName);
+    final box = Hive.box<dynamic>(_boxName);
     final keysToRemove = <dynamic>[];
     for (final key in box.keys) {
-      final existing = Map<String, dynamic>.from(box.get(key));
+      final existing = Map<String, dynamic>.from(box.get(key) as Map);
       if (existing['id'] == id) keysToRemove.add(key);
     }
     for (final key in keysToRemove) await box.delete(key);
   }
 
-  Future<void> clearAll() => Hive.box(_boxName).clear();
+  Future<void> clearAll() => Hive.box<dynamic>(_boxName).clear();
 }
 
 class DraftEntry {

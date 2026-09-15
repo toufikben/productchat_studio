@@ -14,7 +14,7 @@ class RefundService {
     required String reason,
     required int creditsRefunded,
   }) async {
-    final box = Hive.box('analytics');
+    final box = Hive.box<dynamic>('analytics');
     await box.add({
       'event': 'refund',
       'product': productId,
@@ -23,7 +23,7 @@ class RefundService {
       'ts': DateTime.now().toIso8601String(),
     });
 
-    final history = Hive.box('settings');
+    final history = Hive.box<dynamic>('settings');
     final list = List<Map<String, dynamic>>.from(
       (history.get(_kRefundHistory, defaultValue: []) as List)
           .map((e) => Map<String, dynamic>.from(e as Map)),
@@ -39,14 +39,14 @@ class RefundService {
 
   /// استرداد Credits.
   Future<void> refundCredits(int amount) async {
-    final box = Hive.box('credits');
+    final box = Hive.box<dynamic>('credits');
     final current = box.get('balance', defaultValue: 0) as int;
     await box.put('balance', current + amount);
   }
 
   /// تعليق Pro بعد Chargeback.
   Future<void> suspendPro({String reason = 'chargeback'}) async {
-    final box = Hive.box('settings');
+    final box = Hive.box<dynamic>('settings');
     await box.put('isPro', false);
     await box.put('isLifetime', false);
     await box.put('proExpiry', '');
@@ -55,17 +55,17 @@ class RefundService {
   }
 
   /// عدد الاستردادات.
-  int getRefundCount() => Hive.box('analytics').values
+  int getRefundCount() => Hive.box<dynamic>('analytics').values
       .where((e) => (e as Map)['event'] == 'refund')
       .length;
 
   /// سجل الاستردادات.
   List<Map<String, dynamic>> getHistory() {
-    final list = Hive.box('settings').get(_kRefundHistory, defaultValue: []) as List;
+    final list = Hive.box<dynamic>('settings').get(_kRefundHistory, defaultValue: []) as List;
     return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
   }
 
   /// فحص هل المستخدم مُعلّق.
   bool isSuspended() =>
-      Hive.box('settings').get('suspended_at') != null;
+      Hive.box<dynamic>('settings').get('suspended_at') != null;
 }

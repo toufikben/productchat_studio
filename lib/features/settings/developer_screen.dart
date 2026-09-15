@@ -25,8 +25,8 @@ class _DeveloperScreenState extends ConsumerState<DeveloperScreen> {
   void initState() {
     super.initState();
     _loadInfo();
-    _verboseLogging = Hive.box('settings').get('verboseLog', defaultValue: false) as bool;
-    _quality = Hive.box('settings').get('quality', defaultValue: 'balanced') as String;
+    _verboseLogging = Hive.box<dynamic>('settings').get('verboseLog', defaultValue: false) as bool;
+    _quality = Hive.box<dynamic>('settings').get('quality', defaultValue: 'balanced') as String;
   }
 
   Future<void> _loadInfo() async {
@@ -81,7 +81,7 @@ Models: $count (${(size / 1024 / 1024).toStringAsFixed(1)} MB)
                   DropdownMenuItem(value: e, child: Text(e))).toList(),
                 onChanged: (v) {
                   setState(() => _quality = v!);
-                  Hive.box('settings').put('quality', v);
+                  Hive.box<dynamic>('settings').put('quality', v);
                 },
               ),
             ),
@@ -91,7 +91,7 @@ Models: $count (${(size / 1024 / 1024).toStringAsFixed(1)} MB)
               value: _verboseLogging,
               onChanged: (v) {
                 setState(() => _verboseLogging = v);
-                Hive.box('settings').put('verboseLog', v);
+                Hive.box<dynamic>('settings').put('verboseLog', v);
               },
             ),
           ]),
@@ -100,7 +100,7 @@ Models: $count (${(size / 1024 / 1024).toStringAsFixed(1)} MB)
               contentPadding: EdgeInsets.zero,
               title: const Text('Add 100 credits'),
               onTap: () {
-                final box = Hive.box('credits');
+                final box = Hive.box<dynamic>('credits');
                 box.put('balance', (box.get('balance', defaultValue: 0) as int) + 100);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('+100 credits')));
@@ -116,7 +116,7 @@ Models: $count (${(size / 1024 / 1024).toStringAsFixed(1)} MB)
               contentPadding: EdgeInsets.zero,
               title: const Text('Activate Pro (test)'),
               onTap: () {
-                Hive.box('settings').put('isPro', true);
+                Hive.box<dynamic>('settings').put('isPro', true);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Pro activated')));
               },
@@ -125,8 +125,8 @@ Models: $count (${(size / 1024 / 1024).toStringAsFixed(1)} MB)
               contentPadding: EdgeInsets.zero,
               title: const Text('Deactivate Pro'),
               onTap: () {
-                Hive.box('settings').put('isPro', false);
-                Hive.box('settings').put('isLifetime', false);
+                Hive.box<dynamic>('settings').put('isPro', false);
+                Hive.box<dynamic>('settings').put('isLifetime', false);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Pro deactivated')));
               },
@@ -143,10 +143,10 @@ Models: $count (${(size / 1024 / 1024).toStringAsFixed(1)} MB)
                   destructive: true,
                 );
                 if (ok) {
-                  await Hive.box('settings').clear();
-                  await Hive.box('history').clear();
-                  await Hive.box('credits').clear();
-                  await Hive.box('analytics').clear();
+                  await Hive.box<dynamic>('settings').clear();
+                  await Hive.box<dynamic>('history').clear();
+                  await Hive.box<dynamic>('credits').clear();
+                  await Hive.box<dynamic>('analytics').clear();
                   await ModelManager().clearAll();
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(

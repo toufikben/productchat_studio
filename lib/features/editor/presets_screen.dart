@@ -24,11 +24,13 @@ class EditorPreset {
     'createdAt': createdAt.toIso8601String(),
   };
 
-  factory EditorPreset.fromMap(Map m) => EditorPreset(
-    id: m['id'],
-    name: m['name'],
-    operations: Map<String, dynamic>.from(m['operations']),
-    createdAt: DateTime.parse(m['createdAt']),
+  factory EditorPreset.fromMap(Map<String, dynamic> m) => EditorPreset(
+    id: m['id'] as String? ?? '',
+    name: m['name'] as String? ?? '',
+    operations: m['operations'] is Map
+        ? Map<String, dynamic>.from(m['operations'] as Map)
+        : <String, dynamic>{},
+    createdAt: DateTime.tryParse(m['createdAt'] as String? ?? '') ?? DateTime.now(),
   );
 }
 
@@ -39,8 +41,11 @@ class PresetsNotifier extends StateNotifier<List<EditorPreset>> {
   PresetsNotifier() : super([]) { _load(); }
 
   void _load() {
-    final box = Hive.box('presets');
-    state = box.values.map((e) => EditorPreset.fromMap(Map.from(e))).toList();
+    final box = Hive.box<dynamic>('presets');
+    state = box.values
+        .where((e) => e is Map)
+        .map((e) => EditorPreset.fromMap(Map<String, dynamic>.from(e as Map)))
+        .toList();
   }
 
   Future<void> add(String name, Map<String, dynamic> operations) async {
@@ -50,14 +55,14 @@ class PresetsNotifier extends StateNotifier<List<EditorPreset>> {
       operations: operations,
       createdAt: DateTime.now(),
     );
-    await Hive.box('presets').add(preset.toMap());
+    await Hive.box<dynamic>('presets').add(preset.toMap());
     _load();
   }
 
   Future<void> remove(String id) async {
-    final box = Hive.box('presets');
+    final box = Hive.box<dynamic>('presets');
     final keys = box.keys.where((k) {
-      final m = Map.from(box.get(k));
+      final m = Map<String, dynamic>.from(box.get(k) as Map);
       return m['id'] == id;
     }).toList();
     for (final k in keys) await box.delete(k);

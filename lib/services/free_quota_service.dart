@@ -17,10 +17,10 @@ class FreeQuotaService extends StateNotifier<QuotaState> {
   final StorageService? _storage;
   dynamic _get(String key, [dynamic fallback]) => _storage != null
       ? (_storage!.get(key) ?? fallback)
-      : Hive.box(_box).get(key, defaultValue: fallback);
+      : Hive.box<dynamic>(_box).get(key, defaultValue: fallback);
   Future<void> _put(String key, dynamic value) => _storage != null
       ? _storage!.set(key, value)
-      : Hive.box(_box).put(key, value);
+      : Hive.box<dynamic>(_box).put(key, value);
   void _load() {
     final raw = _get(_kLastReset) as String?;
     final now = DateTime.now();

@@ -13,17 +13,17 @@ class FavoritesNotifier extends StateNotifier<List<String>> {
   FavoritesNotifier() : super([]) { _load(); }
 
   void _load() {
-    final box = Hive.box('favorites');
+    final box = Hive.box<dynamic>('favorites');
     state = box.values.cast<String>().toList();
   }
 
   Future<void> add(String imagePath) async {
-    await Hive.box('favorites').add(imagePath);
+    await Hive.box<dynamic>('favorites').add(imagePath);
     _load();
   }
 
   Future<void> remove(String imagePath) async {
-    final box = Hive.box('favorites');
+    final box = Hive.box<dynamic>('favorites');
     final keys = box.keys.where((k) => box.get(k) == imagePath).toList();
     for (final k in keys) await box.delete(k);
     _load();

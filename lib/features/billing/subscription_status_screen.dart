@@ -99,7 +99,7 @@ class SubscriptionStatusScreen extends ConsumerWidget {
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.bolt, color: AppColors.warning),
               title: Text(
-                '${Hive.box('credits').get('balance', defaultValue: 0)} credits',
+                '${Hive.box<dynamic>('credits').get('balance', defaultValue: 0)} credits',
                 style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
               ),
               trailing: TextButton(

@@ -20,7 +20,7 @@ class ReferralService {
   static const _maxReferrals = 50;
 
   static String getMyCode() {
-    final box = Hive.box('settings');
+    final box = Hive.box<dynamic>('settings');
     var code = box.get(_myCodeKey) as String?;
     if (code != null) return code;
     code = _generate();
@@ -38,7 +38,7 @@ class ReferralService {
     code = code.trim().toUpperCase();
     if (code.length != 8) return ReferralResult.invalid;
 
-    final box = Hive.box('settings');
+    final box = Hive.box<dynamic>('settings');
     final used = List<String>.from(box.get(_usedKey, defaultValue: []) as List);
     if (used.contains(code)) return ReferralResult.alreadyUsed;
     if (code == getMyCode()) return ReferralResult.ownCode;
@@ -47,7 +47,7 @@ class ReferralService {
     used.add(code);
     await box.put(_usedKey, used);
 
-    final credits = Hive.box('credits');
+    final credits = Hive.box<dynamic>('credits');
     final current = credits.get('balance', defaultValue: 0) as int;
     await credits.put('balance', current + _rewardPerReferral);
 
@@ -55,7 +55,7 @@ class ReferralService {
   }
 
   static int getReferralCount() =>
-      (Hive.box('settings').get(_usedKey, defaultValue: []) as List).length;
+      (Hive.box<dynamic>('settings').get(_usedKey, defaultValue: []) as List).length;
 
   static int getTotalRewards() => getReferralCount() * _rewardPerReferral;
 

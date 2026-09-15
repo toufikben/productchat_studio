@@ -21,14 +21,14 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
   final _wooSecret = TextEditingController();
 
   bool get _shopifyConnected =>
-      Hive.box('settings').get('shopify_creds') != null;
+      Hive.box<dynamic>('settings').get('shopify_creds') != null;
 
   bool get _wooConnected =>
-      Hive.box('settings').get('woo_creds') != null;
+      Hive.box<dynamic>('settings').get('woo_creds') != null;
 
   Future<void> _saveShopify() async {
     if (_shopifyShop.text.isEmpty || _shopifyToken.text.isEmpty) return;
-    await Hive.box('settings').put('shopify_creds', {
+    await Hive.box<dynamic>('settings').put('shopify_creds', {
       'shop': _shopifyShop.text,
       'token': _shopifyToken.text,
     });
@@ -40,7 +40,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
 
   Future<void> _saveWoo() async {
     if (_wooUrl.text.isEmpty || _wooKey.text.isEmpty || _wooSecret.text.isEmpty) return;
-    await Hive.box('settings').put('woo_creds', {
+    await Hive.box<dynamic>('settings').put('woo_creds', {
       'url': _wooUrl.text,
       'key': _wooKey.text,
       'secret': _wooSecret.text,
@@ -52,7 +52,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
   }
 
   Future<void> _disconnect(String which) async {
-    await Hive.box('settings').delete(which == 'shopify' ? 'shopify_creds' : 'woo_creds');
+    await Hive.box<dynamic>('settings').delete(which == 'shopify' ? 'shopify_creds' : 'woo_creds');
     setState(() {});
   }
 
@@ -200,7 +200,7 @@ class _Field {
 // ═══════════════════════════════════════════════════════════════
 class MarketplaceService {
   static Future<UploadResult> uploadToShopify(String imagePath) async {
-    final creds = Hive.box('settings').get('shopify_creds') as Map?;
+    final creds = Hive.box<dynamic>('settings').get('shopify_creds') as Map?;
     if (creds == null) return UploadResult.error('Not connected');
     try {
       final bytes = await File(imagePath).readAsBytes();
@@ -225,7 +225,7 @@ class MarketplaceService {
   }
 
   static Future<UploadResult> uploadToWoo(String imagePath) async {
-    final creds = Hive.box('settings').get('woo_creds') as Map?;
+    final creds = Hive.box<dynamic>('settings').get('woo_creds') as Map?;
     if (creds == null) return UploadResult.error('Not connected');
     try {
       final dio = Dio(BaseOptions(

@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import '../core/hive_ext.dart';
 
-// ═══════════════════════════════════════════════════════════════
-// Voice State
-// ═══════════════════════════════════════════════════════════════
 class VoiceState {
   final bool isListening;
   final bool isSpeaking;
@@ -34,8 +32,7 @@ class VoiceState {
     double? soundLevel,
     String? lastSpoken,
     VoiceSettings? settings,
-  }) =>
-      VoiceState(
+  }) => VoiceState(
         isListening: isListening ?? this.isListening,
         isSpeaking: isSpeaking ?? this.isSpeaking,
         lastTranscription: lastTranscription ?? this.lastTranscription,
@@ -70,8 +67,7 @@ class VoiceSettings {
     String? language,
     double? speechRate,
     double? pitch,
-  }) =>
-      VoiceSettings(
+  }) => VoiceSettings(
         voiceFeedback: voiceFeedback ?? this.voiceFeedback,
         autoSpeak: autoSpeak ?? this.autoSpeak,
         wakeWordEnabled: wakeWordEnabled ?? this.wakeWordEnabled,
@@ -81,27 +77,24 @@ class VoiceSettings {
       );
 
   Map<String, dynamic> toMap() => {
-    'voiceFeedback': voiceFeedback,
-    'autoSpeak': autoSpeak,
-    'wakeWordEnabled': wakeWordEnabled,
-    'language': language,
-    'speechRate': speechRate,
-    'pitch': pitch,
-  };
+        'voiceFeedback': voiceFeedback,
+        'autoSpeak': autoSpeak,
+        'wakeWordEnabled': wakeWordEnabled,
+        'language': language,
+        'speechRate': speechRate,
+        'pitch': pitch,
+      };
 
-  factory VoiceSettings.fromMap(Map m) => VoiceSettings(
-    voiceFeedback: m['voiceFeedback'] ?? true,
-    autoSpeak: m['autoSpeak'] ?? false,
-    wakeWordEnabled: m['wakeWordEnabled'] ?? false,
-    language: m['language'] ?? 'ar-SA',
-    speechRate: (m['speechRate'] ?? 0.5).toDouble(),
-    pitch: (m['pitch'] ?? 1.0).toDouble(),
-  );
+  factory VoiceSettings.fromMap(Map<String, dynamic> map) => VoiceSettings(
+        voiceFeedback: map['voiceFeedback'] as bool? ?? true,
+        autoSpeak: map['autoSpeak'] as bool? ?? false,
+        wakeWordEnabled: map['wakeWordEnabled'] as bool? ?? false,
+        language: map['language'] as String? ?? 'ar-SA',
+        speechRate: (map['speechRate'] as num?)?.toDouble() ?? 0.5,
+        pitch: (map['pitch'] as num?)?.toDouble() ?? 1.0,
+      );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Voice Service
-// ═══════════════════════════════════════════════════════════════
 class VoiceService extends StateNotifier<VoiceState> {
   VoiceService() : super(const VoiceState()) {
     _loadSettings();
@@ -115,42 +108,37 @@ class VoiceService extends StateNotifier<VoiceState> {
   Stream<String> get onTranscription => _transcriptionController.stream;
 
   void _loadSettings() {
-    final box = Hive.box('settings');
-    final data = box.get('voice_settings');
-    if (data != null) {
-      try {
-        state = state.copyWith(
-          settings: VoiceSettings.fromMap(Map<String, dynamic>.from(data)),
-        );
-      } catch (_) {}
+    final box = Hive.box<dynamic>('settings');
+    final settings = box.getMap('voice_settings');
+    if (settings.isNotEmpty) {
+      state = state.copyWith(settings: VoiceSettings.fromMap(settings));
     }
   }
 
   Future<void> _persistSettings() async {
-    await Hive.box('settings').put('voice_settings', state.settings.toMap());
+    await Hive.box<dynamic>('settings').put('voice_settings', state.settings.toMap());
   }
 
   Future<void> init() async {
-    _sttInitialized = await _stt.initialize(
-      onError: (e) => state = state.copyWith(lastError: e.errorMsg),
-      onStatus: (s) {
-        if (s == 'done' || s == 'notListening') {
-          state = state.copyWith(isListening: false);
-        }
-      },
-    );
-
-    await _tts.setLanguage(state.settings.language);
-    await _tts.setSpeechRate(state.settings.speechRate);
-    await _tts.setPitch(state.settings.pitch);
-    await _tts.setVolume(1.0);
-
-    _tts.setCompletionHandler(() {
-      state = state.copyWith(isSpeaking: false);
-    });
+    try {
+      _sttInitialized = await _stt.initialize(
+        onError: (error) => state = state.copyWith(lastError: error.errorMsg),
+        onStatus: (status) {
+          if (status == 'done' || status == 'notListening') {
+            state = state.copyWith(isListening: false);
+          }
+        },
+      );
+      await _tts.setLanguage(state.settings.language);
+      await _tts.setSpeechRate(state.settings.speechRate);
+      await _tts.setPitch(state.settings.pitch);
+      await _tts.setVolume(1.0);
+      _tts.setCompletionHandler(() => state = state.copyWith(isSpeaking: false));
+    } catch (error) {
+      state = state.copyWith(lastError: error.toString());
+    }
   }
 
-  // ─── Listening ───
   Future<void> startListening({String? localeId}) async {
     if (!_sttInitialized) await init();
     if (!_sttInitialized) {
@@ -160,9 +148,9 @@ class VoiceService extends StateNotifier<VoiceState> {
     state = state.copyWith(isListening: true, lastError: '');
     await _stt.listen(
       localeId: localeId ?? state.settings.language,
-      onResult: (r) {
-        state = state.copyWith(lastTranscription: r.recognizedWords);
-        _transcriptionController.add(r.recognizedWords);
+      onResult: (result) {
+        state = state.copyWith(lastTranscription: result.recognizedWords);
+        _transcriptionController.add(result.recognizedWords);
       },
       listenOptions: SpeechListenOptions(
         listenMode: ListenMode.confirmation,
@@ -177,16 +165,17 @@ class VoiceService extends StateNotifier<VoiceState> {
     state = state.copyWith(isListening: false);
   }
 
-  // ─── Speaking ───
   Future<void> speak(String text, {String? locale, bool feedback = false}) async {
     if (!state.settings.voiceFeedback && feedback) return;
-
     await _tts.setLanguage(locale ?? state.settings.language);
     await _tts.setSpeechRate(state.settings.speechRate);
     await _tts.setPitch(state.settings.pitch);
-
     state = state.copyWith(isSpeaking: true, lastSpoken: text);
-    await _tts.speak(text);
+    try {
+      await _tts.speak(text);
+    } catch (error) {
+      state = state.copyWith(isSpeaking: false, lastError: error.toString());
+    }
   }
 
   Future<void> stopSpeaking() async {
@@ -194,25 +183,20 @@ class VoiceService extends StateNotifier<VoiceState> {
     state = state.copyWith(isSpeaking: false);
   }
 
-  // ─── Voice Feedback after operation ───
   Future<void> announceOperation({
     required String operation,
     required bool success,
     String? details,
   }) async {
     if (!state.settings.voiceFeedback) return;
-
-    final message = success
-        ? _successMessage(operation, details)
-        : _failureMessage(operation);
-
+    final message = success ? _successMessage(operation, details) : _failureMessage(operation);
     await speak(message, feedback: true);
   }
 
-  String _successMessage(String op, String? details) {
-    final isAr = state.settings.language.startsWith('ar');
-    if (isAr) {
-      switch (op) {
+  String _successMessage(String operation, String? details) {
+    final isArabic = state.settings.language.startsWith('ar');
+    if (isArabic) {
+      switch (operation) {
         case 'removeBg': return 'تمت إزالة الخلفية بنجاح';
         case 'enhance': return 'تم تحسين الصورة';
         case 'shadow': return 'تمت إضافة الظل';
@@ -221,75 +205,61 @@ class VoiceService extends StateNotifier<VoiceState> {
         case 'export': return 'تم تصدير الصورة';
         default: return 'تمت العملية بنجاح';
       }
-    } else {
-      switch (op) {
-        case 'removeBg': return 'Background removed successfully';
-        case 'enhance': return 'Image enhanced';
-        case 'shadow': return 'Shadow added';
-        case 'relight': return 'Lighting adjusted';
-        case 'colorize': return 'Image colorized';
-        case 'export': return 'Image exported';
-        default: return 'Operation completed successfully';
-      }
+    }
+    switch (operation) {
+      case 'removeBg': return 'Background removed successfully';
+      case 'enhance': return 'Image enhanced';
+      case 'shadow': return 'Shadow added';
+      case 'relight': return 'Lighting adjusted';
+      case 'colorize': return 'Image colorized';
+      case 'export': return 'Image exported';
+      default: return 'Operation completed successfully';
     }
   }
 
-  String _failureMessage(String op) {
-    final isAr = state.settings.language.startsWith('ar');
-    return isAr ? 'عذراً، فشلت العملية' : 'Sorry, operation failed';
-  }
+  String _failureMessage(String operation) =>
+      state.settings.language.startsWith('ar') ? 'عذراً، فشلت العملية' : 'Sorry, operation failed';
 
-  // ─── Settings ───
   Future<void> updateSettings(VoiceSettings settings) async {
     state = state.copyWith(settings: settings);
     await _persistSettings();
-
     await _tts.setLanguage(settings.language);
     await _tts.setSpeechRate(settings.speechRate);
     await _tts.setPitch(settings.pitch);
   }
 
-  Future<void> toggleVoiceFeedback(bool enabled) async {
-    await updateSettings(state.settings.copyWith(voiceFeedback: enabled));
-  }
+  Future<void> toggleVoiceFeedback(bool enabled) async =>
+      updateSettings(state.settings.copyWith(voiceFeedback: enabled));
 
-  Future<void> toggleAutoSpeak(bool enabled) async {
-    await updateSettings(state.settings.copyWith(autoSpeak: enabled));
-  }
+  Future<void> toggleAutoSpeak(bool enabled) async =>
+      updateSettings(state.settings.copyWith(autoSpeak: enabled));
 
-  Future<void> toggleWakeWord(bool enabled) async {
-    await updateSettings(state.settings.copyWith(wakeWordEnabled: enabled));
-  }
+  Future<void> toggleWakeWord(bool enabled) async =>
+      updateSettings(state.settings.copyWith(wakeWordEnabled: enabled));
 
-  Future<void> setLanguage(String lang) async {
-    await updateSettings(state.settings.copyWith(language: lang));
-  }
+  Future<void> setLanguage(String language) async =>
+      updateSettings(state.settings.copyWith(language: language));
 
-  Future<void> setSpeechRate(double rate) async {
-    await updateSettings(state.settings.copyWith(speechRate: rate));
-  }
+  Future<void> setSpeechRate(double rate) async =>
+      updateSettings(state.settings.copyWith(speechRate: rate));
 
-  Future<void> setPitch(double pitch) async {
-    await updateSettings(state.settings.copyWith(pitch: pitch));
-  }
+  Future<void> setPitch(double pitch) async =>
+      updateSettings(state.settings.copyWith(pitch: pitch));
 
-  // ─── Available Voices ───
   Future<List<Map<String, String>>> getAvailableVoices() async {
     final voices = await _tts.getVoices;
     if (voices is List) {
-      return voices.map((v) => {
-        'name': v['name']?.toString() ?? '',
-        'locale': v['locale']?.toString() ?? '',
-      }).toList();
+      return voices.map((voice) => {
+            'name': voice['name']?.toString() ?? '',
+            'locale': voice['locale']?.toString() ?? '',
+          }).toList();
     }
     return [];
   }
 
   Future<List<String>> getAvailableLanguages() async {
-    final langs = await _tts.getLanguages;
-    if (langs is List) {
-      return langs.map((l) => l.toString()).toList();
-    }
+    final languages = await _tts.getLanguages;
+    if (languages is List) return languages.map((language) => language.toString()).toList();
     return [];
   }
 

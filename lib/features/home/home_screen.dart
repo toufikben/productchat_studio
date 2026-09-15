@@ -67,7 +67,7 @@ class _HomeDashboard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final creditsBox = Hive.box('credits');
+    final creditsBox = Hive.box<dynamic>('credits');
     final credits = creditsBox.get('balance', defaultValue: 0);
 
     return SafeArea(

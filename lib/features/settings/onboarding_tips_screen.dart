@@ -160,7 +160,7 @@ class _OnboardingTipsScreenState extends State<OnboardingTipsScreen> {
   }
 
   Future<void> _markAllSeen() async {
-    await Hive.box('settings').put('tips_seen', true);
+    await Hive.box<dynamic>('settings').put('tips_seen', true);
     if (mounted) Navigator.pop(context);
   }
 }
@@ -193,5 +193,5 @@ class _TipPage extends StatelessWidget {
 
 /// Utility to check if tips should be shown.
 bool shouldShowTips() {
-  return !(Hive.box('settings').get('tips_seen', defaultValue: false) as bool);
+  return !(Hive.box<dynamic>('settings').get('tips_seen', defaultValue: false) as bool);
 }

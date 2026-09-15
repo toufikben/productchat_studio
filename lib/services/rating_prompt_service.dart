@@ -20,7 +20,7 @@ class RatingPromptService {
 
   /// Should we show the rating prompt now?
   static bool shouldPrompt() {
-    final box = Hive.box('settings');
+    final box = Hive.box<dynamic>('settings');
 
     if (box.get(_keyRated, defaultValue: false) as bool) return false;
 
@@ -50,14 +50,14 @@ class RatingPromptService {
 
   /// Track successful operation.
   static Future<void> trackOperation() async {
-    final box = Hive.box('settings');
+    final box = Hive.box<dynamic>('settings');
     final current = box.get(_keyOpCount, defaultValue: 0) as int;
     await box.put(_keyOpCount, current + 1);
   }
 
   /// Mark install date (call once on first launch).
   static Future<void> recordInstallDate() async {
-    final box = Hive.box('settings');
+    final box = Hive.box<dynamic>('settings');
     if (!box.containsKey(_keyInstallDate)) {
       await box.put(_keyInstallDate, DateTime.now().toIso8601String());
     }
@@ -68,7 +68,7 @@ class RatingPromptService {
     final review = InAppReview.instance;
     if (await review.isAvailable()) {
       await review.requestReview();
-      await Hive.box('settings').put(_keyLastPrompt, DateTime.now().toIso8601String());
+      await Hive.box<dynamic>('settings').put(_keyLastPrompt, DateTime.now().toIso8601String());
       return true;
     }
     return false;
@@ -76,6 +76,6 @@ class RatingPromptService {
 
   /// Mark as rated (user tapped "Rate" in manual prompt).
   static Future<void> markRated() async {
-    await Hive.box('settings').put(_keyRated, true);
+    await Hive.box<dynamic>('settings').put(_keyRated, true);
   }
 }

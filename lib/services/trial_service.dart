@@ -39,7 +39,7 @@ class TrialService extends StateNotifier<TrialState> {
   static const _trialDays = 7;
 
   void _load() {
-    final box = Hive.box('settings');
+    final box = Hive.box<dynamic>('settings');
     final hasUsed = box.get(_kUsed, defaultValue: false) as bool;
     final startedStr = box.get(_kStarted) as String?;
 
@@ -65,7 +65,7 @@ class TrialService extends StateNotifier<TrialState> {
   Future<void> startTrial() async {
     if (state.hasUsedTrial) return;
 
-    final box = Hive.box('settings');
+    final box = Hive.box<dynamic>('settings');
     final now = DateTime.now();
     await box.put(_kStarted, now.toIso8601String());
     await box.put(_kUsed, true);
@@ -81,7 +81,7 @@ class TrialService extends StateNotifier<TrialState> {
   }
 
   Future<void> endTrial() async {
-    final box = Hive.box('settings');
+    final box = Hive.box<dynamic>('settings');
     await box.put('isPro', false);
     await box.put('proExpiry', '');
     state = state.copyWith(isActive: false, daysRemaining: 0);

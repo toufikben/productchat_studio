@@ -21,7 +21,7 @@ Future<void> main() async {
     'favorites', 'feedback', 'payments', 'promos', 'tickets', 'drafts',
     'watermark_presets', 'export_presets', 'crash_reports',
   ]) {
-    if (!Hive.isBoxOpen(name)) await Hive.openBox(name);
+    if (!Hive.isBoxOpen(name)) await Hive.openBox<dynamic>(name);
   }
   await CrashReportingService.init();
   await RatingPromptService.recordInstallDate();

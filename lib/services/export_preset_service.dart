@@ -30,14 +30,14 @@ class ExportPreset {
     'watermarkPresetId': watermarkPresetId,
   };
 
-  factory ExportPreset.fromMap(Map m) => ExportPreset(
-    id: m['id'] ?? '',
-    name: m['name'] ?? '',
-    format: m['format'] ?? 'jpg',
-    size: m['size'] ?? 2048,
-    quality: m['quality'] ?? 92,
-    addWatermark: m['addWatermark'] ?? false,
-    watermarkPresetId: m['watermarkPresetId'],
+  factory ExportPreset.fromMap(Map<String, dynamic> m) => ExportPreset(
+    id: m['id'] as String? ?? '',
+    name: m['name'] as String? ?? '',
+    format: m['format'] as String? ?? 'jpg',
+    size: m['size'] as int? ?? 2048,
+    quality: m['quality'] as int? ?? 92,
+    addWatermark: m['addWatermark'] as bool? ?? false,
+    watermarkPresetId: m['watermarkPresetId'] as String?,
   );
 
   /// Pre-built platform presets.
@@ -91,17 +91,17 @@ class ExportPresetService {
   static const _boxName = 'export_presets';
 
   List<ExportPreset> getAll() {
-    final custom = Hive.box(_boxName)
+    final custom = Hive.box<dynamic>(_boxName)
         .values
-        .map((e) => ExportPreset.fromMap(Map.from(e as Map)))
+        .map((e) => ExportPreset.fromMap(Map<String, dynamic>.from(e as Map)))
         .toList();
     return [...ExportPreset.defaults(), ...custom];
   }
 
   List<ExportPreset> getCustom() {
-    return Hive.box(_boxName)
+    return Hive.box<dynamic>(_boxName)
         .values
-        .map((e) => ExportPreset.fromMap(Map.from(e as Map)))
+        .map((e) => ExportPreset.fromMap(Map<String, dynamic>.from(e as Map)))
         .toList();
   }
 
@@ -122,14 +122,14 @@ class ExportPresetService {
       addWatermark: addWatermark,
       watermarkPresetId: watermarkPresetId,
     );
-    await Hive.box(_boxName).add(preset.toMap());
+    await Hive.box<dynamic>(_boxName).add(preset.toMap());
     return preset;
   }
 
   Future<void> remove(String id) async {
-    final box = Hive.box(_boxName);
+    final box = Hive.box<dynamic>(_boxName);
     final keys = box.keys.where((k) {
-      final p = ExportPreset.fromMap(Map.from(box.get(k)));
+      final p = ExportPreset.fromMap(Map<String, dynamic>.from(box.get(k) as Map));
       return p.id == id;
     }).toList();
     for (final k in keys) await box.delete(k);

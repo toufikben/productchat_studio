@@ -46,18 +46,18 @@ class WatermarkPreset {
     'color': color,
   };
 
-  factory WatermarkPreset.fromMap(Map m) => WatermarkPreset(
-    id: m['id'] ?? '',
-    name: m['name'] ?? '',
-    type: m['type'] ?? 'text',
-    text: m['text'],
-    logoPath: m['logoPath'],
-    position: m['position'] ?? 'bottomRight',
-    scale: (m['scale'] ?? 0.15).toDouble(),
-    opacity: (m['opacity'] ?? 0.85).toDouble(),
-    fontFamily: m['fontFamily'] ?? 'Inter',
-    fontSize: m['fontSize'] ?? 24,
-    color: m['color'] ?? '#FFFFFF',
+  factory WatermarkPreset.fromMap(Map<String, dynamic> m) => WatermarkPreset(
+    id: m['id'] as String? ?? '',
+    name: m['name'] as String? ?? '',
+    type: m['type'] as String? ?? 'text',
+    text: m['text'] as String?,
+    logoPath: m['logoPath'] as String?,
+    position: m['position'] as String? ?? 'bottomRight',
+    scale: (m['scale'] as num?)?.toDouble() ?? 0.15,
+    opacity: (m['opacity'] as num?)?.toDouble() ?? 0.85,
+    fontFamily: m['fontFamily'] as String? ?? 'Inter',
+    fontSize: m['fontSize'] as int? ?? 24,
+    color: m['color'] as String? ?? '#FFFFFF',
   );
 
   WatermarkPreset copyWith({
@@ -92,8 +92,8 @@ class WatermarkPresetService {
   static const _boxName = 'watermark_presets';
 
   List<WatermarkPreset> getAll() {
-    return Hive.box(_boxName).values
-        .map((e) => WatermarkPreset.fromMap(Map.from(e as Map)))
+    return Hive.box<dynamic>(_boxName).values
+        .map((e) => WatermarkPreset.fromMap(Map<String, dynamic>.from(e as Map)))
         .toList();
   }
 
@@ -111,14 +111,14 @@ class WatermarkPresetService {
       fontSize: preset.fontSize,
       color: preset.color,
     );
-    await Hive.box(_boxName).add(withId.toMap());
+    await Hive.box<dynamic>(_boxName).add(withId.toMap());
     return withId;
   }
 
   Future<void> update(WatermarkPreset preset) async {
-    final box = Hive.box(_boxName);
+    final box = Hive.box<dynamic>(_boxName);
     for (final key in box.keys) {
-      final existing = WatermarkPreset.fromMap(Map.from(box.get(key)));
+      final existing = WatermarkPreset.fromMap(Map<String, dynamic>.from(box.get(key) as Map));
       if (existing.id == preset.id) {
         await box.put(key, preset.toMap());
         return;
@@ -127,9 +127,9 @@ class WatermarkPresetService {
   }
 
   Future<void> remove(String id) async {
-    final box = Hive.box(_boxName);
+    final box = Hive.box<dynamic>(_boxName);
     final keys = box.keys.where((k) {
-      final m = WatermarkPreset.fromMap(Map.from(box.get(k)));
+      final m = WatermarkPreset.fromMap(Map<String, dynamic>.from(box.get(k) as Map));
       return m.id == id;
     }).toList();
     for (final k in keys) await box.delete(k);

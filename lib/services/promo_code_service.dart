@@ -65,7 +65,7 @@ class PromoCodeService {
       return const PromoResult(ok: false, message: 'Enter a code');
     }
 
-    final used = List<String>.from(Hive.box('settings').get(_usedKey, defaultValue: []) as List);
+    final used = List<String>.from(Hive.box<dynamic>('settings').get(_usedKey, defaultValue: []) as List);
     if (used.contains(normalized)) {
       return const PromoResult(ok: false, message: 'Code already used');
     }
@@ -83,26 +83,26 @@ class PromoCodeService {
     // ─── تطبيق المكافأة ───
     switch (promo.type) {
       case 'credits':
-        final credits = Hive.box('credits');
+        final credits = Hive.box<dynamic>('credits');
         final current = credits.get('balance', defaultValue: 0) as int;
         await credits.put('balance', current + promo.value);
         break;
       case 'free_pro':
         // تفعيل Pro لعدد أيام
-        final settings = Hive.box('settings');
+        final settings = Hive.box<dynamic>('settings');
         await settings.put('isPro', true);
         final expiry = DateTime.now().add(Duration(days: promo.value));
         await settings.put('proExpiry', expiry.toIso8601String());
         break;
       case 'discount':
         // حفظ الخصم لتطبيقه في الدفع
-        await Hive.box('settings').put('active_discount', promo.value);
+        await Hive.box<dynamic>('settings').put('active_discount', promo.value);
         break;
     }
 
     // ─── تسجيل الاستخدام ───
     used.add(normalized);
-    await Hive.box('settings').put(_usedKey, used);
+    await Hive.box<dynamic>('settings').put(_usedKey, used);
 
     return PromoResult(
       ok: true,
@@ -121,10 +121,10 @@ class PromoCodeService {
   }
 
   int getUsedCount() =>
-      (Hive.box('settings').get(_usedKey, defaultValue: []) as List).length;
+      (Hive.box<dynamic>('settings').get(_usedKey, defaultValue: []) as List).length;
 
   Future<void> clearHistory() async {
-    await Hive.box('settings').put(_usedKey, <String>[]);
+    await Hive.box<dynamic>('settings').put(_usedKey, <String>[]);
   }
 
   /// توليد كود جديد (للمطورين).

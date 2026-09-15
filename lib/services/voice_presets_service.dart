@@ -26,12 +26,14 @@ class VoicePreset {
     'createdAt': createdAt.toIso8601String(),
   };
 
-  factory VoicePreset.fromMap(Map m) => VoicePreset(
-    id: m['id'],
-    phrase: m['phrase'],
-    operation: m['operation'],
-    params: Map<String, dynamic>.from(m['params'] ?? {}),
-    createdAt: DateTime.parse(m['createdAt']),
+  factory VoicePreset.fromMap(Map<String, dynamic> m) => VoicePreset(
+    id: m['id'] as String? ?? '',
+    phrase: m['phrase'] as String? ?? '',
+    operation: m['operation'] as String? ?? '',
+    params: m['params'] is Map
+        ? Map<String, dynamic>.from(m['params'] as Map)
+        : <String, dynamic>{},
+    createdAt: DateTime.tryParse(m['createdAt'] as String? ?? '') ?? DateTime.now(),
   );
 }
 
@@ -40,8 +42,11 @@ class VoicePresetsService {
   static const _boxName = 'voice_presets';
 
   List<VoicePreset> getAll() {
-    final box = Hive.box(_boxName);
-    return box.values.map((e) => VoicePreset.fromMap(Map.from(e))).toList();
+    final box = Hive.box<dynamic>(_boxName);
+    return box.values
+        .where((e) => e is Map)
+        .map((e) => VoicePreset.fromMap(Map<String, dynamic>.from(e as Map)))
+        .toList();
   }
 
   Future<VoicePreset> add({
@@ -56,20 +61,20 @@ class VoicePresetsService {
       params: params,
       createdAt: DateTime.now(),
     );
-    await Hive.box(_boxName).add(preset.toMap());
+    await Hive.box<dynamic>(_boxName).add(preset.toMap());
     return preset;
   }
 
   Future<void> remove(String id) async {
-    final box = Hive.box(_boxName);
+    final box = Hive.box<dynamic>(_boxName);
     final keys = box.keys.where((k) {
-      final m = Map.from(box.get(k));
+      final m = Map<String, dynamic>.from(box.get(k) as Map);
       return m['id'] == id;
     }).toList();
     for (final k in keys) await box.delete(k);
   }
 
-  Future<void> clear() => Hive.box(_boxName).clear();
+  Future<void> clear() => Hive.box<dynamic>(_boxName).clear();
 
   /// يطابق نص صوتي مع presets مخزنة.
   VoicePreset? match(String query) {
