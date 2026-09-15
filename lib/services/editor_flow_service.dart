@@ -5,6 +5,7 @@ import 'package:image/image.dart' as img;
 import '../models/edit_request.dart';
 import 'ai_service.dart';
 import 'ai/migan_service.dart';
+import 'compliance_service.dart';
 import 'device_tier_service.dart';
 import 'export_verification_service.dart';
 import 'history_service.dart';
@@ -21,9 +22,7 @@ class EditorFlowService {
   final BorderCutService _border = BorderCutService();
   final MIGanService _migan = MIGanService();
   final ShadowCompositorService _shadow = ShadowCompositorService();
-  final SeikaService _seika = SeikaService(quality: 'best');
   final BasicEnhanceService _enhance = BasicEnhanceService();
-  final UpscaleService _upscale = UpscaleService();
   final ExportService _export = ExportService();
   final HistoryService _history = HistoryService();
   final ExportVerificationService _verify = ExportVerificationService();
@@ -113,11 +112,7 @@ class EditorFlowService {
       }
 
       // ─── Step 6: Save to history ───
-      await _history.add(
-        inputPath: inputPath,
-        outputPath: exportFile.path,
-        op: 'full_flow',
-      );
+      await _history.record(path: exportFile.path, operation: 'full_flow');
 
       onProgress?.call('Done', 1.0);
 
