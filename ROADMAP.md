@@ -564,3 +564,18 @@ All repair work must follow these rules:
 - [x] اجتياز `git diff --check` والتحقق من وجود جميع الملفات الجديدة.
 - [ ] تعذر تنفيذ `flutter pub get` و`flutter analyze` محلياً لأن Flutter SDK غير موجود في `PATH` (exit code 127)؛ سيجري التحقق عبر GitHub Actions بعد الرفع.
 - [x] تصحيح تحويل قيم `clamp` إلى `int` في القص، وإزالة imports غير مستخدمة، وفصل أسماء متغيرات حالات presets لتفادي تعارض النطاق في Dart.
+
+## سجل التحديثات — 2026-09-15 — New Features Part 2 FIX #134–#144
+- [x] إضافة `ExifService` لقراءة وتحرير وإزالة بيانات EXIF.
+- [x] إضافة `WatermarkPresetService` مع presets نصية وشعارات ومواقع متعددة.
+- [x] إضافة `ExportPresetService` مع presets Amazon وEtsy وShopify وInstagram وWeb وPrint.
+- [x] إنشاء شاشة `OnboardingTipsScreen` مع حفظ حالة مشاهدة النصائح.
+- [x] إضافة `RatingPromptService` و`RatingPromptDialog` وفق قواعد العمليات وفترة الانتظار.
+- [x] إنشاء `TimelineScreen` لتجميع سجل العمليات حسب التاريخ ومشاركة النتائج.
+- [x] ربط المسارين `/tips` و`/timeline` في الراوتر.
+- [x] إضافة `in_app_review` و`store_redirect` إلى `pubspec.yaml`.
+- [x] فتح صناديق Hive `watermark_presets` و`export_presets` وتسجيل تاريخ التثبيت.
+- [x] ربط تتبع العمليات الناجحة داخل `ChatController`.
+- [x] الحفاظ على namespace المتجر الحالي `com.productchat.aiphotostudio`.
+- [x] اجتياز `git diff --check` والتحقق من وجود الملفات الجديدة.
+- [ ] نتيجة `flutter pub get` و`flutter analyze` معلقة؛ البيئة الحالية لا تحتوي Flutter SDK إذا استمر الخطأ السابق `flutter: command not found`.

@@ -32,12 +32,14 @@ import '../features/settings/analytics_screen.dart';
 import '../features/settings/roadmap_screen.dart';
 import '../features/settings/voice_settings_screen.dart';
 import '../features/settings/voice_presets_screen.dart';
+import '../features/settings/onboarding_tips_screen.dart';
 import '../features/chat/voice_search_screen.dart';
 import '../features/billing/paywall_screen.dart';
 import '../features/billing/subscription_status_screen.dart';
 import '../features/billing/promo_code_screen.dart';
 import '../features/billing/refund_policy_screen.dart';
 import '../features/history/history_screen.dart';
+import '../features/history/timeline_screen.dart';
 import '../features/batch/batch_screen.dart';
 import '../features/advanced/ai_description_screen.dart';
 
@@ -94,6 +96,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/compliance', builder: (_, __) => const ComplianceScreen()),
       GoRoute(path: '/batch', builder: (_, __) => const BatchScreen()),
       GoRoute(path: '/history', builder: (_, __) => const HistoryScreen()),
+      GoRoute(path: '/tips', builder: (_, __) => const OnboardingTipsScreen()),
+      GoRoute(path: '/timeline', builder: (_, __) => const TimelineScreen()),
 
       // ─── Billing ───
       GoRoute(path: '/paywall', builder: (_, __) => const PaywallScreen()),

@@ -1,0 +1,1133 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 27 (PART 2): NEW FEATURES                                      ║
+║  EXIF, Watermark, Gallery, Export Presets, Timeline, Tips, Rating    ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #134: 🟢 CREATE
+📁 الملف الجديد: lib/services/exif_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:io';
+import 'package:image/image.dart' as img;
+
+/// ExifService — Read, edit, and remove EXIF metadata.
+class ExifService {
+  /// Read all EXIF data from an image.
+  Future<Map<String, String>> read(String imagePath) async {
+    try {
+      final bytes = await File(imagePath).readAsBytes();
+      final image = img.decodeImage(bytes);
+      if (image == null) return {};
+
+      final exif = image.exif;
+      final result = <String, String>{};
+
+      for (final entry in exif.imageIfd.tags) {
+        result[entry.key] = entry.value.toString();
+      }
+
+      return result;
+    } catch (e) {
+      return {'error': '$e'};
+    }
+  }
+
+  /// Remove all EXIF data (for privacy).
+  Future<String> stripAll(String imagePath) async {
+    try {
+      final bytes = await File(imagePath).readAsBytes();
+      final image = img.decodeImage(bytes);
+      if (image == null) return imagePath;
+
+      // Create clean image (no EXIF)
+      final clean = img.Image.from(image);
+      clean.exif.clear();
+
+      final path = imagePath.replaceAll(RegExp(r'\.[^.]+$'), '_clean.jpg');
+      await File(path).writeAsBytes(img.encodeJpg(clean, quality: 95));
+      return path;
+    } catch (e) {
+      return imagePath;
+    }
+  }
+
+  /// Set basic EXIF fields.
+  Future<String> setMetadata(
+    String imagePath, {
+    String? artist,
+    String? copyright,
+    String? description,
+    String? software,
+  }) async {
+    try {
+      final bytes = await File(imagePath).readAsBytes();
+      final image = img.decodeImage(bytes);
+      if (image == null) return imagePath;
+
+      final exif = image.exif;
+
+      if (artist != null) exif.imageIfd['Artist'] = artist;
+      if (copyright != null) exif.imageIfd['Copyright'] = copyright;
+      if (description != null) exif.imageIfd['ImageDescription'] = description;
+      if (software != null) exif.imageIfd['Software'] = software;
+      exif.imageIfd['DateTime'] = DateTime.now().toIso8601String();
+
+      final path = imagePath.replaceAll(RegExp(r'\.[^.]+$'), '_meta.jpg');
+      await File(path).writeAsBytes(img.encodeJpg(image, quality: 95));
+      return path;
+    } catch (e) {
+      return imagePath;
+    }
+  }
+
+  /// Get only camera info.
+  Future<CameraInfo?> getCameraInfo(String imagePath) async {
+    final data = await read(imagePath);
+    if (data.isEmpty || data['error'] != null) return null;
+
+    return CameraInfo(
+      make: data['Make'],
+      model: data['Model'],
+      lens: data['LensModel'],
+      iso: data['ISOSpeedRatings'],
+      aperture: data['FNumber'],
+      shutter: data['ExposureTime'],
+      focalLength: data['FocalLength'],
+      dateTime: data['DateTime'],
+    );
+  }
+}
+
+class CameraInfo {
+  final String? make;
+  final String? model;
+  final String? lens;
+  final String? iso;
+  final String? aperture;
+  final String? shutter;
+  final String? focalLength;
+  final String? dateTime;
+
+  const CameraInfo({
+    this.make,
+    this.model,
+    this.lens,
+    this.iso,
+    this.aperture,
+    this.shutter,
+    this.focalLength,
+    this.dateTime,
+  });
+
+  bool get hasAnyData =>
+      make != null || model != null || lens != null || iso != null;
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #135: 🟢 CREATE
+📁 الملف الجديد: lib/services/watermark_preset_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:convert';
+import 'dart:io';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:uuid/uuid.dart';
+import 'package:image/image.dart' as img;
+
+/// WatermarkPreset — Configurable watermark for exports.
+class WatermarkPreset {
+  final String id;
+  final String name;
+  final String type; // 'text' or 'logo'
+  final String? text;
+  final String? logoPath;
+  final String position; // topLeft, topRight, bottomLeft, bottomRight, center
+  final double scale;
+  final double opacity;
+  final String fontFamily;
+  final int fontSize;
+  final String color; // hex
+
+  const WatermarkPreset({
+    required this.id,
+    required this.name,
+    required this.type,
+    this.text,
+    this.logoPath,
+    this.position = 'bottomRight',
+    this.scale = 0.15,
+    this.opacity = 0.85,
+    this.fontFamily = 'Inter',
+    this.fontSize = 24,
+    this.color = '#FFFFFF',
+  });
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'name': name,
+    'type': type,
+    'text': text,
+    'logoPath': logoPath,
+    'position': position,
+    'scale': scale,
+    'opacity': opacity,
+    'fontFamily': fontFamily,
+    'fontSize': fontSize,
+    'color': color,
+  };
+
+  factory WatermarkPreset.fromMap(Map m) => WatermarkPreset(
+    id: m['id'] ?? '',
+    name: m['name'] ?? '',
+    type: m['type'] ?? 'text',
+    text: m['text'],
+    logoPath: m['logoPath'],
+    position: m['position'] ?? 'bottomRight',
+    scale: (m['scale'] ?? 0.15).toDouble(),
+    opacity: (m['opacity'] ?? 0.85).toDouble(),
+    fontFamily: m['fontFamily'] ?? 'Inter',
+    fontSize: m['fontSize'] ?? 24,
+    color: m['color'] ?? '#FFFFFF',
+  );
+
+  WatermarkPreset copyWith({
+    String? name,
+    String? type,
+    String? text,
+    String? logoPath,
+    String? position,
+    double? scale,
+    double? opacity,
+    String? fontFamily,
+    int? fontSize,
+    String? color,
+  }) =>
+      WatermarkPreset(
+        id: id,
+        name: name ?? this.name,
+        type: type ?? this.type,
+        text: text ?? this.text,
+        logoPath: logoPath ?? this.logoPath,
+        position: position ?? this.position,
+        scale: scale ?? this.scale,
+        opacity: opacity ?? this.opacity,
+        fontFamily: fontFamily ?? this.fontFamily,
+        fontSize: fontSize ?? this.fontSize,
+        color: color ?? this.color,
+      );
+}
+
+/// WatermarkPresetService — Manage multiple watermark presets.
+class WatermarkPresetService {
+  static const _boxName = 'watermark_presets';
+
+  List<WatermarkPreset> getAll() {
+    return Hive.box(_boxName).values
+        .map((e) => WatermarkPreset.fromMap(Map.from(e as Map)))
+        .toList();
+  }
+
+  Future<WatermarkPreset> add(WatermarkPreset preset) async {
+    final withId = WatermarkPreset(
+      id: const Uuid().v4(),
+      name: preset.name,
+      type: preset.type,
+      text: preset.text,
+      logoPath: preset.logoPath,
+      position: preset.position,
+      scale: preset.scale,
+      opacity: preset.opacity,
+      fontFamily: preset.fontFamily,
+      fontSize: preset.fontSize,
+      color: preset.color,
+    );
+    await Hive.box(_boxName).add(withId.toMap());
+    return withId;
+  }
+
+  Future<void> update(WatermarkPreset preset) async {
+    final box = Hive.box(_boxName);
+    for (final key in box.keys) {
+      final existing = WatermarkPreset.fromMap(Map.from(box.get(key)));
+      if (existing.id == preset.id) {
+        await box.put(key, preset.toMap());
+        return;
+      }
+    }
+  }
+
+  Future<void> remove(String id) async {
+    final box = Hive.box(_boxName);
+    final keys = box.keys.where((k) {
+      final m = WatermarkPreset.fromMap(Map.from(box.get(k)));
+      return m.id == id;
+    }).toList();
+    for (final k in keys) await box.delete(k);
+  }
+
+  /// Apply watermark to image.
+  Future<String> apply(String imagePath, WatermarkPreset preset) async {
+    final bytes = await File(imagePath).readAsBytes();
+    final image = img.decodeImage(bytes);
+    if (image == null) return imagePath;
+
+    if (preset.type == 'logo' && preset.logoPath != null) {
+      final logoBytes = await File(preset.logoPath!).readAsBytes();
+      final logo = img.decodeImage(logoBytes);
+      if (logo != null) {
+        final logoW = (image.width * preset.scale).toInt();
+        final logoH = (logo.height * logoW / logo.width).toInt();
+        final resized = img.copyResize(logo, width: logoW, height: logoH);
+        final (x, y) = _position(image.width, image.height, logoW, logoH, preset.position);
+        img.compositeImage(image, resized, dstX: x, dstY: y);
+      }
+    } else if (preset.type == 'text' && preset.text != null) {
+      // Simple text band with opacity
+      final bandHeight = preset.fontSize + 16;
+      final (x, y) = _position(image.width, image.height,
+          preset.text!.length * preset.fontSize ~/ 2, bandHeight, preset.position);
+
+      for (var dy = 0; dy < bandHeight; dy++) {
+        for (var dx = 0; dx < preset.text!.length * preset.fontSize ~/ 2; dx++) {
+          final px = x + dx;
+          final py = y + dy;
+          if (px >= 0 && px < image.width && py >= 0 && py < image.height) {
+            final p = image.getPixel(px, py);
+            final alpha = preset.opacity;
+            image.setPixelRgb(
+              px, py,
+              (p.r * (1 - alpha * 0.5)).round(),
+              (p.g * (1 - alpha * 0.5)).round(),
+              (p.b * (1 - alpha * 0.5)).round(),
+            );
+          }
+        }
+      }
+    }
+
+    final path = imagePath.replaceAll(RegExp(r'\.[^.]+$'), '_wm.png');
+    await File(path).writeAsBytes(img.encodePng(image));
+    return path;
+  }
+
+  (int, int) _position(int w, int h, int wmW, int wmH, String pos) {
+    switch (pos) {
+      case 'topLeft': return (16, 16);
+      case 'topRight': return (w - wmW - 16, 16);
+      case 'bottomLeft': return (16, h - wmH - 16);
+      case 'center': return ((w - wmW) ~/ 2, (h - wmH) ~/ 2);
+      default: return (w - wmW - 16, h - wmH - 16);
+    }
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #136: 🟢 CREATE
+📁 الملف الجديد: lib/services/export_preset_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:uuid/uuid.dart';
+
+class ExportPreset {
+  final String id;
+  final String name;
+  final String format;
+  final int size;
+  final int quality;
+  final bool addWatermark;
+  final String? watermarkPresetId;
+
+  const ExportPreset({
+    required this.id,
+    required this.name,
+    required this.format,
+    required this.size,
+    required this.quality,
+    this.addWatermark = false,
+    this.watermarkPresetId,
+  });
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'name': name,
+    'format': format,
+    'size': size,
+    'quality': quality,
+    'addWatermark': addWatermark,
+    'watermarkPresetId': watermarkPresetId,
+  };
+
+  factory ExportPreset.fromMap(Map m) => ExportPreset(
+    id: m['id'] ?? '',
+    name: m['name'] ?? '',
+    format: m['format'] ?? 'jpg',
+    size: m['size'] ?? 2048,
+    quality: m['quality'] ?? 92,
+    addWatermark: m['addWatermark'] ?? false,
+    watermarkPresetId: m['watermarkPresetId'],
+  );
+
+  /// Pre-built platform presets.
+  static List<ExportPreset> defaults() => [
+    const ExportPreset(
+      id: 'amazon_main',
+      name: 'Amazon Main',
+      format: 'jpg',
+      size: 2000,
+      quality: 95,
+    ),
+    const ExportPreset(
+      id: 'etsy_listing',
+      name: 'Etsy Listing',
+      format: 'jpg',
+      size: 2400,
+      quality: 92,
+    ),
+    const ExportPreset(
+      id: 'shopify_product',
+      name: 'Shopify Product',
+      format: 'jpg',
+      size: 2048,
+      quality: 90,
+    ),
+    const ExportPreset(
+      id: 'instagram_post',
+      name: 'Instagram Post',
+      format: 'jpg',
+      size: 1080,
+      quality: 88,
+    ),
+    const ExportPreset(
+      id: 'web_optimized',
+      name: 'Web Optimized',
+      format: 'webp',
+      size: 1200,
+      quality: 80,
+    ),
+    const ExportPreset(
+      id: 'print_ready',
+      name: 'Print Ready',
+      format: 'png',
+      size: 3000,
+      quality: 100,
+    ),
+  ];
+}
+
+class ExportPresetService {
+  static const _boxName = 'export_presets';
+
+  List<ExportPreset> getAll() {
+    final custom = Hive.box(_boxName)
+        .values
+        .map((e) => ExportPreset.fromMap(Map.from(e as Map)))
+        .toList();
+    return [...ExportPreset.defaults(), ...custom];
+  }
+
+  List<ExportPreset> getCustom() {
+    return Hive.box(_boxName)
+        .values
+        .map((e) => ExportPreset.fromMap(Map.from(e as Map)))
+        .toList();
+  }
+
+  Future<ExportPreset> add({
+    required String name,
+    required String format,
+    required int size,
+    required int quality,
+    bool addWatermark = false,
+    String? watermarkPresetId,
+  }) async {
+    final preset = ExportPreset(
+      id: const Uuid().v4(),
+      name: name,
+      format: format,
+      size: size,
+      quality: quality,
+      addWatermark: addWatermark,
+      watermarkPresetId: watermarkPresetId,
+    );
+    await Hive.box(_boxName).add(preset.toMap());
+    return preset;
+  }
+
+  Future<void> remove(String id) async {
+    final box = Hive.box(_boxName);
+    final keys = box.keys.where((k) {
+      final p = ExportPreset.fromMap(Map.from(box.get(k)));
+      return p.id == id;
+    }).toList();
+    for (final k in keys) await box.delete(k);
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #137: 🟢 CREATE
+📁 الملف الجديد: lib/features/settings/onboarding_tips_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../../core/theme.dart';
+import '../../widgets/app_widgets.dart';
+
+class OnboardingTip {
+  final String id;
+  final String title;
+  final String body;
+  final IconData icon;
+  final String? route;
+
+  const OnboardingTip({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.icon,
+    this.route,
+  });
+}
+
+const kOnboardingTips = <OnboardingTip>[
+  OnboardingTip(
+    id: 'chat_studio',
+    title: 'Chat with your image',
+    body: 'Just type "remove background" or "add shadow" — the AI does the rest.',
+    icon: Icons.chat_bubble_outline,
+    route: '/chat-studio',
+  ),
+  OnboardingTip(
+    id: 'smart_analysis',
+    title: 'Let AI suggest improvements',
+    body: 'Upload an image and we analyze it automatically with 5 suggestions.',
+    icon: Icons.auto_awesome,
+  ),
+  OnboardingTip(
+    id: 'voice_commands',
+    title: 'Use voice commands',
+    body: 'Tap the mic and speak your command in 17 languages.',
+    icon: Icons.mic,
+    route: '/voice-settings',
+  ),
+  OnboardingTip(
+    id: 'batch_processing',
+    title: 'Process 100 images at once',
+    body: 'Pro users can batch process with automatic background removal.',
+    icon: Icons.layers,
+    route: '/batch',
+  ),
+  OnboardingTip(
+    id: 'brand_identity',
+    title: 'Save your brand',
+    body: 'Apply your logo, colors, and fonts to every export.',
+    icon: Icons.business,
+    route: '/brand',
+  ),
+  OnboardingTip(
+    id: 'compliance',
+    title: 'Check marketplace compliance',
+    body: 'Verify your images meet Amazon, Etsy, and Shopify requirements.',
+    icon: Icons.verified_outlined,
+    route: '/compliance',
+  ),
+  OnboardingTip(
+    id: 'models',
+    title: 'Download AI models',
+    body: 'Get LaMa and Real-ESRGAN for advanced editing.',
+    icon: Icons.download,
+    route: '/models',
+  ),
+  OnboardingTip(
+    id: 'privacy',
+    title: 'Your photos stay private',
+    body: 'All processing happens on your device. Nothing is uploaded.',
+    icon: Icons.security,
+  ),
+];
+
+class OnboardingTipsScreen extends StatefulWidget {
+  const OnboardingTipsScreen({super.key});
+  @override
+  State<OnboardingTipsScreen> createState() => _OnboardingTipsScreenState();
+}
+
+class _OnboardingTipsScreenState extends State<OnboardingTipsScreen> {
+  int _currentIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Tips & Tricks'),
+        actions: [
+          TextButton(
+            onPressed: _markAllSeen,
+            child: const Text('Skip'),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Progress indicator
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: List.generate(
+                kOnboardingTips.length,
+                (i) => Expanded(
+                  child: Container(
+                    height: 4,
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    decoration: BoxDecoration(
+                      color: i <= _currentIndex
+                          ? AppColors.primary
+                          : AppColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: PageView.builder(
+              onPageChanged: (i) => setState(() => _currentIndex = i),
+              itemCount: kOnboardingTips.length,
+              itemBuilder: (_, i) => _TipPage(tip: kOnboardingTips[i]),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                if (_currentIndex > 0)
+                  OutlinedButton(
+                    onPressed: () => setState(() => _currentIndex--),
+                    child: const Text('Back'),
+                  ),
+                const Spacer(),
+                FilledButton(
+                  onPressed: _currentIndex == kOnboardingTips.length - 1
+                      ? _markAllSeen
+                      : () => setState(() => _currentIndex++),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                  ),
+                  child: Text(
+                    _currentIndex == kOnboardingTips.length - 1
+                        ? 'Get Started'
+                        : 'Next',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _markAllSeen() async {
+    await Hive.box('settings').put('tips_seen', true);
+    if (mounted) Navigator.pop(context);
+  }
+}
+
+class _TipPage extends StatelessWidget {
+  final OnboardingTip tip;
+  const _TipPage({required this.tip});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          AppIcons.circle(tip.icon, size: 120),
+          const SizedBox(height: 32),
+          Text(tip.title,
+              style: Theme.of(context).textTheme.displayLarge,
+              textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          Text(tip.body,
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.center),
+        ],
+      ),
+    );
+  }
+}
+
+/// Utility to check if tips should be shown.
+bool shouldShowTips() {
+  return !(Hive.box('settings').get('tips_seen', defaultValue: false) as bool);
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #138: 🟢 CREATE
+📁 الملف الجديد: lib/services/rating_prompt_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:in_app_review/in_app_review.dart';
+
+/// RatingPromptService — Smart in-app review prompt.
+///
+/// Rules:
+///   • Show after 5 successful operations
+///   • Show after at least 3 days since install
+///   • Do not show more than once every 90 days
+///   • Do not show if user already rated
+class RatingPromptService {
+  static const _keyOpCount = 'rating_op_count';
+  static const _keyLastPrompt = 'rating_last_prompt';
+  static const _keyRated = 'rating_done';
+  static const _keyInstallDate = 'install_date';
+
+  static const _minOps = 5;
+  static const _minDays = 3;
+  static const _promptCooldown = Duration(days: 90);
+
+  /// Should we show the rating prompt now?
+  static bool shouldPrompt() {
+    final box = Hive.box('settings');
+
+    if (box.get(_keyRated, defaultValue: false) as bool) return false;
+
+    final opCount = box.get(_keyOpCount, defaultValue: 0) as int;
+    if (opCount < _minOps) return false;
+
+    final installStr = box.get(_keyInstallDate) as String?;
+    if (installStr != null) {
+      final installed = DateTime.tryParse(installStr);
+      if (installed != null &&
+          DateTime.now().difference(installed).inDays < _minDays) {
+        return false;
+      }
+    }
+
+    final lastStr = box.get(_keyLastPrompt) as String?;
+    if (lastStr != null) {
+      final last = DateTime.tryParse(lastStr);
+      if (last != null &&
+          DateTime.now().difference(last) < _promptCooldown) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /// Track successful operation.
+  static Future<void> trackOperation() async {
+    final box = Hive.box('settings');
+    final current = box.get(_keyOpCount, defaultValue: 0) as int;
+    await box.put(_keyOpCount, current + 1);
+  }
+
+  /// Mark install date (call once on first launch).
+  static Future<void> recordInstallDate() async {
+    final box = Hive.box('settings');
+    if (!box.containsKey(_keyInstallDate)) {
+      await box.put(_keyInstallDate, DateTime.now().toIso8601String());
+    }
+  }
+
+  /// Show the in-app review.
+  static Future<bool> requestReview() async {
+    final review = InAppReview.instance;
+    if (await review.isAvailable()) {
+      await review.requestReview();
+      await Hive.box('settings').put(_keyLastPrompt, DateTime.now().toIso8601String());
+      return true;
+    }
+    return false;
+  }
+
+  /// Mark as rated (user tapped "Rate" in manual prompt).
+  static Future<void> markRated() async {
+    await Hive.box('settings').put(_keyRated, true);
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #139: 🟢 CREATE
+📁 الملف الجديد: lib/widgets/rating_prompt_dialog.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'package:flutter/material.dart';
+import 'package:store_redirect/store_redirect.dart';
+import '../core/theme.dart';
+import '../services/rating_prompt_service.dart';
+import 'app_widgets.dart';
+
+class RatingPromptDialog extends StatelessWidget {
+  const RatingPromptDialog({super.key});
+
+  static Future<void> showIfNeeded(BuildContext context) async {
+    if (!RatingPromptService.shouldPrompt()) return;
+
+    await showDialog(
+      context: context,
+      builder: (_) => const RatingPromptDialog(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      contentPadding: const EdgeInsets.all(24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppIcons.circle(Icons.star, size: 72),
+          const SizedBox(height: 16),
+          Text('Enjoying ProductChat?',
+              style: Theme.of(context).textTheme.headlineMedium,
+              textAlign: TextAlign.center),
+          const SizedBox(height: 12),
+          const Text(
+            'Your rating helps us improve and reach more sellers.',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Later'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: FilledButton(
+                  onPressed: () async {
+                    final success = await RatingPromptService.requestReview();
+                    if (success) {
+                      await RatingPromptService.markRated();
+                    } else {
+                      await StoreRedirect.redirect(
+                        androidAppId: 'com.productchat.studio',
+                        iOSAppId: 'com.productchat.studio',
+                      );
+                    }
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                  ),
+                  child: const Text('Rate Now'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #140: 🟢 CREATE
+📁 الملف الجديد: lib/features/history/timeline_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../core/theme.dart';
+import '../../services/storage_service.dart';
+import '../../widgets/app_widgets.dart';
+
+class TimelineScreen extends ConsumerStatefulWidget {
+  const TimelineScreen({super.key});
+  @override
+  ConsumerState<TimelineScreen> createState() => _TimelineScreenState();
+}
+
+class _TimelineScreenState extends ConsumerState<TimelineScreen> {
+  String _filter = 'all';
+
+  @override
+  Widget build(BuildContext context) {
+    final all = StorageService().getHistory();
+    final items = _filter == 'all'
+        ? all
+        : all.where((i) => i['op'] == _filter).toList();
+
+    // Group by date
+    final grouped = <String, List<Map<String, dynamic>>>{};
+    for (final item in items) {
+      final ts = item['ts'] as String? ?? '';
+      final date = ts.isNotEmpty ? ts.substring(0, 10) : 'Unknown';
+      grouped.putIfAbsent(date, () => []).add(item);
+    }
+    final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Timeline'),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.filter_list),
+            onSelected: (v) => setState(() => _filter = v),
+            itemBuilder: (_) => [
+              const PopupMenuItem(value: 'all', child: Text('All')),
+              const PopupMenuItem(value: 'removeBg', child: Text('Remove BG')),
+              const PopupMenuItem(value: 'enhance', child: Text('Enhance')),
+              const PopupMenuItem(value: 'shadow', child: Text('Shadow')),
+              const PopupMenuItem(value: 'relight', child: Text('Relight')),
+              const PopupMenuItem(value: 'colorize', child: Text('Colorize')),
+            ],
+          ),
+        ],
+      ),
+      body: items.isEmpty
+          ? const EmptyState(
+              icon: Icons.timeline,
+              title: 'No activity yet',
+              subtitle: 'Your edits will appear here in chronological order',
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: sortedDates.length,
+              itemBuilder: (_, dateIndex) {
+                final date = sortedDates[dateIndex];
+                final dateItems = grouped[date]!;
+                return _DateGroup(date: date, items: dateItems);
+              },
+            ),
+    );
+  }
+}
+
+class _DateGroup extends StatelessWidget {
+  final String date;
+  final List<Map<String, dynamic>> items;
+  const _DateGroup({required this.date, required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _formatDate(date),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Expanded(child: Divider(color: AppColors.border)),
+              const SizedBox(width: 8),
+              Text(
+                '${items.length}',
+                style: const TextStyle(
+                  color: AppColors.textTertiary,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ),
+        ...items.map((item) => _TimelineItem(item: item)),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  String _formatDate(String iso) {
+    try {
+      final dt = DateTime.parse(iso);
+      final now = DateTime.now();
+      if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
+        return 'Today';
+      }
+      final yesterday = now.subtract(const Duration(days: 1));
+      if (dt.year == yesterday.year &&
+          dt.month == yesterday.month &&
+          dt.day == yesterday.day) {
+        return 'Yesterday';
+      }
+      return '${dt.day}/${dt.month}/${dt.year}';
+    } catch (_) {
+      return iso;
+    }
+  }
+}
+
+class _TimelineItem extends StatelessWidget {
+  final Map<String, dynamic> item;
+  const _TimelineItem({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final output = item['output'] as String?;
+    final op = item['op'] as String? ?? '';
+    final ts = item['ts'] as String? ?? '';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8, left: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: output != null && File(output).existsSync()
+                  ? Image.file(File(output), fit: BoxFit.cover)
+                  : Container(
+                      color: AppColors.surfaceAlt,
+                      child: Icon(_iconFor(op),
+                          color: AppColors.textTertiary, size: 20),
+                    ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(_labelFor(op),
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600)),
+                Text(
+                  ts.length > 11 ? ts.substring(11, 16) : '',
+                  style: const TextStyle(
+                      color: AppColors.textTertiary, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          if (output != null && File(output).existsSync())
+            IconButton(
+              icon: const Icon(Icons.share, size: 18),
+              onPressed: () => Share.shareXFiles([XFile(output)]),
+            ),
+        ],
+      ),
+    );
+  }
+
+  IconData _iconFor(String op) => switch (op) {
+    'removeBg' => Icons.content_cut,
+    'enhance' => Icons.high_quality,
+    'shadow' => Icons.brightness_4,
+    'relight' => Icons.light_mode,
+    'colorize' => Icons.color_lens,
+    'inpaint' => Icons.healing,
+    _ => Icons.image,
+  };
+
+  String _labelFor(String op) => switch (op) {
+    'removeBg' => 'Background Removed',
+    'enhance' => 'Enhanced',
+    'shadow' => 'Shadow Added',
+    'relight' => 'Lighting Adjusted',
+    'colorize' => 'Colorized',
+    'inpaint' => 'Object Removed',
+    _ => op,
+  };
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #141: 🟡 MODIFY
+📁 الملف: lib/core/router.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة: أضف هذه المسارات قبل errorBuilder:
+
+      GoRoute(
+        path: '/tips',
+        builder: (_, __) => const OnboardingTipsScreen(),
+      ),
+      GoRoute(
+        path: '/timeline',
+        builder: (_, __) => const TimelineScreen(),
+      ),
+
+الخطوة 2: أضف في الأعلى:
+
+import '../features/settings/onboarding_tips_screen.dart';
+import '../features/history/timeline_screen.dart';
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #142: 🟡 MODIFY
+📁 الملف: pubspec.yaml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة: أضف في dependencies:
+
+  in_app_review: ^2.0.9
+  store_redirect: ^2.0.3
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #143: 🟡 MODIFY
+📁 الملف: lib/main.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة 1: أضف في Hive.openBox:
+
+  await Hive.openBox('watermark_presets');
+  await Hive.openBox('export_presets');
+
+الخطوة 2: أضف بعد تهيئة Hive:
+
+  await RatingPromptService.recordInstallDate();
+
+الخطوة 3: أضف import:
+
+import 'services/rating_prompt_service.dart';
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #144: 🟡 MODIFY
+📁 الملف: lib/features/chat/chat_controller.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة: في submit()، بعد نجاح العملية، أضف:
+
+        await RatingPromptService.trackOperation();
+
+الخطوة 2: في _init() أو عند أول بناء:
+
+        await RatingPromptService.recordInstallDate();
+
+الخطوة 3: أضف import:
+
+import '../../services/rating_prompt_service.dart';
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية PART 2 من 27_NEW_FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

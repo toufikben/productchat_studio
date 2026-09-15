@@ -15,6 +15,7 @@ import '../../services/smart_analysis_service.dart';
 import '../../services/pro_service.dart';
 import '../../services/voice_service.dart';
 import '../../services/voice_presets_service.dart';
+import '../../services/rating_prompt_service.dart';
 import '../../core/constants.dart';
 
 class ChatMessage {
@@ -89,6 +90,7 @@ class ChatController extends StateNotifier<ChatState> {
   final _voice = VoiceService();
 
   Future<void> _init() async {
+    await RatingPromptService.recordInstallDate();
     await _voice.init();
     await VoicePresetsService().seedDefaults();
     state = state.copyWith(
@@ -185,6 +187,7 @@ class ChatController extends StateNotifier<ChatState> {
           'op': req.op.name,
           'ts': DateTime.now().toIso8601String(),
         });
+        await RatingPromptService.trackOperation();
 
         state = state.copyWith(
           imagePath: res.outputPath,

@@ -8,6 +8,7 @@ import 'services/storage_service.dart';
 import 'services/billing_service.dart';
 import 'services/platform/locale_service.dart';
 import 'services/platform/theme_service.dart';
+import 'services/rating_prompt_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,9 +26,12 @@ Future<void> main() async {
     'promos',
     'tickets',
     'drafts',
+    'watermark_presets',
+    'export_presets',
   ]) {
     if (!Hive.isBoxOpen(name)) await Hive.openBox(name);
   }
+  await RatingPromptService.recordInstallDate();
   await storageService.init();
   await localeController.init();
   await themeModeController.init();
