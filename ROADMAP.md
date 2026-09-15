@@ -521,3 +521,9 @@ All repair work must follow these rules:
 - [x] تصحيح escape غير صالح في القيم السعرية حتى تتوافق ملفات ARB مع JSON و`gen-l10n`.
 - [ ] `flutter gen-l10n && flutter analyze`: تعذر التنفيذ لأن Flutter SDK غير موجود في `PATH`.
 - [ ] اللغات المتبقية ستُستكمل عند وصول Parts 2–4 من حزمة L10N.
+
+## سجل التحديثات — 2026-09-15 — L10N Complete Part 2 FIX #98–#100
+
+- [x] إضافة `app_pt.arb` و`app_ru.arb` و`app_tr.arb` بواقع 177 مفتاح ترجمة لكل ملف.
+- [x] التحقق من JSON و`git diff --check` بنجاح.
+- [ ] `flutter gen-l10n`: تعذر التنفيذ لأن Flutter SDK غير موجود في `PATH`.
