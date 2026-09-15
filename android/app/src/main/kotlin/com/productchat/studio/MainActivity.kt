@@ -5,6 +5,9 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import com.productchat.studio.native.SeikaChannel
+import com.productchat.studio.native.MobileSAMChannel
+import com.productchat.studio.native.ModelComparisonChannel
+import com.productchat.studio.native.MODNetChannel
 import com.productchat.studio.native.MIGanChannel
 import com.productchat.studio.native.QwenEditChannel
 import com.productchat.studio.native.QuickActionsChannel
@@ -18,6 +21,12 @@ class MainActivity : FlutterActivity() {
         seika.attach(MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "productchat/studio/seika"))
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, MIGanChannel.CHANNEL)
             .setMethodCallHandler(MIGanChannel(this))
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, MODNetChannel.CHANNEL)
+            .setMethodCallHandler(MODNetChannel(this))
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ModelComparisonChannel.CHANNEL)
+            .setMethodCallHandler(ModelComparisonChannel(this))
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, MobileSAMChannel.CHANNEL)
+            .setMethodCallHandler(MobileSAMChannel(this))
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, QwenEditChannel.CHANNEL)
             .setMethodCallHandler(QwenEditChannel(this))
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, QuickActionsChannel.CHANNEL)

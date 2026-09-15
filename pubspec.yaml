@@ -39,6 +39,7 @@ dependencies:
   url_launcher: ^6.3.1
   share_plus: ^10.1.2
   package_info_plus: ^8.1.1
+  device_info_plus: ^11.2.0
   connectivity_plus: ^6.1.0
   intl: ^0.19.0
   uuid: ^4.5.1
@@ -59,6 +60,7 @@ flutter:
     - assets/recipes/
     - assets/icons/
     - assets/lottie/
+    - assets/test_fixtures/
 flutter_launcher_icons:
   android: true
   ios: true

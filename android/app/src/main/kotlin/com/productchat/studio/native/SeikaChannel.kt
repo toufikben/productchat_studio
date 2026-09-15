@@ -62,9 +62,8 @@ class SeikaChannel(private val context: Context) : MethodChannel.MethodCallHandl
             val output: Bitmap = when (quality) {
                 "balanced", "best" -> {
                     synchronized(lock) {
-                        if (lamaSession != null) runLaMa(bmp, null)
-                        else PatchMatchRemover().remove(bmp)
-                    } ?: PatchMatchRemover().remove(bmp)
+                        runLaMa(bmp, null)
+                    } ?: return result.error("INFERENCE_FAIL", "LaMa inference failed", null)
                 }
                 else -> PatchMatchRemover().remove(bmp)
             }
@@ -125,7 +124,11 @@ class SeikaChannel(private val context: Context) : MethodChannel.MethodCallHandl
             val bmp = decodeBitmap(path)
                 ?: return result.error("DECODE_FAIL", "Cannot decode", null)
 
-            val output = synchronized(lock) { runEsrgan(bmp, factor) } ?: bmp
+            if (esrganSession == null) {
+                return result.error("MODEL_NOT_LOADED", "Real-ESRGAN model not loaded", null)
+            }
+            val output = synchronized(lock) { runEsrgan(bmp, factor) }
+                ?: return result.error("INFERENCE_FAIL", "Real-ESRGAN inference failed", null)
             FileOutputStream(outputPath).use {
                 output.compress(Bitmap.CompressFormat.PNG, 100, it)
             }
