@@ -22,6 +22,18 @@
 
 وجود شاشة أو dependency أو model file لا يثبت اكتمال الميزة.
 
+## سجل التحديثات — 2026-09-15 — Package Extensions 04–07
+
+- [x] قراءة ملفات الحزمة الثمانية بالترتيب وحفظ نسخها في `docs/ai_package/`.
+- [x] تطبيق `ROUTER_UPDATE`: إضافة `/` و`/home` و`/chat-studio` و`/mask-painter`، وتوجيه Splash وOnboarding إلى Home.
+- [x] إنشاء اختبارات `VoiceService` و`ModelCenter` و`FeatureFlags` و`FloatingNavBar`.
+- [x] إضافة مفاتيح الترجمة الجديدة إلى `app_en.arb` و`app_ar.arb` وتثبيت `nullable-getter: false` في `l10n.yaml`.
+- [x] التحقق من صلاحية JSON للملفين ومن وجود الملفات المرجعية والاختبارات والمسارات المطلوبة.
+- [ ] تشغيل `flutter clean`, `flutter pub get`, `flutter gen-l10n`, `flutter analyze`, و`flutter test`؛ تعذر التنفيذ لأن Flutter SDK غير موجود في `PATH`.
+- [ ] تشغيل `flutter build apk --debug` واختبارات Android وVoice Commands وModel Center؛ تحتاج بيئة Flutter وجهازاً أو Emulator.
+
+**نتيجة الحزمة الموسعة:** التعديلات والاختبارات والموارد النصية موجودة في المصدر، لكن نتائج التحليل والاختبارات والبناء لا يمكن اعتمادها آلياً حتى تتوفر أداة Flutter.
+
 ## سجل التحديثات — 2026-09-15 — AI Execution Package
 
 - [x] حفظ الحزمة المرجعية داخل `docs/ai_package/` بالترتيب: التعليمات، الإصلاحات، الميزات، وخارطة الطريق.

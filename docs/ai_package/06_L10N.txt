@@ -1,0 +1,134 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 06: LOCALIZATION                                              ║
+║  إضافة النصوص الجديدة للـ 16 لغة                                     ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #15: 🟡 MODIFY FILE
+📁 الملف: lib/l10n/app_en.arb
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة: أضف المفاتيح التالية قبل آخر قوس } في الملف:
+
+  "navHome": "Home",
+  "navChat": "Chat",
+  "navEditor": "Editor",
+  "navBatch": "Batch",
+  "navSettings": "Settings",
+
+  "homeWelcome": "Welcome",
+  "homeQuickActions": "Quick Actions",
+  "homeRecent": "Recent",
+  "homeSeeAll": "See all",
+  "homeRemoveBg": "Remove BG",
+  "homeEnhance": "Enhance",
+  "homeShadow": "Shadow",
+
+  "voiceTitle": "Voice Commands",
+  "voiceStart": "Start listening",
+  "voiceStop": "Stop listening",
+  "voiceSpeak": "Speak",
+  "voiceStopSpeak": "Stop speaking",
+  "voiceListening": "Listening...",
+  "voiceError": "Voice error",
+
+  "modelsTitle": "AI Models",
+  "modelsReadyCount": "{ready} of {total} ready",
+  "modelsDownloadHint": "Download only what you need",
+  "modelsDownload": "Download",
+  "modelsCancel": "Cancel",
+  "modelsDelete": "Delete",
+  "modelsReady": "Ready",
+  "modelsFailed": "Failed",
+  "modelsDownloading": "Downloading...",
+  "modelsVerifying": "Verifying...",
+
+  "maskPainterTitle": "Draw Mask",
+  "maskPainterApply": "Apply",
+  "maskPainterClear": "Clear",
+  "maskPainterUndo": "Undo",
+  "maskPainterBrushSize": "Brush Size",
+
+  "chatStudioTitle": "Chat Studio",
+  "chatStudioWelcome": "Welcome! Upload an image and type your command.",
+  "chatStudioType": "Type your command...",
+
+  "featureNotReady": "This feature is under development",
+  "modelNotDownloaded": "Model not downloaded. Go to Settings > Models.",
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #16: 🟡 MODIFY FILE
+📁 الملف: lib/l10n/app_ar.arb
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة: أضف المفاتيح التالية قبل آخر قوس } في الملف:
+
+  "navHome": "الرئيسية",
+  "navChat": "المحادثة",
+  "navEditor": "المحرر",
+  "navBatch": "الدفعات",
+  "navSettings": "الإعدادات",
+
+  "homeWelcome": "مرحباً",
+  "homeQuickActions": "إجراءات سريعة",
+  "homeRecent": "الأحدث",
+  "homeSeeAll": "عرض الكل",
+  "homeRemoveBg": "إزالة خلفية",
+  "homeEnhance": "تحسين",
+  "homeShadow": "ظل",
+
+  "voiceTitle": "الأوامر الصوتية",
+  "voiceStart": "بدء الاستماع",
+  "voiceStop": "إيقاف الاستماع",
+  "voiceSpeak": "تحدث",
+  "voiceStopSpeak": "إيقاف التحدث",
+  "voiceListening": "جارٍ الاستماع...",
+  "voiceError": "خطأ صوتي",
+
+  "modelsTitle": "نماذج AI",
+  "modelsReadyCount": "{ready} من {total} جاهز",
+  "modelsDownloadHint": "حمّل ما تحتاجه فقط",
+  "modelsDownload": "تحميل",
+  "modelsCancel": "إلغاء",
+  "modelsDelete": "حذف",
+  "modelsReady": "جاهز",
+  "modelsFailed": "فشل",
+  "modelsDownloading": "جارٍ التحميل...",
+  "modelsVerifying": "جارٍ التحقق...",
+
+  "maskPainterTitle": "رسم قناع",
+  "maskPainterApply": "تطبيق",
+  "maskPainterClear": "مسح",
+  "maskPainterUndo": "تراجع",
+  "maskPainterBrushSize": "حجم الفرشاة",
+
+  "chatStudioTitle": "استوديو المحادثة",
+  "chatStudioWelcome": "مرحباً! ارفع صورة واكتب أمرك.",
+  "chatStudioType": "اكتب أمرك...",
+
+  "featureNotReady": "هذه الميزة قيد التطوير",
+  "modelNotDownloaded": "النموذج غير محمّل. اذهب إلى الإعدادات > النماذج.",
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #17: 🟢 CREATE NEW FILE
+📁 الملف: l10n.yaml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف في الجذر بهذا المحتوى:
+
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الملف 06_L10N.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+بعد الانتهاء من كل الملفات، شغّل:
+  flutter clean
+  flutter pub get
+  flutter gen-l10n
+  flutter analyze
+  flutter test

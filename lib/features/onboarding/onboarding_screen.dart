@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -15,7 +16,7 @@ class OnboardingScreen extends StatelessWidget {
             const SizedBox(height: 12),
             const Text('Choose an image, try PatchMatch background removal, and review every result before export. Local operations do not upload your images.'),
             const SizedBox(height: 24),
-            FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Start editing')),
+            FilledButton(onPressed: () => context.go('/home'), child: const Text('Start editing')),
           ],
         ),
       );

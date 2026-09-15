@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Splash screen that navigates to /chat after a fixed delay.
+/// Splash screen that navigates to /home after a fixed delay.
 ///
 /// Uses [StatefulWidget] with [initState] so the timer fires exactly once,
 /// even if the widget is rebuilt (e.g. theme or locale change) during the
@@ -19,7 +19,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Future.delayed(const Duration(milliseconds: 1800), () {
-      if (mounted) context.go('/chat');
+      if (mounted) context.go('/home');
     });
   }
 

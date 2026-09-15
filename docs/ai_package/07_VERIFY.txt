@@ -1,0 +1,106 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 07: VERIFICATION                                               ║
+║  التحقق النهائي من كل الإصلاحات                                      ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 VERIFY: التحقق خطوة بخطوة
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة 1: تحقق من وجود الملفات الجديدة
+  ✅ android/app/src/main/res/xml/file_paths.xml
+  ✅ lib/core/feature_flags.dart
+  ✅ lib/services/voice_service.dart
+  ✅ lib/widgets/floating_nav_bar.dart
+  ✅ lib/features/home/home_screen.dart
+  ✅ lib/features/editor/mask_painter_screen.dart
+  ✅ lib/features/chat/chat_studio_screen.dart
+  ✅ test/services/voice_service_test.dart
+  ✅ test/services/model_center_test.dart
+  ✅ test/core/feature_flags_test.dart
+  ✅ test/widgets/floating_nav_bar_test.dart
+  ✅ l10n.yaml
+
+الخطوة 2: تحقق من الملفات المستبدلة
+  ✅ android/app/src/main/AndroidManifest.xml
+  ✅ lib/core/router.dart
+  ✅ lib/main.dart
+  ✅ lib/features/settings/models_screen.dart
+
+الخطوة 3: تحقق من الملفات المعدلة
+  ✅ lib/core/constants.dart (Real-ESRGAN URL)
+  ✅ lib/core/theme.dart (light theme)
+  ✅ lib/services/model_manager.dart (realEsrgan)
+  ✅ lib/services/seika_service.dart (upscale + export)
+  ✅ pubspec.yaml (flutter_tts + crypto)
+  ✅ lib/l10n/app_en.arb (new keys)
+  ✅ lib/l10n/app_ar.arb (new keys)
+  ✅ lib/features/splash/splash_screen.dart (/home)
+  ✅ lib/features/onboarding/onboarding_screen.dart (/home)
+
+الخطوة 4: شغّل الأوامر
+  flutter clean
+  flutter pub get
+  flutter gen-l10n
+  flutter analyze
+  flutter test
+
+الخطوة 5: النتائج المتوقعة
+  ✅ flutter analyze: 0 errors
+  ✅ flutter test: all tests pass
+  ✅ flutter build apk --debug: success
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 قائمة التحقق النهائية
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] AndroidManifest.xml محدّث
+[ ] file_paths.xml موجود
+[ ] feature_flags.dart موجود
+[ ] voice_service.dart موجود
+[ ] floating_nav_bar.dart موجود
+[ ] home_screen.dart موجود
+[ ] mask_painter_screen.dart موجود
+[ ] chat_studio_screen.dart موجود
+[ ] models_screen.dart محدّث
+[ ] router.dart محدّث
+[ ] main.dart محدّث
+[ ] constants.dart محدّث
+[ ] theme.dart محدّث
+[ ] model_manager.dart محدّث
+[ ] seika_service.dart محدّث
+[ ] pubspec.yaml محدّث
+[ ] l10n.yaml موجود
+[ ] app_en.arb محدّث
+[ ] app_ar.arb محدّث
+[ ] splash_screen.dart محدّث
+[ ] onboarding_screen.dart محدّث
+[ ] 4 test files موجودة
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 تقرير الذكاء الاصطناعي المطلوب
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أرسل التقرير بهذا الشكل:
+
+✅ الملفات الجديدة: [عدد] / 12
+✅ الملفات المستبدلة: [عدد] / 4
+✅ الملفات المعدلة: [عدد] / 9
+❌ الفاشلة: [عدد] / 0
+⚠️ تحتاج مراجعة: [عدد]
+
+📊 flutter analyze:
+  Errors: [عدد]
+  Warnings: [عدد]
+  Info: [عدد]
+
+📊 flutter test:
+  Passed: [عدد]
+  Failed: [عدد]
+
+📊 flutter build apk --debug:
+  [نجاح / فشل]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الحزمة
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,0 +1,151 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 04: ROUTER UPDATE                                              ║
+║  ربط HomeScreen + دعم الشاشات الجديدة                                ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #11: 🔴 REPLACE ENTIRE FILE
+📁 الملف: lib/core/router.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+استبدل الملف بالكامل بهذا المحتوى:
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'theme.dart';
+import '../features/splash/splash_screen.dart';
+import '../features/onboarding/onboarding_screen.dart';
+import '../features/home/home_screen.dart';
+import '../features/chat/chat_screen.dart';
+import '../features/chat/chat_studio_screen.dart';
+import '../features/editor/editor_screen.dart';
+import '../features/editor/mask_painter_screen.dart';
+import '../features/recipes/recipes_screen.dart';
+import '../features/compliance/compliance_screen.dart';
+import '../features/settings/settings_screen.dart';
+import '../features/settings/faq_screen.dart';
+import '../features/settings/support_screen.dart';
+import '../features/settings/legal_screen.dart';
+import '../features/settings/models_screen.dart';
+import '../features/settings/brand_screen.dart';
+import '../features/billing/paywall_screen.dart';
+import '../features/history/history_screen.dart';
+import '../features/batch/batch_screen.dart';
+
+final routerProvider = Provider<GoRouter>((ref) {
+  return GoRouter(
+    initialLocation: '/splash',
+    routes: [
+      GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
+      GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
+
+      // ─── Main app (with bottom nav) ───
+      GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
+      GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
+
+      // ─── Chat ───
+      GoRoute(path: '/chat', builder: (_, __) => const ChatScreen()),
+      GoRoute(path: '/chat-studio', builder: (_, __) => const ChatStudioScreen()),
+
+      // ─── Editor ───
+      GoRoute(
+        path: '/editor',
+        builder: (_, s) => EditorScreen(imagePath: s.extra as String?),
+      ),
+      GoRoute(
+        path: '/mask-painter',
+        builder: (_, s) => MaskPainterScreen(imagePath: s.extra as String),
+      ),
+
+      // ─── Other screens ───
+      GoRoute(path: '/recipes', builder: (_, __) => const RecipesScreen()),
+      GoRoute(path: '/compliance', builder: (_, __) => const ComplianceScreen()),
+      GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+      GoRoute(path: '/faq', builder: (_, __) => const FAQScreen()),
+      GoRoute(path: '/support', builder: (_, __) => const SupportScreen()),
+      GoRoute(
+        path: '/privacy',
+        builder: (_, __) => const LegalScreen(type: 'privacy'),
+      ),
+      GoRoute(
+        path: '/terms',
+        builder: (_, __) => const LegalScreen(type: 'terms'),
+      ),
+      GoRoute(path: '/models', builder: (_, __) => const ModelsScreen()),
+      GoRoute(path: '/brand', builder: (_, __) => const BrandScreen()),
+      GoRoute(path: '/paywall', builder: (_, __) => const PaywallScreen()),
+      GoRoute(path: '/history', builder: (_, __) => const HistoryScreen()),
+      GoRoute(path: '/batch', builder: (_, __) => const BatchScreen()),
+    ],
+    errorBuilder: (c, s) => Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: AppColors.danger),
+            const SizedBox(height: 16),
+            Text('Page not found', style: Theme.of(c).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: () => c.go('/'),
+              child: const Text('Go Home'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+});
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #12: 🟡 MODIFY FILE
+📁 الملف: lib/features/splash/splash_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة: ابحث عن:
+    if (mounted) context.go('/');
+
+الخطوة: استبدله بـ:
+    if (mounted) context.go('/home');
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #13: 🟡 MODIFY FILE
+📁 الملف: lib/features/onboarding/onboarding_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة 1: ابحث عن:
+    onPressed: () => c.go('/chat'),
+
+الخطوة 2: استبدله بـ:
+    onPressed: () => c.go('/home'),
+
+الخطوة 3: ابحث عن:
+    if (_page == _pages.length - 1) { c.go('/chat'); }
+
+الخطوة 4: استبدله بـ:
+    if (_page == _pages.length - 1) { c.go('/home'); }
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #14: 🟡 MODIFY FILE
+📁 الملف: pubspec.yaml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة 1: ابحث عن قسم dependencies
+
+الخطوة 2: أضف الأسطر التالية:
+
+  # Voice
+  speech_to_text: ^7.0.0
+  flutter_tts: ^4.2.0
+
+  # Crypto
+  crypto: ^3.0.5
+
+الخطوة 3: تأكد من وجود:
+  flutter_localizations:
+    sdk: flutter
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الملف 04_ROUTER_UPDATE.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

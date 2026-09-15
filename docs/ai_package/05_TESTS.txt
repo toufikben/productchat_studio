@@ -1,0 +1,283 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 05: TESTS                                                      ║
+║  اختبارات VoiceService + ModelsScreen + MaskPainter                  ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧪 TEST #1: 🟢 CREATE NEW FILE
+📁 الملف الجديد: test/services/voice_service_test.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف بهذا المحتوى:
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:productchat_studio/services/voice_service.dart';
+
+void main() {
+  group('VoiceState', () {
+    test('starts with default values', () {
+      const state = VoiceState();
+      expect(state.isListening, false);
+      expect(state.isSpeaking, false);
+      expect(state.lastTranscription, '');
+      expect(state.lastError, '');
+    });
+
+    test('copyWith updates isListening', () {
+      const state = VoiceState();
+      final updated = state.copyWith(isListening: true);
+      expect(updated.isListening, true);
+      expect(updated.isSpeaking, false);
+    });
+
+    test('copyWith updates lastTranscription', () {
+      const state = VoiceState();
+      final updated = state.copyWith(lastTranscription: 'hello');
+      expect(updated.lastTranscription, 'hello');
+    });
+
+    test('copyWith preserves unchanged fields', () {
+      const state = VoiceState(isListening: true, lastTranscription: 'test');
+      final updated = state.copyWith(isSpeaking: true);
+      expect(updated.isListening, true);
+      expect(updated.lastTranscription, 'test');
+      expect(updated.isSpeaking, true);
+    });
+  });
+
+  group('VoiceService', () {
+    test('initial state is default', () {
+      final service = VoiceService();
+      expect(service.state.isListening, false);
+      expect(service.state.isSpeaking, false);
+      service.dispose();
+    });
+
+    test('state starts with empty transcription', () {
+      final service = VoiceService();
+      expect(service.state.lastTranscription, '');
+      service.dispose();
+    });
+  });
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧪 TEST #2: 🟢 CREATE NEW FILE
+📁 الملف الجديد: test/services/model_center_test.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف بهذا المحتوى:
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:productchat_studio/features/settings/models_screen.dart';
+
+void main() {
+  group('ModelInfo', () {
+    test('kModels contains LaMa', () {
+      final lama = kModels.firstWhere((m) => m.id == 'lama');
+      expect(lama.name, 'LaMa');
+      expect(lama.fileName, 'lama_fp16.onnx');
+    });
+
+    test('kModels contains Real-ESRGAN', () {
+      final esrgan = kModels.firstWhere((m) => m.id == 'real_esrgan');
+      expect(esrgan.name, 'Real-ESRGAN');
+      expect(esrgan.fileName, 'real_esrgan_x4.onnx');
+    });
+
+    test('all models have required fields', () {
+      for (final m in kModels) {
+        expect(m.id, isNotEmpty);
+        expect(m.name, isNotEmpty);
+        expect(m.url, isNotEmpty);
+        expect(m.fileName, isNotEmpty);
+        expect(m.size, isNotEmpty);
+      }
+    });
+  });
+
+  group('ModelCenterState', () {
+    test('starts empty', () {
+      const state = ModelCenterState();
+      expect(state.states, isEmpty);
+      expect(state.progress, isEmpty);
+      expect(state.paths, isEmpty);
+      expect(state.errors, isEmpty);
+    });
+
+    test('copyWith updates states', () {
+      const state = ModelCenterState();
+      final updated = state.copyWith(
+        states: {'lama': ModelState.ready},
+      );
+      expect(updated.states['lama'], ModelState.ready);
+    });
+
+    test('copyWith preserves unchanged fields', () {
+      const state = ModelCenterState(
+        states: {'lama': ModelState.ready},
+        progress: {'lama': 1.0},
+      );
+      final updated = state.copyWith(errors: {'lama': 'error'});
+      expect(updated.states['lama'], ModelState.ready);
+      expect(updated.progress['lama'], 1.0);
+      expect(updated.errors['lama'], 'error');
+    });
+  });
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧪 TEST #3: 🟢 CREATE NEW FILE
+📁 الملف الجديد: test/core/feature_flags_test.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف بهذا المحتوى:
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:productchat_studio/core/feature_flags.dart';
+
+void main() {
+  group('FeatureFlags', () {
+    test('v1.0 features are enabled', () {
+      expect(FeatureFlags.backgroundRemoval, true);
+      expect(FeatureFlags.shadowPresets, true);
+      expect(FeatureFlags.basicEnhance, true);
+      expect(FeatureFlags.textEditor, true);
+      expect(FeatureFlags.layerEditor, true);
+      expect(FeatureFlags.export, true);
+      expect(FeatureFlags.history, true);
+      expect(FeatureFlags.billing, true);
+      expect(FeatureFlags.modelCenter, true);
+      expect(FeatureFlags.voiceCommands, true);
+      expect(FeatureFlags.smartAnalysis, true);
+      expect(FeatureFlags.floatingNavBar, true);
+      expect(FeatureFlags.chatStudio, true);
+    });
+
+    test('pending features are disabled', () {
+      expect(FeatureFlags.miGan, false);
+      expect(FeatureFlags.realEsrgan, false);
+      expect(FeatureFlags.relight, false);
+      expect(FeatureFlags.conversationalEdit, false);
+      expect(FeatureFlags.recipesAutomation, false);
+      expect(FeatureFlags.compliance, false);
+      expect(FeatureFlags.batchProcessing, false);
+      expect(FeatureFlags.brandIdentity, false);
+      expect(FeatureFlags.referral, false);
+    });
+
+    test('isEnabled returns correct value for enabled features', () {
+      expect(FeatureFlags.isEnabled('backgroundRemoval'), true);
+      expect(FeatureFlags.isEnabled('voiceCommands'), true);
+      expect(FeatureFlags.isEnabled('floatingNavBar'), true);
+    });
+
+    test('isEnabled returns false for disabled features', () {
+      expect(FeatureFlags.isEnabled('miGan'), false);
+      expect(FeatureFlags.isEnabled('realEsrgan'), false);
+      expect(FeatureFlags.isEnabled('compliance'), false);
+    });
+
+    test('isEnabled returns false for unknown features', () {
+      expect(FeatureFlags.isEnabled('unknownFeature'), false);
+    });
+
+    test('watermark is enabled', () {
+      expect(FeatureFlags.useWatermark, true);
+    });
+
+    test('free quota is 3', () {
+      expect(FeatureFlags.useQuota, true);
+      expect(FeatureFlags.freeQuota, 3);
+    });
+  });
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧪 TEST #4: 🟢 CREATE NEW FILE
+📁 الملف الجديد: test/widgets/floating_nav_bar_test.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف بهذا المحتوى:
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:productchat_studio/widgets/floating_nav_bar.dart';
+import 'package:productchat_studio/core/theme.dart';
+
+void main() {
+  group('NavItem', () {
+    test('creates correctly', () {
+      const item = NavItem(
+        icon: Icons.home_outlined,
+        activeIcon: Icons.home,
+        label: 'Home',
+      );
+      expect(item.label, 'Home');
+    });
+  });
+
+  group('FloatingNavBar', () {
+    testWidgets('renders 5 items', (tester) async {
+      final items = [
+        const NavItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home'),
+        const NavItem(icon: Icons.chat_outlined, activeIcon: Icons.chat, label: 'Chat'),
+        const NavItem(icon: Icons.edit_outlined, activeIcon: Icons.edit, label: 'Editor'),
+        const NavItem(icon: Icons.layers_outlined, activeIcon: Icons.layers, label: 'Batch'),
+        const NavItem(icon: Icons.settings_outlined, activeIcon: Icons.settings, label: 'Settings'),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark,
+          home: Scaffold(
+            body: Stack(
+              children: [
+                FloatingNavBar(
+                  currentIndex: 0,
+                  onTap: (_) {},
+                  items: items,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Home'), findsOneWidget);
+      expect(find.byIcon(Icons.home), findsOneWidget);
+    });
+
+    testWidgets('calls onTap when item tapped', (tester) async {
+      var tappedIndex = -1;
+      final items = [
+        const NavItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home'),
+        const NavItem(icon: Icons.chat_outlined, activeIcon: Icons.chat, label: 'Chat'),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark,
+          home: Scaffold(
+            body: Stack(
+              children: [
+                FloatingNavBar(
+                  currentIndex: 0,
+                  onTap: (i) => tappedIndex = i,
+                  items: items,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.byIcon(Icons.chat_outlined));
+      expect(tappedIndex, 1);
+    });
+  });
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الملف 05_TESTS.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
