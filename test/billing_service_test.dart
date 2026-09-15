@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_platform_interface/in_app_purchase_platform_interface.dart';
 import 'package:productchat_studio/services/billing_service.dart';
 import 'package:productchat_studio/services/storage_service.dart';
 
@@ -58,6 +61,29 @@ void main() {
     expect(ledger.balance, 100);
     expect(await ledger.spend(40), isTrue);
     expect(ledger.balance, 60);
+  });
+
+  test('credit packs stack by their catalog quantities without duplicate grant', () async {
+    final ledger = CreditsLedger(StorageService());
+
+    await ledger.addOnce(
+      purchaseId: 'pack-100',
+      amount: CreditProducts.creditsFor(CreditProducts.starter)!,
+    );
+    await ledger.addOnce(
+      purchaseId: 'pack-500',
+      amount: CreditProducts.creditsFor(CreditProducts.standard)!,
+    );
+    await ledger.addOnce(
+      purchaseId: 'pack-1200',
+      amount: CreditProducts.creditsFor(CreditProducts.largePack)!,
+    );
+    await ledger.addOnce(
+      purchaseId: 'pack-500',
+      amount: CreditProducts.creditsFor(CreditProducts.standard)!,
+    );
+
+    expect(ledger.balance, 1800);
   });
 
   test('Billing v2 catalog contains six products', () {
@@ -152,4 +178,125 @@ void main() {
       expect(isConsumable || isEntitlement, isTrue, reason: id);
     }
   });
+
+  test('BillingService completes purchases and grants a consumable once', () async {
+    final fake = FakePurchasePlatform();
+    InAppPurchasePlatform.instance = fake;
+    final billing = BillingService(storage: StorageService());
+
+    await billing.init();
+    final purchase = PurchaseDetails(
+      purchaseID: 'billing-test-1',
+      productID: CreditProducts.starter,
+      verificationData: PurchaseVerificationData(
+        localVerificationData: 'local',
+        serverVerificationData: 'server',
+        source: 'test',
+      ),
+      transactionDate: '1',
+      status: PurchaseStatus.purchased,
+    )..pendingCompletePurchase = true;
+
+    fake.emit([purchase]);
+    await Future<void>.delayed(Duration.zero);
+    expect(billing.credits, 100);
+    expect(fake.completed, 1);
+
+    fake.emit([purchase]);
+    await Future<void>.delayed(Duration.zero);
+    expect(billing.credits, 100);
+    expect(fake.completed, 2);
+
+    billing.dispose();
+  });
+
+  test('BillingService ignores restored consumables and records purchase errors', () async {
+    final fake = FakePurchasePlatform();
+    InAppPurchasePlatform.instance = fake;
+    final billing = BillingService(storage: StorageService());
+
+    await billing.init();
+    fake.emit([
+      PurchaseDetails(
+        purchaseID: 'restored-credit',
+        productID: CreditProducts.standard,
+        verificationData: PurchaseVerificationData(
+          localVerificationData: 'local',
+          serverVerificationData: 'server',
+          source: 'test',
+        ),
+        transactionDate: '1',
+        status: PurchaseStatus.restored,
+      ),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+    expect(billing.credits, 0);
+    expect(billing.error, contains('restored'));
+
+    final failed = PurchaseDetails(
+      productID: CreditProducts.starter,
+      verificationData: PurchaseVerificationData(
+        localVerificationData: 'local',
+        serverVerificationData: 'server',
+        source: 'test',
+      ),
+      transactionDate: null,
+      status: PurchaseStatus.error,
+    );
+    fake.emit([failed]);
+    await Future<void>.delayed(Duration.zero);
+    expect(billing.error, 'Purchase failed.');
+    billing.dispose();
+  });
+}
+
+class FakePurchasePlatform extends Fake implements InAppPurchasePlatform {
+  final StreamController<List<PurchaseDetails>> _controller =
+      StreamController<List<PurchaseDetails>>.broadcast();
+  int completed = 0;
+
+  void emit(List<PurchaseDetails> purchases) => _controller.add(purchases);
+
+  @override
+  Stream<List<PurchaseDetails>> get purchaseStream => _controller.stream;
+
+  @override
+  Future<bool> isAvailable() async => true;
+
+  @override
+  Future<ProductDetailsResponse> queryProductDetails(
+    Set<String> identifiers,
+  ) async => ProductDetailsResponse(
+        productDetails: identifiers
+            .map(
+              (id) => ProductDetails(
+                id: id,
+                title: id,
+                description: 'test product',
+                price: '\$1.00',
+                rawPrice: 1,
+                currencyCode: 'USD',
+              ),
+            )
+            .toList(),
+        notFoundIDs: const [],
+      );
+
+  @override
+  Future<bool> buyConsumable({
+    required PurchaseParam purchaseParam,
+    bool autoConsume = true,
+  }) async => true;
+
+  @override
+  Future<bool> buyNonConsumable({required PurchaseParam purchaseParam}) async => true;
+
+  @override
+  Future<void> restorePurchases({String? applicationUserName}) async {}
+
+  @override
+  Future<void> completePurchase(PurchaseDetails purchase) async => completed++;
+
+  @override
+  Future<String> countryCode() async => 'US';
 }

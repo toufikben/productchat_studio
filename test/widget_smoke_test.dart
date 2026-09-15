@@ -5,6 +5,8 @@ import 'package:productchat_studio/features/batch/batch_screen.dart';
 import 'package:productchat_studio/features/billing/paywall_screen.dart';
 import 'package:productchat_studio/features/history/history_screen.dart';
 import 'package:productchat_studio/features/settings/settings_screen.dart';
+import 'package:productchat_studio/app.dart';
+import 'package:productchat_studio/core/router.dart';
 import 'package:productchat_studio/services/billing_service.dart';
 import 'package:productchat_studio/services/storage_service.dart';
 
@@ -69,5 +71,42 @@ void main() {
 
     expect(find.text('History'), findsOneWidget);
     expect(find.text('No successful edits yet.'), findsOneWidget);
+  });
+
+  testWidgets('Settings restore action reports no entitlement without Play Billing',
+      (tester) async {
+    final billing = BillingService(storage: StorageService());
+    await tester.pumpWidget(
+      MaterialApp(home: SettingsScreen(billing: billing)),
+    );
+
+    await tester.tap(find.text('Restore purchases'));
+    await tester.pump();
+
+    expect(find.text('No Pro or Lifetime purchase was restored.'), findsOneWidget);
+    billing.dispose();
+  });
+
+  testWidgets('Batch action is disabled for Free users', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(child: MaterialApp(home: BatchScreen())),
+    );
+
+    final selectImages = find.text('Select images');
+    expect(selectImages, findsOneWidget);
+    await tester.tap(selectImages);
+    expect(find.text('Choose batch operation'), findsNothing);
+  });
+
+  testWidgets('Router navigates to Settings and handles unknown routes',
+      (tester) async {
+    routerProvider.go('/settings');
+    await tester.pumpWidget(const ProviderScope(child: ProductChatApp()));
+    await tester.pump();
+    expect(find.text('Settings'), findsOneWidget);
+
+    routerProvider.go('/route-that-does-not-exist');
+    await tester.pumpAndSettle();
+    expect(find.text('Page not found'), findsOneWidget);
   });
 }

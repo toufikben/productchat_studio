@@ -243,10 +243,10 @@
 **الحالة:** قيد التنفيذ على مستوى البروتوكول.
 
 - [ ] تشغيل `integration_test/` الفعلي، إذ إن الخطة موجودة والمجلد غير مثبت حاليًا.
-- [x] اختبارات ProService: البداية، 30 يومًا، 365 يومًا، Lifetime، auto-expiry، restore، وإعادة التحميل من التخزين.
-- [x] اختبارات Billing الأساسية والموسعة: المنتجات الستة، تصنيف consumable/entitlement، purchase statuses، رفض المعاملات الفارغة، duplicate grant، restored consumables، `canSpend`، ومنع الرصيد السالب.
-- [ ] اختبارات Credits: 100/500/1200، stacking، refund، وعدم النزول تحت الصفر.
-- [x] اختبارات service لـBatch/History/Brand/Storage، وwidget smoke tests لـPaywall وSettings وBatch وHistory؛ اختبارات الراوتر المتقدمة ما زالت اختيارية.
+- [x] اختبارات ProService: البداية، 30 يومًا، 365 يومًا، Lifetime، auto-expiry، restore، إعادة التحميل من التخزين، Product ID غير صالح، وبيانات التحقق الفارغة.
+- [x] اختبارات Billing الأساسية والموسعة: المنتجات الستة، تصنيف consumable/entitlement، purchase statuses، fake Google Play store، `completePurchase`، `restorePurchases`، رفض المعاملات الفارغة، duplicate grant، restored consumables، `canSpend`، ومنع الرصيد السالب.
+- [x] اختبارات Credits: حزم 100/500/1200، stacking، duplicate grant، والإنفاق دون رصيد سالب؛ سياسة refund الحقيقية تبقى مرتبطة بـPlay Console المؤجلة.
+- [x] اختبارات service لـBatch/History/Brand/Storage، وwidget tests سلوكية لـPaywall وSettings وBatch وHistory، واختبارات Router للمسارات وunknown route.
 - [ ] Fixtures للصور والأقنعة دون تخزين النموذج داخل Git.
 - [ ] benchmark cold/warm، cancellation، timeout، memory، CPU/NNAPI، 30–100 inference.
 - [x] CI للتحليل والاختبار والبناء وفحص الأسرار؛ فحوص Flutter وبناء Release APK/AAB نجحت، كما نجحت اختبارات ProService وWidget smoke على commit `ddaf70d` في التشغيل [34914019464](https://github.com/toufikben/productchat_studio/actions/runs/34914019464). تم رفع artifact للـAAB وartifact للـAPK في التشغيل [34911550832](https://github.com/toufikben/productchat_studio/actions/runs/34911550832).

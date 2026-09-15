@@ -105,6 +105,41 @@ void main() {
     expect(reloaded.daysRemaining, -1);
   });
 
+  test('invalid product and empty verification data never activate Pro', () async {
+    final service = ProService(storage: StorageService());
+
+    await service.activateSubscription(
+      const Duration(days: 30),
+      productId: 'unknown_product',
+      verificationData: 'play-invalid-product',
+    );
+    await service.activateMonthly(verificationData: '');
+    await service.restoreFromPurchase(
+      productId: 'unknown_product',
+      verificationData: 'play-unknown-restore',
+      expiry: DateTime.now().add(const Duration(days: 10)),
+    );
+
+    expect(service.isPro, isFalse);
+    expect(service.productId, isNull);
+    expect(service.purchaseFingerprint, isNull);
+  });
+
+  test('expired stored subscription is cleared on reload', () async {
+    final storage = StorageService();
+    await storage.set(ProService.isProKey, true);
+    await storage.set(ProService.lifetimeKey, false);
+    await storage.set(ProService.productKey, 'pro_yearly');
+    await storage.set(ProService.expiryKey,
+        DateTime.now().subtract(const Duration(minutes: 1)).toIso8601String());
+
+    final service = ProService(storage: storage);
+
+    expect(service.isPro, isFalse);
+    expect(service.productId, isNull);
+    expect(storage.get(ProService.isProKey), isFalse);
+  });
+
   test('deactivate clears subscription and lifetime state', () async {
     final service = ProService(storage: StorageService());
 
