@@ -352,6 +352,8 @@ All repair work must follow these rules:
 
 **نتيجة اختبارات Pro والواجهات:** التشغيل [34914019464](https://github.com/toufikben/productchat_studio/actions/runs/34914019464) على `ddaf70d` نجح في `flutter analyze` و`flutter test` بعد إضافة اختبارات Monthly/Yearly/Lifetime/Restore وWidget smoke لـPaywall وSettings وBatch وHistory.
 
+**التحقق النهائي للتغطية الموسعة:** التشغيل [34915458728](https://github.com/toufikben/productchat_studio/actions/runs/34915458728) على commit `578447d` نجح في `flutter analyze` و`flutter test` بعد إضافة fake Google Play platform، اختبارات purchase/restore/completePurchase وCredits stacking والاختبارات السلوكية للواجهات والـRouter. ملاحظة GitHub CLI الخاصة بـ`checks:read` لا تؤثر على نجاح Workflow.
+
 - **Phase 1 — Diagnostic log capture — STARTED 2026-09-14:** Approved temporary workflow-only change. Scope: capture and upload the exact flutter analyze output while preserving a failing job when analysis fails. No application code or test logic changes. Rollback: revert the workflow commit. Acceptance: the next run publishes flutter-analyze.log and still reports the analyzer failure.
 
 - **2026-09-14 — دفعة الإصلاحات الأساسية:** تطبيق إصلاحات Android وiOS وCI وطبقة التطبيق وإضافة فحص الأسرار والثيم الفاتح وonboarding وProviderScope والتحقق المحلي من entitlement. لم يُعتمد Real-ESRGAN ONNX: الرابط أعاد 404 وSHA-256 كان placeholder، لذلك أُعيد upscale إلى fallback الموثق وأزيلت الاعتمادية غير المستخدمة وآثارها من lock/registrant.
