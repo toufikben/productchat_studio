@@ -22,7 +22,7 @@ class ProductChatApp extends ConsumerWidget {
       locale: locale.locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      routerConfig: routerProvider,
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }

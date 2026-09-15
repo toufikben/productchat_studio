@@ -1,0 +1,419 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 01: ALL CRITICAL FIXES                                         ║
+║  10 إصلاحات حرجة (P0)                                                ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #1: 🔴 REPLACE ENTIRE FILE
+📁 الملف: android/app/src/main/AndroidManifest.xml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+استبدل الملف بالكامل بهذا المحتوى:
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:label="ProductChat Studio"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+
+            <meta-data
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="productchat.app" android:pathPrefix="/chat" />
+                <data android:scheme="https" android:host="productchat.app" android:pathPrefix="/recipes" />
+                <data android:scheme="https" android:host="productchat.app" android:pathPrefix="/invite" />
+                <data android:scheme="https" android:host="productchat.app" android:pathPrefix="/paywall" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="productchat" />
+            </intent-filter>
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <meta-data android:name="flutterEmbedding" android:value="2" />
+    </application>
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <data android:mimeType="text/plain" />
+        </intent>
+    </queries>
+</manifest>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #2: 🟢 CREATE NEW FILE
+📁 الملف الجديد: android/app/src/main/res/xml/file_paths.xml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف بهذا المحتوى:
+
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <external-path name="external_files" path="." />
+    <cache-path name="cache" path="." />
+    <files-path name="files" path="." />
+</paths>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #3: 🟢 CREATE NEW FILE
+📁 الملف الجديد: lib/core/feature_flags.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+أنشئ الملف بهذا المحتوى:
+
+/// FeatureFlags — التحكم المركزي في الميزات المعروضة.
+/// كل ميزة غير مكتملة تُخفى بـ false حتى تصبح جاهزة.
+class FeatureFlags {
+  // ═══════════════════════════════════════════════════════════════
+  // v1.0 — الميزات المكتملة (true)
+  // ═══════════════════════════════════════════════════════════════
+  static const bool backgroundRemoval = true;
+  static const bool shadowPresets = true;
+  static const bool basicEnhance = true;
+  static const bool textEditor = true;
+  static const bool layerEditor = true;
+  static const bool export = true;
+  static const bool history = true;
+  static const bool billing = true;
+  static const bool modelCenter = true;
+  static const bool voiceCommands = true;
+  static const bool smartAnalysis = true;
+  static const bool floatingNavBar = true;
+  static const bool chatStudio = true;
+
+  // ═══════════════════════════════════════════════════════════════
+  // v1.0 — الميزات المحجوبة (false) حتى الاكتمال
+  // ═══════════════════════════════════════════════════════════════
+  static const bool miGan = false;
+  static const bool realEsrgan = false;
+  static const bool relight = false;
+  static const bool conversationalEdit = false;
+  static const bool recipesAutomation = false;
+  static const bool compliance = false;
+  static const bool batchProcessing = false;
+  static const bool brandIdentity = false;
+  static const bool referral = false;
+
+  // ═══════════════════════════════════════════════════════════════
+  // إعدادات التشغيل
+  // ═══════════════════════════════════════════════════════════════
+  static const bool useWatermark = true;
+  static const bool useQuota = true;
+  static const int freeQuota = 3;
+
+  // ═══════════════════════════════════════════════════════════════
+  // دوال مساعدة
+  // ═══════════════════════════════════════════════════════════════
+  static bool isEnabled(String featureName) {
+    switch (featureName) {
+      case 'backgroundRemoval': return backgroundRemoval;
+      case 'shadowPresets': return shadowPresets;
+      case 'basicEnhance': return basicEnhance;
+      case 'textEditor': return textEditor;
+      case 'layerEditor': return layerEditor;
+      case 'export': return export;
+      case 'history': return history;
+      case 'billing': return billing;
+      case 'modelCenter': return modelCenter;
+      case 'voiceCommands': return voiceCommands;
+      case 'smartAnalysis': return smartAnalysis;
+      case 'floatingNavBar': return floatingNavBar;
+      case 'chatStudio': return chatStudio;
+      case 'miGan': return miGan;
+      case 'realEsrgan': return realEsrgan;
+      case 'relight': return relight;
+      case 'conversationalEdit': return conversationalEdit;
+      case 'recipesAutomation': return recipesAutomation;
+      case 'compliance': return compliance;
+      case 'batchProcessing': return batchProcessing;
+      case 'brandIdentity': return brandIdentity;
+      case 'referral': return referral;
+      default: return false;
+    }
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #4: 🟡 MODIFY FILE
+📁 الملف: lib/core/constants.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة 1: ابحث عن السطر:
+static const modelRealEsrganUrl = 'https://huggingface.co/Toufikben/productchat-models/resolve/main/RealESRGAN_x4plus.pth';
+
+الخطوة 2: استبدله بالسطرين التاليين:
+static const modelRealEsrganUrl = 'https://huggingface.co/Toufikben/productchat-models/resolve/main/real_esrgan_x4.onnx';
+static const modelRealEsrganSha256 = 'REPLACE_AFTER_UPLOAD';
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #5: 🟡 MODIFY FILE
+📁 الملف: lib/services/model_manager.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة 1: ابحث عن السطر:
+static const lama = ModelSpec(
+
+الخطوة 2: أضف بعده مباشرة (قبل نهاية class ModelManager):
+
+  static const realEsrgan = ModelSpec(
+    id: 'real_esrgan',
+    url: AppConstants.modelRealEsrganUrl,
+    fileName: 'real_esrgan_x4.onnx',
+    sha256: AppConstants.modelRealEsrganSha256,
+  );
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #6: 🟡 MODIFY FILE
+📁 الملف: lib/services/seika_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة 1: ابحث عن دالة upscale كاملة، استبدلها بـ:
+
+  Future<EditResult> upscale(String imagePath, {required int factor}) async {
+    final modelPath = await _models.readyPath(ModelManager.realEsrgan);
+    if (modelPath == null) {
+      return const EditResult(
+        ok: false,
+        error: 'Real-ESRGAN model not downloaded. Go to Settings > Models.',
+      );
+    }
+    return _invoke('upscale', {
+      'imagePath': imagePath,
+      'factor': factor,
+      'modelPath': modelPath,
+    }, credits: 2);
+  }
+
+الخطوة 2: ابحث عن دالة export كاملة، استبدلها بـ:
+
+  Future<EditResult> export(
+    String imagePath, {
+    required String format,
+    required int size,
+  }) =>
+      _invoke('export', {
+        'imagePath': imagePath,
+        'format': format,
+        'size': size,
+      });
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #7: 🔴 REPLACE ENTIRE FILE
+📁 الملف: lib/core/router.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+استبدل الملف بالكامل بهذا المحتوى:
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'theme.dart';
+import '../features/splash/splash_screen.dart';
+import '../features/onboarding/onboarding_screen.dart';
+import '../features/chat/chat_screen.dart';
+import '../features/editor/editor_screen.dart';
+import '../features/recipes/recipes_screen.dart';
+import '../features/compliance/compliance_screen.dart';
+import '../features/settings/settings_screen.dart';
+import '../features/settings/faq_screen.dart';
+import '../features/settings/support_screen.dart';
+import '../features/settings/legal_screen.dart';
+import '../features/settings/models_screen.dart';
+import '../features/settings/brand_screen.dart';
+import '../features/billing/paywall_screen.dart';
+import '../features/history/history_screen.dart';
+import '../features/batch/batch_screen.dart';
+
+final routerProvider = Provider<GoRouter>((ref) {
+  return GoRouter(
+    initialLocation: '/splash',
+    routes: [
+      GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
+      GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
+      GoRoute(path: '/chat', builder: (_, __) => const ChatScreen()),
+      GoRoute(
+        path: '/editor',
+        builder: (_, s) => EditorScreen(imagePath: s.extra as String?),
+      ),
+      GoRoute(path: '/recipes', builder: (_, __) => const RecipesScreen()),
+      GoRoute(path: '/compliance', builder: (_, __) => const ComplianceScreen()),
+      GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+      GoRoute(path: '/faq', builder: (_, __) => const FAQScreen()),
+      GoRoute(path: '/support', builder: (_, __) => const SupportScreen()),
+      GoRoute(
+        path: '/privacy',
+        builder: (_, __) => const LegalScreen(type: 'privacy'),
+      ),
+      GoRoute(
+        path: '/terms',
+        builder: (_, __) => const LegalScreen(type: 'terms'),
+      ),
+      GoRoute(path: '/models', builder: (_, __) => const ModelsScreen()),
+      GoRoute(path: '/brand', builder: (_, __) => const BrandScreen()),
+      GoRoute(path: '/paywall', builder: (_, __) => const PaywallScreen()),
+      GoRoute(path: '/history', builder: (_, __) => const HistoryScreen()),
+      GoRoute(path: '/batch', builder: (_, __) => const BatchScreen()),
+    ],
+    errorBuilder: (c, s) => Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: AppColors.danger),
+            const SizedBox(height: 16),
+            Text('Page not found', style: Theme.of(c).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: () => c.go('/chat'),
+              child: const Text('Go Home'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+});
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #8: 🔴 REPLACE ENTIRE FILE
+📁 الملف: lib/main.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+استبدل الملف بالكامل بهذا المحتوى:
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'app.dart';
+import 'services/billing_service.dart';
+import 'services/platform/locale_service.dart';
+import 'services/platform/theme_service.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Hive.initFlutter();
+  await Hive.openBox('settings');
+  await Hive.openBox('history');
+  await Hive.openBox('credits');
+  await Hive.openBox('analytics');
+
+  await localeProvider.init();
+  await themeModeProvider.init();
+
+  final billing = BillingService();
+  await billing.init();
+
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+  ));
+
+  runApp(const ProviderScope(child: ProductChatApp()));
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #9: 🟡 MODIFY FILE
+📁 الملف: lib/core/theme.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة 1: ابحث عن السطر:
+  static ThemeData dark = ThemeData(
+
+الخطوة 2: أضف قبله مباشرة:
+
+  static final light = ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.light,
+    scaffoldBackgroundColor: const Color(0xFFF7F8FB),
+    colorScheme: const ColorScheme.light(
+      primary: AppColors.primary,
+      surface: Color(0xFFFFFFFF),
+    ),
+    cardTheme: CardThemeData(
+      color: const Color(0xFFFFFFFF),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFE2E6EF)),
+      ),
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: const Color(0xFFF0F2F7),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+    ),
+  );
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FIX #10: 🟡 MODIFY FILE
+📁 الملف: pubspec.yaml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+الخطوة 1: احذف السطرين التاليين (إذا كانا موجودين):
+  seika: ^0.1.0
+  flutter_onnxruntime: ^1.8.3
+
+الخطوة 2: أضف السطرين التاليين في قسم dependencies:
+  crypto: ^3.0.5
+  flutter_tts: ^4.2.0
+
+الخطوة 3: تأكد من وجود flutter_localizations في dependencies:
+  flutter_localizations:
+    sdk: flutter
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الملف 01_ALL_FIXES.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+بعد تنفيذ الإصلاحات العشرة، انتقل إلى الملف 02_NEW_FEATURES.txt.

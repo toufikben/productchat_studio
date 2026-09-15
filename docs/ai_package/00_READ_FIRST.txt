@@ -1,0 +1,97 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  ProductChat Studio — PACKAGE FOR AI EXECUTION                       ║
+║  اقرأ هذا الملف أولاً                                                ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+## مرحباً أيها الذكاء الاصطناعي المنفذ
+
+هذه الحزمة تحتوي على 3 ملفات:
+  1. هذا الملف (00_READ_FIRST.txt) — التعليمات
+  2. 01_ALL_FIXES.txt — الإصلاحات الحرجة (P0)
+  3. 02_NEW_FEATURES.txt — الميزات الجديدة
+  4. 03_ROADMAP.txt — خارطة الطريق
+
+## مهمتك
+
+نفّذ كل ما في 01_ALL_FIXES.txt ثم 02_NEW_FEATURES.txt بالترتيب.
+
+## أنواع العمليات
+
+كل إصلاح في الملفات يبدأ بـ:
+  🔴 REPLACE ENTIRE FILE — استبدل الملف بالكامل بالمحتوى المعطى
+  🟡 MODIFY FILE — عدّل الملف حسب التعليمات (ابحث عن... استبدل بـ...)
+  🟢 CREATE NEW FILE — أنشئ ملفاً جديداً في المسار المذكور
+
+## ترتيب التنفيذ الإلزامي
+
+من 01_ALL_FIXES.txt:
+  1. FIX #1: AndroidManifest.xml (REPLACE)
+  2. FIX #2: file_paths.xml (CREATE)
+  3. FIX #3: feature_flags.dart (CREATE)
+  4. FIX #4: constants.dart (MODIFY)
+  5. FIX #5: model_manager.dart (MODIFY)
+  6. FIX #6: seika_service.dart (MODIFY)
+  7. FIX #7: router.dart (REPLACE)
+  8. FIX #8: main.dart (REPLACE)
+  9. FIX #9: theme.dart (MODIFY)
+  10. FIX #10: pubspec.yaml (MODIFY)
+
+من 02_NEW_FEATURES.txt:
+  11. FEAT #1: voice_service.dart (CREATE)
+  12. FEAT #2: floating_nav_bar.dart (CREATE)
+  13. FEAT #3: home_screen.dart (CREATE)
+  14. FEAT #4: model_center_screen.dart (REPLACE existing)
+  15. FEAT #5: mask_painter_screen.dart (CREATE)
+  16. FEAT #6: chat_studio_screen.dart (CREATE)
+
+## بعد الانتهاء من كل الإصلاحات
+
+شغّل الأوامر التالية بالترتيب:
+  flutter clean
+  flutter pub get
+  flutter gen-l10n
+  flutter analyze
+  flutter test
+
+## التقرير النهائي المطلوب
+
+أرسل تقريراً بهذا الشكل:
+  ✅ الناجحة: [عدد] — قائمة
+  ❌ الفاشلة: [عدد] — قائمة مع السبب
+  ⚠️ تحتاج مراجعة بشرية: [عدد] — قائمة
+  📊 flutter analyze: Errors / Warnings / Info
+  📊 flutter test: Passed / Failed
+
+## قواعد صارمة
+
+❌ لا تنشر التطبيق
+❌ لا تنشئ حسابات
+❌ لا ترفع نماذج
+❌ لا تخمن — إذا لم تجد شيئاً، أبلغ
+✅ التزم بالكود المعطى حرفياً
+✅ إذا لم يجد ملفاً، أنشئه
+✅ لا تحذف أي ميزة موجودة — فقط أضف أو عدّل
+
+## مسارات الملفات المطلقة
+
+كل المسارات نسبية إلى جذر المشروع:
+  • android/app/src/main/AndroidManifest.xml
+  • android/app/src/main/res/xml/file_paths.xml
+  • lib/core/feature_flags.dart
+  • lib/core/constants.dart
+  • lib/core/router.dart
+  • lib/core/theme.dart
+  • lib/main.dart
+  • lib/services/model_manager.dart
+  • lib/services/seika_service.dart
+  • lib/services/voice_service.dart (جديد)
+  • lib/widgets/floating_nav_bar.dart (جديد)
+  • lib/features/home/home_screen.dart (جديد)
+  • lib/features/settings/models_screen.dart (استبدال)
+  • lib/features/editor/mask_painter_screen.dart (جديد)
+  • lib/features/chat/chat_studio_screen.dart (جديد)
+  • pubspec.yaml
+
+## ابدأ الآن
+
+انتقل إلى الملف 01_ALL_FIXES.txt وابدأ بـ FIX #1.

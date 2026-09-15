@@ -47,6 +47,13 @@ class ModelManager {
         '1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6',
   );
 
+  static const realEsrgan = ModelSpec(
+    id: 'real_esrgan',
+    url: AppConstants.modelRealEsrganUrl,
+    fileName: 'real_esrgan_x4.onnx',
+    sha256: AppConstants.modelRealEsrganSha256,
+  );
+
   /// Maximum number of times [download] will fall back to a full (non-Range)
   /// download when the server ignores the Range header. Prevents an infinite
   /// recursive loop on servers that persistently return 200 instead of 206.

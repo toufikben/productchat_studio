@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 
-class AppIcons { static const image = Icons.image; }
+class AppIcons {
+  static const image = Icons.image;
+  static Widget circle(IconData icon, {double size = 24, Color? color}) =>
+      Icon(icon, size: size, color: color);
+  static Widget outline(IconData icon, {double size = 24, Color? color}) =>
+      Icon(icon, size: size, color: color);
+}
 class ImagePreview extends StatelessWidget { const ImagePreview({super.key}); @override Widget build(BuildContext context) => const SizedBox.shrink(); }
 class ActionChipWidget extends StatelessWidget { final String label; const ActionChipWidget({super.key, required this.label}); @override Widget build(BuildContext context) => Chip(label: Text(label)); }
 class CreditsPill extends StatelessWidget { const CreditsPill({super.key}); @override Widget build(BuildContext context) => const Chip(label: Text('3 credits')); }

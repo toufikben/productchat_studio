@@ -56,8 +56,13 @@ class SeikaService {
         credits: 1,
       );
 
-  Future<EditResult> upscale(String imagePath, {required int factor}) =>
-      _invoke('upscale', {'imagePath': imagePath, 'factor': factor}, credits: 2);
+  Future<EditResult> upscale(String imagePath, {required int factor}) async {
+    final modelPath = await _models.readyPath(ModelManager.realEsrgan);
+    if (modelPath == null) {
+      return const EditResult.failure('Real-ESRGAN model not downloaded. Go to Settings > Models.');
+    }
+    return _invoke('upscale', {'imagePath': imagePath, 'factor': factor, 'modelPath': modelPath}, credits: 2);
+  }
 
   Future<EditResult> addShadow(String imagePath) =>
       _invoke('addShadow', {'imagePath': imagePath}, credits: 1);

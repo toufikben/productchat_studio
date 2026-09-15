@@ -30,10 +30,8 @@ class AppTheme {
         side: const BorderSide(color: Color(0xFFE2E6EF)),
       ),
     ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-    ),
+    appBarTheme: const AppBarTheme(backgroundColor: Colors.transparent, elevation: 0),
+    inputDecorationTheme: InputDecorationTheme(filled: true, fillColor: Color(0xFFF0F2F7), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(14)), borderSide: BorderSide.none)),
   );
   static final dark = ThemeData(useMaterial3: true, brightness: Brightness.dark, scaffoldBackgroundColor: AppColors.bg, colorScheme: const ColorScheme.dark(primary: AppColors.primary, surface: AppColors.surface), cardTheme: CardThemeData(color: AppColors.surface, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(18)), side: BorderSide(color: AppColors.border))));
 }

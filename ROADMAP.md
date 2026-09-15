@@ -22,6 +22,21 @@
 
 وجود شاشة أو dependency أو model file لا يثبت اكتمال الميزة.
 
+## سجل التحديثات — 2026-09-15 — AI Execution Package
+
+- [x] حفظ الحزمة المرجعية داخل `docs/ai_package/` بالترتيب: التعليمات، الإصلاحات، الميزات، وخارطة الطريق.
+- [x] تنفيذ إصلاحات Android Manifest وFileProvider و`feature_flags.dart`.
+- [x] تحديث رابط Real-ESRGAN إلى ONNX وإضافة تعريف `ModelManager.realEsrgan` وربط `SeikaService.upscale` بمسار النموذج.
+- [x] تحويل الراوتر إلى `Provider<GoRouter>` وتحديث `app.dart` لاستهلاك المزود، مع إبقاء المسارات القديمة وإضافة Home وChat Studio وMask Painter.
+- [x] إكمال تهيئة Hive وBilling وواجهات الخدمات عند بدء التطبيق.
+- [x] إنشاء Voice Service وFloating Navigation وHome Screen وChat Studio وMask Painter واستبدال Models Screen.
+- [x] إضافة توافق `AppIcons.circle/outline` الذي تتطلبه شاشة Model Center دون إزالة المكونات الموجودة.
+- [x] اجتياز `git diff --check` وفحص وجود جميع الملفات الجديدة.
+- [ ] `flutter clean`, `flutter pub get`, `flutter gen-l10n`, `flutter analyze`, و`flutter test`؛ تعذر تشغيلها لأن Flutter SDK غير موجود في `PATH` داخل بيئة التنفيذ.
+- [ ] توفير SHA-256 الحقيقي لملف `real_esrgan_x4.onnx` بعد رفع النموذج المرخص؛ القيمة الحالية `REPLACE_AFTER_UPLOAD` مقصودة وحاجبة للتحقق.
+
+**حالة الدفعة:** التغييرات مطبقة في المصدر، لكن البناء والاختبارات وتشغيل Android تحتاج مراجعة بشرية/بيئة Flutter. لم يتم نشر التطبيق أو رفع أي نموذج.
+
 ## سجل التحديثات — 2026-09-15
 
 ### UI Overhaul + Voice Integration
