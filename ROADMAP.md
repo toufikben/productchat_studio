@@ -249,7 +249,7 @@
 - [x] اختبارات service لـBatch/History/Brand/Storage، وwidget smoke tests لـPaywall وSettings وBatch وHistory؛ اختبارات الراوتر المتقدمة ما زالت اختيارية.
 - [ ] Fixtures للصور والأقنعة دون تخزين النموذج داخل Git.
 - [ ] benchmark cold/warm، cancellation، timeout، memory، CPU/NNAPI، 30–100 inference.
-- [x] CI للتحليل والاختبار والبناء وفحص الأسرار؛ فحوص Flutter وبناء Release APK/AAB نجحت على commit `6238db0` في التشغيل [34911550832](https://github.com/toufikben/productchat_studio/actions/runs/34911550832)، وتم رفع artifact للـAAB وartifact للـAPK.
+- [x] CI للتحليل والاختبار والبناء وفحص الأسرار؛ فحوص Flutter وبناء Release APK/AAB نجحت، كما نجحت اختبارات ProService وWidget smoke على commit `ddaf70d` في التشغيل [34914019464](https://github.com/toufikben/productchat_studio/actions/runs/34914019464). تم رفع artifact للـAAB وartifact للـAPK في التشغيل [34911550832](https://github.com/toufikben/productchat_studio/actions/runs/34911550832).
 
 ### المرحلة 9 — Internal Testing والإصدار — مؤجلة
 
@@ -349,6 +349,8 @@ All repair work must follow these rules:
 **متابعة البناء:** التشغيل [34911216248](https://github.com/toufikben/productchat_studio/actions/runs/34911216248) تجاوز مشكلة Groovy، لكنه كشف كتلة `kotlin { compilerOptions { ... } }` غير مرتبطة في `android/app/build.gradle.kts`. أزيلت الكتلة لأنها غير لازمة، ويلزم تشغيل Release جديد للتحقق من إنشاء APK وAAB.
 
 **نتيجة Release النهائية:** التشغيل [34911550832](https://github.com/toufikben/productchat_studio/actions/runs/34911550832) نجح في `flutter analyze` و`flutter test` و`flutter build appbundle --release` و`flutter build apk --release` ورفع artifact للـAAB وartifact للـAPK. ملاحظة GitHub CLI الخاصة بـ`checks:read` لا تؤثر على نجاح Workflow أو artifacts.
+
+**نتيجة اختبارات Pro والواجهات:** التشغيل [34914019464](https://github.com/toufikben/productchat_studio/actions/runs/34914019464) على `ddaf70d` نجح في `flutter analyze` و`flutter test` بعد إضافة اختبارات Monthly/Yearly/Lifetime/Restore وWidget smoke لـPaywall وSettings وBatch وHistory.
 
 - **Phase 1 — Diagnostic log capture — STARTED 2026-09-14:** Approved temporary workflow-only change. Scope: capture and upload the exact flutter analyze output while preserving a failing job when analysis fails. No application code or test logic changes. Rollback: revert the workflow commit. Acceptance: the next run publishes flutter-analyze.log and still reports the analyzer failure.
 
