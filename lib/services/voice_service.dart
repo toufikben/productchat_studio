@@ -1,8 +1,10 @@
 import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:flutter_tts/flutter_tts.dart';
+
 import '../core/hive_ext.dart';
 
 class VoiceState {
@@ -32,7 +34,8 @@ class VoiceState {
     double? soundLevel,
     String? lastSpoken,
     VoiceSettings? settings,
-  }) => VoiceState(
+  }) =>
+      VoiceState(
         isListening: isListening ?? this.isListening,
         isSpeaking: isSpeaking ?? this.isSpeaking,
         lastTranscription: lastTranscription ?? this.lastTranscription,
@@ -67,7 +70,8 @@ class VoiceSettings {
     String? language,
     double? speechRate,
     double? pitch,
-  }) => VoiceSettings(
+  }) =>
+      VoiceSettings(
         voiceFeedback: voiceFeedback ?? this.voiceFeedback,
         autoSpeak: autoSpeak ?? this.autoSpeak,
         wakeWordEnabled: wakeWordEnabled ?? this.wakeWordEnabled,
@@ -116,7 +120,8 @@ class VoiceService extends StateNotifier<VoiceState> {
   }
 
   Future<void> _persistSettings() async {
-    await Hive.box<dynamic>('settings').put('voice_settings', state.settings.toMap());
+    await Hive.box<dynamic>('settings')
+        .put('voice_settings', state.settings.toMap());
   }
 
   Future<void> init() async {
@@ -133,7 +138,8 @@ class VoiceService extends StateNotifier<VoiceState> {
       await _tts.setSpeechRate(state.settings.speechRate);
       await _tts.setPitch(state.settings.pitch);
       await _tts.setVolume(1.0);
-      _tts.setCompletionHandler(() => state = state.copyWith(isSpeaking: false));
+      _tts.setCompletionHandler(
+          () => state = state.copyWith(isSpeaking: false));
     } catch (error) {
       state = state.copyWith(lastError: error.toString());
     }
@@ -147,12 +153,12 @@ class VoiceService extends StateNotifier<VoiceState> {
     }
     state = state.copyWith(isListening: true, lastError: '');
     await _stt.listen(
-      localeId: localeId ?? state.settings.language,
       onResult: (result) {
         state = state.copyWith(lastTranscription: result.recognizedWords);
         _transcriptionController.add(result.recognizedWords);
       },
       listenOptions: SpeechListenOptions(
+        localeId: localeId ?? state.settings.language,
         listenMode: ListenMode.confirmation,
         partialResults: true,
         cancelOnError: true,
@@ -165,7 +171,8 @@ class VoiceService extends StateNotifier<VoiceState> {
     state = state.copyWith(isListening: false);
   }
 
-  Future<void> speak(String text, {String? locale, bool feedback = false}) async {
+  Future<void> speak(String text,
+      {String? locale, bool feedback = false}) async {
     if (!state.settings.voiceFeedback && feedback) return;
     await _tts.setLanguage(locale ?? state.settings.language);
     await _tts.setSpeechRate(state.settings.speechRate);
@@ -189,7 +196,9 @@ class VoiceService extends StateNotifier<VoiceState> {
     String? details,
   }) async {
     if (!state.settings.voiceFeedback) return;
-    final message = success ? _successMessage(operation, details) : _failureMessage(operation);
+    final message = success
+        ? _successMessage(operation, details)
+        : _failureMessage(operation);
     await speak(message, feedback: true);
   }
 
@@ -197,28 +206,44 @@ class VoiceService extends StateNotifier<VoiceState> {
     final isArabic = state.settings.language.startsWith('ar');
     if (isArabic) {
       switch (operation) {
-        case 'removeBg': return 'تمت إزالة الخلفية بنجاح';
-        case 'enhance': return 'تم تحسين الصورة';
-        case 'shadow': return 'تمت إضافة الظل';
-        case 'relight': return 'تم تعديل الإضاءة';
-        case 'colorize': return 'تم تلوين الصورة';
-        case 'export': return 'تم تصدير الصورة';
-        default: return 'تمت العملية بنجاح';
+        case 'removeBg':
+          return 'تمت إزالة الخلفية بنجاح';
+        case 'enhance':
+          return 'تم تحسين الصورة';
+        case 'shadow':
+          return 'تمت إضافة الظل';
+        case 'relight':
+          return 'تم تعديل الإضاءة';
+        case 'colorize':
+          return 'تم تلوين الصورة';
+        case 'export':
+          return 'تم تصدير الصورة';
+        default:
+          return 'تمت العملية بنجاح';
       }
     }
     switch (operation) {
-      case 'removeBg': return 'Background removed successfully';
-      case 'enhance': return 'Image enhanced';
-      case 'shadow': return 'Shadow added';
-      case 'relight': return 'Lighting adjusted';
-      case 'colorize': return 'Image colorized';
-      case 'export': return 'Image exported';
-      default: return 'Operation completed successfully';
+      case 'removeBg':
+        return 'Background removed successfully';
+      case 'enhance':
+        return 'Image enhanced';
+      case 'shadow':
+        return 'Shadow added';
+      case 'relight':
+        return 'Lighting adjusted';
+      case 'colorize':
+        return 'Image colorized';
+      case 'export':
+        return 'Image exported';
+      default:
+        return 'Operation completed successfully';
     }
   }
 
   String _failureMessage(String operation) =>
-      state.settings.language.startsWith('ar') ? 'عذراً، فشلت العملية' : 'Sorry, operation failed';
+      state.settings.language.startsWith('ar')
+          ? 'عذراً، فشلت العملية'
+          : 'Sorry, operation failed';
 
   Future<void> updateSettings(VoiceSettings settings) async {
     state = state.copyWith(settings: settings);
@@ -249,17 +274,21 @@ class VoiceService extends StateNotifier<VoiceState> {
   Future<List<Map<String, String>>> getAvailableVoices() async {
     final voices = await _tts.getVoices;
     if (voices is List) {
-      return voices.map((voice) => {
-            'name': voice['name']?.toString() ?? '',
-            'locale': voice['locale']?.toString() ?? '',
-          }).toList();
+      return voices
+          .map((voice) => {
+                'name': voice['name']?.toString() ?? '',
+                'locale': voice['locale']?.toString() ?? '',
+              })
+          .toList();
     }
     return [];
   }
 
   Future<List<String>> getAvailableLanguages() async {
     final languages = await _tts.getLanguages;
-    if (languages is List) return languages.map((language) => language.toString()).toList();
+    if (languages is List) {
+      return languages.map((language) => language.toString()).toList();
+    }
     return [];
   }
 

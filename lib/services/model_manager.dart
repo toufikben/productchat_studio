@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_slow_async_io
+
 import 'dart:async';
 import 'dart:io';
 
@@ -107,8 +109,9 @@ class ModelManager {
       await for (final chunk in response.data!.stream) {
         sink.add(chunk);
         received += chunk.length;
-        if (totalBytes > 0)
+        if (totalBytes > 0) {
           onProgress?.call(received / (totalBytes + startByte));
+        }
       }
       await sink.close();
     } catch (_) {
