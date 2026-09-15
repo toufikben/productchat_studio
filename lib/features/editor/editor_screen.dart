@@ -46,7 +46,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               icon: const Icon(Icons.redo)),
           IconButton(onPressed: _export, icon: const Icon(Icons.download))
         ]),
-        body: Column(children: [
+        body: SafeArea(
+            child: Column(children: [
           Expanded(
               child: GestureDetector(
                   onLongPress: c.toggleBefore,
@@ -98,23 +99,24 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                         onPressed: () => Navigator.pop(context, s.imagePath),
                         child: const Text('Done')))
               ]))
-        ]));
+        ])));
   }
 
   Widget _tools(EditorController c) {
     final isPro = billingService.proService.isPro;
     return Container(
-      height: 64,
-      color: AppColors.surface,
-      child: ListView(scrollDirection: Axis.horizontal, children: [
-        _tool('BG', c.removeBg),
-        _tool('Shadow${isPro ? '' : ' (Pro)'}', c.addShadow),
-        _tool('Enhance${isPro ? '' : ' (Pro)'}', c.enhance),
-        _tool('Text', c.addText),
-        _tool('Layers', c.toggleLayers),
-        _tool('Relight${isPro ? '' : ' (Pro)'}', c.relight)
-      ]));
+        height: 64,
+        color: AppColors.surface,
+        child: ListView(scrollDirection: Axis.horizontal, children: [
+          _tool('BG', c.removeBg),
+          _tool('Shadow${isPro ? '' : ' (Pro)'}', c.addShadow),
+          _tool('Enhance${isPro ? '' : ' (Pro)'}', c.enhance),
+          _tool('Text', c.addText),
+          _tool('Layers', c.toggleLayers),
+          _tool('Relight${isPro ? '' : ' (Pro)'}', c.relight)
+        ]));
   }
+
   Widget _tool(String label, VoidCallback onTap) => Padding(
       padding: const EdgeInsets.all(8),
       child: OutlinedButton(onPressed: onTap, child: Text(label)));

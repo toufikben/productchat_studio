@@ -41,82 +41,96 @@ class _PaywallScreenState extends State<PaywallScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(title: const Text('Unlock ProductChat Studio')),
-        body: RefreshIndicator(
-          onRefresh: _billing.restorePurchases,
-          child: ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.bolt),
-                  title: const Text('Available credits'),
-                  trailing: Text(
-                    '${_billing.credits}',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+        body: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: _billing.retry,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 36),
+              children: [
+                if (_billing.loading && !_billing.available)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 16),
+                    child: LinearProgressIndicator(),
                   ),
-                ),
-              ),
-              if (!_billing.proService.isPro) ...[
-                const SizedBox(height: 8),
                 Card(
                   child: ListTile(
-                    leading: const Icon(Icons.photo_outlined),
-                    title: const Text('Free monthly images'),
-                    subtitle: const Text(
-                      'PatchMatch-only tier with watermark',
-                    ),
+                    leading: const Icon(Icons.bolt),
+                    title: const Text('Available credits'),
                     trailing: Text(
-                      '${_billing.freeQuota.remaining}/${AppConstants.freeMonthlyQuota}',
+                      '${_billing.credits}',
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
-              ],
-              const SizedBox(height: 20),
-              const _SectionTitle('Lifetime'),
-              _productSection(CreditProducts.lifetime),
-              const SizedBox(height: 12),
-              const _SectionTitle('Subscriptions'),
-              _productSection(CreditProducts.monthly),
-              _productSection(CreditProducts.yearly),
-              const SizedBox(height: 12),
-              const _SectionTitle('Credits'),
-              _productSection(CreditProducts.starter),
-              _productSection(CreditProducts.standard),
-              _productSection(CreditProducts.largePack),
-              if (!_billing.available && _billing.error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Text(
-                    _billing.error!,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                if (!_billing.proService.isPro) ...[
+                  const SizedBox(height: 8),
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.photo_outlined),
+                      title: const Text('Free monthly images'),
+                      subtitle: const Text(
+                        'PatchMatch-only tier with watermark',
+                      ),
+                      trailing: Text(
+                        '${_billing.freeQuota.remaining}/${AppConstants.freeMonthlyQuota}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
+                ],
+                const SizedBox(height: 20),
+                const _SectionTitle('Lifetime'),
+                _productSection(CreditProducts.lifetime),
+                const SizedBox(height: 12),
+                const _SectionTitle('Subscriptions'),
+                _productSection(CreditProducts.monthly),
+                _productSection(CreditProducts.yearly),
+                const SizedBox(height: 12),
+                const _SectionTitle('Credits'),
+                _productSection(CreditProducts.starter),
+                _productSection(CreditProducts.standard),
+                _productSection(CreditProducts.largePack),
+                if (!_billing.available && _billing.error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(
+                      _billing.error!,
+                      style:
+                          TextStyle(color: Theme.of(context).colorScheme.error),
+                    ),
+                  ),
+                if (_billing.loading) const LinearProgressIndicator(),
+                if (_billing.available && _billing.products.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 12),
+                    child:
+                        Text('Products are not configured in Google Play yet.'),
+                  ),
+                if (!_billing.available && !_billing.loading)
+                  OutlinedButton.icon(
+                    onPressed: _billing.retry,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry Google Play connection'),
+                  ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed:
+                      _billing.available ? _billing.restorePurchases : null,
+                  icon: const Icon(Icons.restore),
+                  label: const Text('Restore purchases'),
                 ),
-              if (_billing.loading) const LinearProgressIndicator(),
-              if (_billing.available && _billing.products.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.only(top: 12),
-                  child: Text('Products are not configured in Google Play yet.'),
+                const SizedBox(height: 16),
+                const Text(
+                  'Google Play prices are shown when available. Credits are not added for pending, failed, or restored consumable purchases. Pro access requires verified entitlement.',
                 ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: _billing.available
-                    ? _billing.restorePurchases
-                    : null,
-                icon: const Icon(Icons.restore),
-                label: const Text('Restore purchases'),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Google Play prices are shown when available. Credits are not added for pending, failed, or restored consumable purchases. Pro access requires verified entitlement.',
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -132,9 +146,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
           title: Text(_titleFor(product)),
           subtitle: Text(_subtitleFor(product)),
           trailing: FilledButton(
-            onPressed: _billing.loading
-                ? null
-                : () => _billing.buy(product),
+            onPressed: _billing.loading ? null : () => _billing.buy(product),
             child: Text(product.price),
           ),
         ),

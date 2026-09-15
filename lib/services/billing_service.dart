@@ -122,6 +122,12 @@ class BillingService extends ChangeNotifier {
 
   Future<void> init() => _initFuture ??= _initialize();
 
+  Future<void> retry() async {
+    if (loading) return;
+    _initFuture = null;
+    await init();
+  }
+
   Future<void> _initialize() async {
     final store = _storeOrDefault;
     _subscription = store.purchaseStream.listen(
@@ -202,7 +208,16 @@ class BillingService extends ChangeNotifier {
     if (value is TimeoutException) {
       return 'Google Play did not respond. Check your connection and try again.';
     }
-    return value.toString().replaceFirst('Exception: ', '');
+    final text = value.toString();
+    final normalized = text.toLowerCase();
+    if (normalized.contains('item_not_found') ||
+        normalized.contains('could not be found')) {
+      return 'This product is not available in Google Play for this app version. Check the product ID, country, and internal-test installation.';
+    }
+    if (normalized.contains('item_unavailable')) {
+      return 'This product is currently unavailable. Use the Google Play internal-test version and try again.';
+    }
+    return text.replaceFirst('Exception: ', '');
   }
 
   Future<void> _handlePurchases(List<PurchaseDetails> purchases) async {
@@ -227,11 +242,21 @@ class BillingService extends ChangeNotifier {
             error = proService.isLifetime
                 ? null
                 : 'Lifetime purchase could not be stored safely.';
+          } else if (purchase.productID == CreditProducts.monthly &&
+              verificationData.isNotEmpty) {
+            await proService.activateMonthly(
+                verificationData: verificationData);
+            error = proService.isPro
+                ? null
+                : 'Monthly subscription could not be stored safely.';
+          } else if (purchase.productID == CreditProducts.yearly &&
+              verificationData.isNotEmpty) {
+            await proService.activateYearly(verificationData: verificationData);
+            error = proService.isPro
+                ? null
+                : 'Yearly subscription could not be stored safely.';
           } else {
-            // Subscription expiry is not inferred locally from a purchase
-            // event. Keep it pending until Google Play supplies a verified
-            // entitlement source that includes expiry.
-            error = 'Subscription entitlement requires a verified expiry.';
+            error = 'Purchase verification data was unavailable.';
           }
         } else if (!CreditProducts.shouldGrantCredits(
           status: purchase.status,
