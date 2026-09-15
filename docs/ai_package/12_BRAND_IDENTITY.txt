@@ -1,0 +1,445 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 12: BRAND IDENTITY                                             ║
+║  شاشة هوية العلامة الكاملة مع Logo + Colors + Fonts                  ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FEAT #11: 🟢 CREATE NEW FILE
+📁 الملف الجديد: lib/services/brand_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:convert';
+import 'dart:io';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:image/image.dart' as img;
+
+class BrandProfile {
+  final String? logoPath;
+  final String primaryColor;
+  final String secondaryColor;
+  final String fontFamily;
+  final String? tagline;
+  final bool showWatermark;
+
+  const BrandProfile({
+    this.logoPath,
+    this.primaryColor = '#6C5CE7',
+    this.secondaryColor = '#00D2A8',
+    this.fontFamily = 'Inter',
+    this.tagline,
+    this.showWatermark = true,
+  });
+
+  Map<String, dynamic> toMap() => {
+        'logoPath': logoPath,
+        'primaryColor': primaryColor,
+        'secondaryColor': secondaryColor,
+        'fontFamily': fontFamily,
+        'tagline': tagline,
+        'showWatermark': showWatermark,
+      };
+
+  factory BrandProfile.fromMap(Map map) => BrandProfile(
+        logoPath: map['logoPath'] as String?,
+        primaryColor: map['primaryColor'] as String? ?? '#6C5CE7',
+        secondaryColor: map['secondaryColor'] as String? ?? '#00D2A8',
+        fontFamily: map['fontFamily'] as String? ?? 'Inter',
+        tagline: map['tagline'] as String?,
+        showWatermark: map['showWatermark'] as bool? ?? true,
+      );
+
+  BrandProfile copyWith({
+    String? logoPath,
+    String? primaryColor,
+    String? secondaryColor,
+    String? fontFamily,
+    String? tagline,
+    bool? showWatermark,
+    bool clearLogo = false,
+  }) =>
+      BrandProfile(
+        logoPath: clearLogo ? null : (logoPath ?? this.logoPath),
+        primaryColor: primaryColor ?? this.primaryColor,
+        secondaryColor: secondaryColor ?? this.secondaryColor,
+        fontFamily: fontFamily ?? this.fontFamily,
+        tagline: tagline ?? this.tagline,
+        showWatermark: showWatermark ?? this.showWatermark,
+      );
+}
+
+class BrandService {
+  static const _key = 'brand_profile';
+
+  BrandProfile load() {
+    final box = Hive.box('settings');
+    final data = box.get(_key);
+    if (data == null) return const BrandProfile();
+    try {
+      return BrandProfile.fromMap(Map<String, dynamic>.from(jsonDecode(data as String)));
+    } catch (_) {
+      return const BrandProfile();
+    }
+  }
+
+  Future<void> save(BrandProfile profile) async {
+    final box = Hive.box('settings');
+    await box.put(_key, jsonEncode(profile.toMap()));
+  }
+
+  Future<void> clear() async {
+    final box = Hive.box('settings');
+    await box.delete(_key);
+  }
+
+  /// يطبق الشعار على الصورة في الركن السفلي الأيمن.
+  Future<String> applyLogo(String imagePath, BrandProfile profile, {double scale = 0.15}) async {
+    if (profile.logoPath == null || !File(profile.logoPath!).existsSync()) {
+      return imagePath;
+    }
+    final imageBytes = await File(imagePath).readAsBytes();
+    final logoBytes = await File(profile.logoPath!).readAsBytes();
+    final image = img.decodeImage(imageBytes);
+    final logo = img.decodeImage(logoBytes);
+    if (image == null || logo == null) return imagePath;
+
+    final logoWidth = (image.width * scale).toInt();
+    final logoHeight = (logo.height * logoWidth / logo.width).toInt();
+    final resizedLogo = img.copyResize(logo, width: logoWidth, height: logoHeight);
+
+    final x = image.width - logoWidth - 24;
+    final y = image.height - logoHeight - 24;
+
+    img.compositeImage(image, resizedLogo, dstX: x, dstY: y);
+
+    final outPath = imagePath.replaceAll(RegExp(r'\.[^.]+$'), '_branded.png');
+    await File(outPath).writeAsBytes(img.encodePng(image));
+    return outPath;
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FEAT #12: 🔴 REPLACE ENTIRE FILE
+📁 الملف: lib/features/settings/brand_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../core/theme.dart';
+import '../../services/brand_service.dart';
+
+final brandServiceProvider = Provider((_) => BrandService());
+
+class BrandScreen extends ConsumerStatefulWidget {
+  const BrandScreen({super.key});
+  @override
+  ConsumerState<BrandScreen> createState() => _BrandScreenState();
+}
+
+class _BrandScreenState extends ConsumerState<BrandScreen> {
+  late BrandProfile _profile;
+  bool _dirty = false;
+
+  static const _colors = [
+    '#6C5CE7', '#00D2A8', '#FFB547', '#FF5C5C',
+    '#3B82F6', '#EC4899', '#8B5CF6', '#14B8A6',
+    '#F97316', '#6366F1', '#10B981', '#EF4444',
+  ];
+
+  static const _fonts = ['Inter', 'Cairo', 'Tajawal', 'Poppins', 'Montserrat', 'Roboto'];
+
+  @override
+  void initState() {
+    super.initState();
+    _profile = ref.read(brandServiceProvider).load();
+  }
+
+  Color _hex(String h) => Color(int.parse('0xFF${h.replaceFirst('#', '')}'));
+
+  Future<void> _pickLogo() async {
+    final x = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 90);
+    if (x == null) return;
+    setState(() {
+      _profile = _profile.copyWith(logoPath: x.path);
+      _dirty = true;
+    });
+  }
+
+  Future<void> _save() async {
+    await ref.read(brandServiceProvider).save(_profile);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Brand saved ✓'), backgroundColor: AppColors.success),
+      );
+      setState(() => _dirty = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Brand Identity'),
+        actions: [
+          if (_dirty)
+            TextButton(
+              onPressed: _save,
+              child: const Text('Save'),
+            ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildLogoPicker(),
+          const SizedBox(height: 24),
+          _buildColorSection('Primary Color', _profile.primaryColor, (c) {
+            setState(() {
+              _profile = _profile.copyWith(primaryColor: c);
+              _dirty = true;
+            });
+          }),
+          const SizedBox(height: 20),
+          _buildColorSection('Secondary Color', _profile.secondaryColor, (c) {
+            setState(() {
+              _profile = _profile.copyWith(secondaryColor: c);
+              _dirty = true;
+            });
+          }),
+          const SizedBox(height: 24),
+          _buildFontSection(),
+          const SizedBox(height: 24),
+          _buildTaglineField(),
+          const SizedBox(height: 16),
+          _buildWatermarkSwitch(),
+          const SizedBox(height: 32),
+          _buildPreview(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogoPicker() => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: _profile.logoPath != null && File(_profile.logoPath!).existsSync()
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.file(File(_profile.logoPath!), fit: BoxFit.cover),
+                    )
+                  : const Icon(Icons.business, size: 32, color: AppColors.textTertiary),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Your Logo', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 4),
+                  const Text('PNG with transparency recommended',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed: _pickLogo,
+                        icon: const Icon(Icons.upload, size: 16),
+                        label: Text(_profile.logoPath == null ? 'Upload' : 'Replace'),
+                      ),
+                      if (_profile.logoPath != null) ...[
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+                          onPressed: () => setState(() {
+                            _profile = _profile.copyWith(clearLogo: true);
+                            _dirty = true;
+                          }),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildColorSection(String label, String selected, ValueChanged<String> onSelect) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              )),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: _colors.map((c) {
+              final isSel = c == selected;
+              return GestureDetector(
+                onTap: () => onSelect(c),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _hex(c),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSel ? Colors.white : Colors.transparent,
+                      width: 3,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _hex(c).withValues(alpha: isSel ? 0.5 : 0.2),
+                        blurRadius: isSel ? 16 : 8,
+                      ),
+                    ],
+                  ),
+                  child: isSel ? const Icon(Icons.check, color: Colors.white) : null,
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      );
+
+  Widget _buildFontSection() => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Font Family',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              )),
+          const SizedBox(height: 12),
+          ..._fonts.map((f) => Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: _profile.fontFamily == f
+                      ? AppColors.primary.withValues(alpha: 0.12)
+                      : AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: _profile.fontFamily == f ? AppColors.primary : AppColors.border,
+                    width: _profile.fontFamily == f ? 1.5 : 1,
+                  ),
+                ),
+                child: ListTile(
+                  title: Text(f, style: TextStyle(fontFamily: f, fontSize: 17)),
+                  trailing: _profile.fontFamily == f
+                      ? const Icon(Icons.check_circle, color: AppColors.primary)
+                      : null,
+                  onTap: () => setState(() {
+                    _profile = _profile.copyWith(fontFamily: f);
+                    _dirty = true;
+                  }),
+                ),
+              )),
+        ],
+      );
+
+  Widget _buildTaglineField() => TextField(
+        controller: TextEditingController(text: _profile.tagline ?? ''),
+        decoration: const InputDecoration(
+          labelText: 'Tagline (optional)',
+          hintText: 'Your brand slogan',
+        ),
+        onChanged: (v) {
+          _profile = _profile.copyWith(tagline: v.isEmpty ? null : v);
+          _dirty = true;
+        },
+      );
+
+  Widget _buildWatermarkSwitch() => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Show watermark'),
+          subtitle: const Text('Adds your logo to exported images'),
+          value: _profile.showWatermark,
+          onChanged: (v) => setState(() {
+            _profile = _profile.copyWith(showWatermark: v);
+            _dirty = true;
+          }),
+          activeColor: AppColors.primary,
+        ),
+      );
+
+  Widget _buildPreview() => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [_hex(_profile.primaryColor), _hex(_profile.secondaryColor)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          children: [
+            const Text('Preview',
+                style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1)),
+            const SizedBox(height: 16),
+            if (_profile.logoPath != null && File(_profile.logoPath!).existsSync())
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.all(8),
+                child: Image.file(File(_profile.logoPath!)),
+              ),
+            const SizedBox(height: 12),
+            Text('Your Brand',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: _profile.fontFamily,
+                )),
+            if (_profile.tagline != null) ...[
+              const SizedBox(height: 4),
+              Text(_profile.tagline!,
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    fontFamily: _profile.fontFamily,
+                  )),
+            ],
+          ],
+        ),
+      );
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الملف 12_BRAND_IDENTITY.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,0 +1,311 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 14: A/B TESTING + REFERRAL                                     ║
+║  نظام اختبار الأسعار + برنامج الإحالة                                ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FEAT #15: 🟢 CREATE NEW FILE
+📁 الملف الجديد: lib/services/price_ab_test_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:math';
+import 'package:hive_flutter/hive_flutter.dart';
+
+class PriceABTestService {
+  static const _key = 'ab_price_group';
+  static const _variants = ['A', 'B', 'C'];
+
+  static const prices = {
+    'A': {'pro_monthly': 4.99, 'pro_yearly': 29.99, 'credits_100': 4.99, 'credits_500': 19.99, 'credits_1200': 39.99, 'lifetime': 79.99},
+    'B': {'pro_monthly': 6.99, 'pro_yearly': 39.99, 'credits_100': 5.99, 'credits_500': 24.99, 'credits_1200': 49.99, 'lifetime': 99.99},
+    'C': {'pro_monthly': 3.99, 'pro_yearly': 24.99, 'credits_100': 3.99, 'credits_500': 14.99, 'credits_1200': 29.99, 'lifetime': 59.99},
+  };
+
+  String getGroup() {
+    final box = Hive.box('settings');
+    var g = box.get(_key) as String?;
+    if (g == null) {
+      g = _variants[Random().nextInt(_variants.length)];
+      box.put(_key, g);
+    }
+    return g;
+  }
+
+  double? priceFor(String productId) {
+    final g = getGroup();
+    return prices[g]?[productId]?.toDouble();
+  }
+
+  Future<void> logPurchase(String productId) async {
+    final box = Hive.box('analytics');
+    await box.add({
+      'event': 'purchase',
+      'params': {'group': getGroup(), 'product': productId},
+      'ts': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Map<String, int> report() {
+    final box = Hive.box('analytics');
+    final counts = {'A': 0, 'B': 0, 'C': 0};
+    for (final e in box.values) {
+      final m = Map<String, dynamic>.from(e as Map);
+      if (m['event'] == 'purchase') {
+        final g = m['params']?['group'] as String?;
+        if (g != null) counts[g] = (counts[g] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FEAT #16: 🟢 CREATE NEW FILE
+📁 الملف الجديد: lib/services/referral_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'dart:math';
+import 'package:hive_flutter/hive_flutter.dart';
+
+class ReferralResult {
+  final String status; // success, invalid, alreadyUsed, ownCode, limitReached
+  final int credits;
+  const ReferralResult(this.status, {this.credits = 0});
+
+  static const invalid = ReferralResult('invalid');
+  static const alreadyUsed = ReferralResult('alreadyUsed');
+  static const ownCode = ReferralResult('ownCode');
+  static const limitReached = ReferralResult('limitReached');
+  factory ReferralResult.success({required int credits}) => ReferralResult('success', credits: credits);
+}
+
+class ReferralService {
+  static const _myCodeKey = 'myReferralCode';
+  static const _usedKey = 'usedReferrals';
+  static const _rewardPerReferral = 20;
+  static const _maxReferrals = 50;
+
+  static String getMyCode() {
+    final box = Hive.box('settings');
+    var code = box.get(_myCodeKey) as String?;
+    if (code != null) return code;
+    code = _generate();
+    box.put(_myCodeKey, code);
+    return code;
+  }
+
+  static String _generate() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    final rnd = Random.secure();
+    return List.generate(8, (_) => chars[rnd.nextInt(chars.length)]).join();
+  }
+
+  static Future<ReferralResult> applyCode(String code) async {
+    code = code.trim().toUpperCase();
+    if (code.length != 8) return ReferralResult.invalid;
+
+    final box = Hive.box('settings');
+    final used = List<String>.from(box.get(_usedKey, defaultValue: []) as List);
+    if (used.contains(code)) return ReferralResult.alreadyUsed;
+    if (code == getMyCode()) return ReferralResult.ownCode;
+    if (used.length >= _maxReferrals) return ReferralResult.limitReached;
+
+    used.add(code);
+    await box.put(_usedKey, used);
+
+    final credits = Hive.box('credits');
+    final current = credits.get('balance', defaultValue: 0) as int;
+    await credits.put('balance', current + _rewardPerReferral);
+
+    return ReferralResult.success(credits: _rewardPerReferral);
+  }
+
+  static int getReferralCount() =>
+      (Hive.box('settings').get(_usedKey, defaultValue: []) as List).length;
+
+  static int getTotalRewards() => getReferralCount() * _rewardPerReferral;
+
+  static String inviteLink() => 'https://productchat.app/invite?code=${getMyCode()}';
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FEAT #17: 🟢 CREATE NEW FILE
+📁 الملف الجديد: lib/features/settings/referral_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../core/theme.dart';
+import '../../services/referral_service.dart';
+
+class ReferralScreen extends StatefulWidget {
+  const ReferralScreen({super.key});
+  @override
+  State<ReferralScreen> createState() => _S();
+}
+
+class _S extends StatefulWidget {
+  @override
+  State<_S> createState() => _ReferralScreenState();
+}
+
+class _ReferralScreenState extends State<_S> {
+  final _codeCtrl = TextEditingController();
+  String _myCode = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _myCode = ReferralService.getMyCode();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final count = ReferralService.getReferralCount();
+    final rewards = ReferralService.getTotalRewards();
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Invite Friends')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, AppColors.primaryGlow],
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              children: [
+                const Text('Your personal code',
+                    style: TextStyle(color: Colors.white70, fontSize: 13)),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(_myCode,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 4,
+                          fontFamily: 'monospace',
+                        )),
+                    const SizedBox(width: 12),
+                    IconButton(
+                      icon: const Icon(Icons.copy, color: Colors.white),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: _myCode));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Code copied ✓')),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () => Share.share(
+                    'Try ProductChat Studio! Use my code $_myCode and get 20 free credits.\n${ReferralService.inviteLink()}',
+                  ),
+                  icon: const Icon(Icons.share),
+                  label: const Text('Share Code'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(child: _Stat(label: 'Successful invites', value: '$count')),
+              const SizedBox(width: 12),
+              Expanded(child: _Stat(label: 'Credits earned', value: '$rewards')),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const Text('Have a friend\'s code?',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _codeCtrl,
+                  textCapitalization: TextCapitalization.characters,
+                  maxLength: 8,
+                  decoration: const InputDecoration(
+                    hintText: 'ABCD1234',
+                    counterText: '',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: () async {
+                  final res = await ReferralService.applyCode(_codeCtrl.text);
+                  if (!mounted) return;
+                  _codeCtrl.clear();
+                  final msg = switch (res.status) {
+                    'success' => '🎉 +${res.credits} credits',
+                    'invalid' => 'Invalid code',
+                    'alreadyUsed' => 'Already used',
+                    'ownCode' => 'Cannot use your own code!',
+                    'limitReached' => 'Limit reached',
+                    _ => 'Error',
+                  };
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(msg),
+                    backgroundColor:
+                        res.status == 'success' ? AppColors.success : AppColors.danger,
+                  ));
+                  setState(() {});
+                },
+                child: const Text('Apply'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Stat extends StatelessWidget {
+  final String label, value;
+  const _Stat({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          children: [
+            Text(value,
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                )),
+            const SizedBox(height: 2),
+            Text(label,
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          ],
+        ),
+      );
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الملف 14_AB_TESTING_REFERRAL.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -17,6 +17,9 @@ import '../features/settings/support_screen.dart';
 import '../features/settings/legal_screen.dart';
 import '../features/settings/models_screen.dart';
 import '../features/settings/brand_screen.dart';
+import '../features/settings/analytics_screen.dart';
+import '../features/settings/referral_screen.dart';
+import '../features/settings/roadmap_screen.dart';
 import '../features/billing/paywall_screen.dart';
 import '../features/history/history_screen.dart';
 import '../features/batch/batch_screen.dart';
@@ -42,6 +45,9 @@ final routerProvider = Provider<GoRouter>((ref) => GoRouter(
     GoRoute(path: '/terms', builder: (_, __) => const LegalScreen(type: 'terms')),
     GoRoute(path: '/models', builder: (_, __) => const ModelsScreen()),
     GoRoute(path: '/brand', builder: (_, __) => const BrandScreen()),
+    GoRoute(path: '/analytics', builder: (_, __) => const AnalyticsScreen()),
+    GoRoute(path: '/referral', builder: (_, __) => const ReferralScreen()),
+    GoRoute(path: '/roadmap', builder: (_, __) => const RoadmapScreen()),
     GoRoute(path: '/paywall', builder: (_, __) => const PaywallScreen()),
     GoRoute(path: '/history', builder: (_, __) => const HistoryScreen()),
     GoRoute(path: '/batch', builder: (_, __) => const BatchScreen()),

@@ -1,0 +1,250 @@
+﻿╔══════════════════════════════════════════════════════════════════════╗
+║  FILE 16: ADVANCED 2026 FEATURES                                     ║
+║  Virtual Models + Image to Video + A/B Comparison                    ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FEAT #19: 🟢 CREATE NEW FILE
+📁 الملف الجديد: lib/services/feature_roadmap_service.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/// FeatureRoadmapService — يوثق الميزات المستقبلية ويظهر حالتها.
+class FeatureRoadmapService {
+  static const features = <RoadmapFeature>[
+    RoadmapFeature(
+      id: 'virtual_models',
+      title: 'AI Virtual Models',
+      description: 'Replace mannequin with AI-generated human model',
+      phase: 4,
+      status: 'planned',
+      icon: 'person',
+    ),
+    RoadmapFeature(
+      id: 'image_to_video',
+      title: 'Image to Video',
+      description: 'Turn product photo into 5-second video',
+      phase: 4,
+      status: 'planned',
+      icon: 'videocam',
+    ),
+    RoadmapFeature(
+      id: 'color_change',
+      title: 'Product Color Change',
+      description: 'Change product colors without re-shooting',
+      phase: 4,
+      status: 'planned',
+      icon: 'palette',
+    ),
+    RoadmapFeature(
+      id: 'lifestyle_scenes',
+      title: 'Lifestyle Scenes',
+      description: 'Place product on wooden table, marble, etc.',
+      phase: 4,
+      status: 'planned',
+      icon: 'landscape',
+    ),
+    RoadmapFeature(
+      id: 'ab_testing',
+      title: 'A/B Testing',
+      description: 'Compare two images to find the best',
+      phase: 4,
+      status: 'planned',
+      icon: 'compare',
+    ),
+    RoadmapFeature(
+      id: 'competitor_analysis',
+      title: 'Competitor Analysis',
+      description: 'See how your images compare to competitors',
+      phase: 4,
+      status: 'planned',
+      icon: 'analytics',
+    ),
+    RoadmapFeature(
+      id: '3d_visualization',
+      title: '3D Product Visualization',
+      description: 'Convert photo to 3D model',
+      phase: 5,
+      status: 'planned',
+      icon: 'view_in_ar',
+    ),
+    RoadmapFeature(
+      id: 'ar_preview',
+      title: 'AR Preview',
+      description: 'Preview product in real space',
+      phase: 5,
+      status: 'planned',
+      icon: 'camera_enhance',
+    ),
+    RoadmapFeature(
+      id: 'b2b_api',
+      title: 'B2B API',
+      description: 'Connect with Shopify/WooCommerce',
+      phase: 5,
+      status: 'planned',
+      icon: 'api',
+    ),
+    RoadmapFeature(
+      id: 'cloud_sync',
+      title: 'Cloud Sync',
+      description: 'Sync between devices',
+      phase: 5,
+      status: 'planned',
+      icon: 'cloud',
+    ),
+  ];
+}
+
+class RoadmapFeature {
+  final String id;
+  final String title;
+  final String description;
+  final int phase;
+  final String status; // planned, in_progress, done
+  final String icon;
+
+  const RoadmapFeature({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.phase,
+    required this.status,
+    required this.icon,
+  });
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 FEAT #20: 🟢 CREATE NEW FILE
+📁 الملف الجديد: lib/features/settings/roadmap_screen.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import 'package:flutter/material.dart';
+import '../../core/theme.dart';
+import '../../services/feature_roadmap_service.dart';
+import '../../widgets/app_widgets.dart';
+
+class RoadmapScreen extends StatelessWidget {
+  const RoadmapScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final grouped = <int, List<RoadmapFeature>>{};
+    for (final f in FeatureRoadmapService.features) {
+      grouped.putIfAbsent(f.phase, () => []).add(f);
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Product Roadmap')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, AppColors.primaryGlow],
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Coming Soon',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    )),
+                SizedBox(height: 8),
+                Text('Features we are working on for future releases',
+                    style: TextStyle(color: Colors.white70, fontSize: 13)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          ...grouped.entries.map((e) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text('Phase ${e.key}',
+                        style: const TextStyle(
+                          color: AppColors.textTertiary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1,
+                        )),
+                  ),
+                  ...e.value.map((f) => Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(
+                          children: [
+                            AppIcons.outline(_iconFor(f.icon), size: 40),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(f.title,
+                                      style: const TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      )),
+                                  const SizedBox(height: 2),
+                                  Text(f.description,
+                                      style: const TextStyle(
+                                        color: AppColors.textSecondary,
+                                        fontSize: 11,
+                                      )),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.warning.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text('Planned',
+                                  style: TextStyle(
+                                    color: AppColors.warning,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                  )),
+                            ),
+                          ],
+                        ),
+                      )),
+                  const SizedBox(height: 20),
+                ],
+              )),
+        ],
+      ),
+    );
+  }
+
+  IconData _iconFor(String name) => switch (name) {
+        'person' => Icons.person,
+        'videocam' => Icons.videocam,
+        'palette' => Icons.palette,
+        'landscape' => Icons.landscape,
+        'compare' => Icons.compare,
+        'analytics' => Icons.analytics,
+        'view_in_ar' => Icons.view_in_ar,
+        'camera_enhance' => Icons.camera_enhance,
+        'api' => Icons.api,
+        'cloud' => Icons.cloud,
+        _ => Icons.star,
+      };
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ نهاية الملف 16_ADVANCED_2026.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

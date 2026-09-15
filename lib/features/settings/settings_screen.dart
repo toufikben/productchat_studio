@@ -97,6 +97,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: () => context.push('/brand'),
             ),
             ListTile(
+              leading: const Icon(Icons.analytics_outlined),
+              title: const Text('Analytics'),
+              subtitle: const Text('Local usage statistics'),
+              onTap: () => context.push('/analytics'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.card_giftcard_outlined),
+              title: const Text('Invite friends'),
+              subtitle: const Text('Earn credits with referrals'),
+              onTap: () => context.push('/referral'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.map_outlined),
+              title: const Text('Product roadmap'),
+              subtitle: const Text('See upcoming features'),
+              onTap: () => context.push('/roadmap'),
+            ),
+            ListTile(
               leading: const Icon(Icons.history),
               title: const Text('History'),
               subtitle: Text(isPro
