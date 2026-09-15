@@ -132,16 +132,18 @@ class BillingService extends ChangeNotifier {
   }
 
   Future<void> _initialize() async {
-    final store = _storeOrDefault;
-    _subscription = store.purchaseStream.listen(
-      _handlePurchases,
-      onError: (Object value) {
-        error = value.toString();
-        loading = false;
-        notifyListeners();
-      },
-    );
     try {
+      // InAppPurchase.instance can throw on unsupported platforms; keep it
+      // inside the non-fatal billing boundary.
+      final store = _storeOrDefault;
+      _subscription = store.purchaseStream.listen(
+        _handlePurchasesSafely,
+        onError: (Object value) {
+          error = value.toString();
+          loading = false;
+          notifyListeners();
+        },
+      );
       available = await store.isAvailable().timeout(_billingTimeout);
       if (!available) {
         error = 'Google Play Billing is unavailable on this device.';
@@ -161,6 +163,17 @@ class BillingService extends ChangeNotifier {
       available = false;
       error = _friendlyBillingError(value);
     } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<void> _handlePurchasesSafely(
+      List<PurchaseDetails> purchases) async {
+    try {
+      await _handlePurchases(purchases);
+    } catch (value) {
+      error = _friendlyBillingError(value);
+      loading = false;
       notifyListeners();
     }
   }

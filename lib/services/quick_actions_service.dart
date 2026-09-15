@@ -15,7 +15,11 @@ class QuickActionsService {
       });
       _channel.setMethodCallHandler((call) async {
         if (call.method == 'onShortcut' && call.arguments is String) {
-          onAction(call.arguments as String);
+          try {
+            onAction(call.arguments as String);
+          } catch (_) {
+            // A shortcut callback must never terminate the app.
+          }
         }
         return null;
       });
