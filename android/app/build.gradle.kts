@@ -75,7 +75,7 @@ android {
 }
 
 dependencies {
-    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.19.0")
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.29.0")
     implementation("androidx.core:core-ktx:1.13.1")
 }
 
