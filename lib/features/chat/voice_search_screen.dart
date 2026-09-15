@@ -6,7 +6,6 @@ import '../../core/theme.dart';
 import '../../services/storage_service.dart';
 import '../../services/voice_search_service.dart';
 import '../../services/voice_service.dart';
-import '../../widgets/app_widgets.dart';
 
 class VoiceSearchScreen extends ConsumerStatefulWidget {
   const VoiceSearchScreen({super.key});
@@ -127,7 +126,7 @@ class _VoiceSearchScreenState extends ConsumerState<VoiceSearchScreen> {
                                   : Container(color: AppColors.surfaceAlt),
                             ),
                           ),
-                          title: Text(item['op'] ?? ''),
+                          title: Text(item['op']?.toString() ?? ''),
                           subtitle: Text(
                             (item['ts'] as String? ?? '').substring(0, 16),
                             style: const TextStyle(fontSize: 11),
